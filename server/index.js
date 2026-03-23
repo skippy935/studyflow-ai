@@ -13,7 +13,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/decks', require('./routes/deckRoutes'));
 app.use('/api', require('./routes/cardRoutes'));
-app.use('/api', require('./routes/aiRoutes'));
+app.use('/api/ai', require('./routes/aiRoutes'));
 
 // Fallback: serve index.html for any unmatched route
 app.get('*', (req, res) => {

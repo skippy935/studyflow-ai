@@ -115,7 +115,7 @@ async function endSession() {
 
   // Save session
   try {
-    await apiFetch('/api/study-sessions', {
+    await apiFetch('/api/ai/study-sessions', {
       method: 'POST',
       body: JSON.stringify({
         deck_id: deckId,
