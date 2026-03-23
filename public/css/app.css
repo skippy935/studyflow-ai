@@ -1,0 +1,248 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #F8FAFC;
+  color: #0F172A;
+  margin: 0;
+}
+
+/* ── Flip Card ─────────────────────────────────────────── */
+.card-scene {
+  perspective: 1200px;
+  width: 100%;
+}
+
+.card-wrap {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.card-wrap.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(99, 102, 241, 0.12), 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.card-face--front {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+}
+
+.card-face--back {
+  background: linear-gradient(135deg, #EEF2FF 0%, #F0FDF4 100%);
+  border: 1px solid #C7D2FE;
+  transform: rotateY(180deg);
+}
+
+.card-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  margin-bottom: 1rem;
+}
+
+.card-text {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #1E293B;
+  line-height: 1.5;
+  max-width: 480px;
+}
+
+/* ── Modal ─────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.modal-backdrop.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: min(480px, calc(100vw - 2rem));
+  box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-backdrop.open .modal-box {
+  transform: translateY(0) scale(1);
+}
+
+/* ── Toast ─────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: #1E293B;
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  z-index: 100;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast.success { background: #059669; }
+.toast.error   { background: #DC2626; }
+
+/* ── Loading spinner ───────────────────────────────────── */
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(99,102,241,0.2);
+  border-top-color: #6366F1;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Deck card hover ───────────────────────────────────── */
+.deck-card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.deck-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(99,102,241,0.15);
+}
+
+/* ── Color swatch picker ───────────────────────────────── */
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.color-swatch.selected,
+.color-swatch:hover {
+  border-color: #1E293B;
+  transform: scale(1.15);
+}
+
+/* ── Progress bar ──────────────────────────────────────── */
+.progress-bar-track {
+  background: #E2E8F0;
+  border-radius: 999px;
+  height: 6px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  background: linear-gradient(90deg, #6366F1, #8B5CF6);
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* ── Rating buttons ────────────────────────────────────── */
+.rating-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s ease, filter 0.1s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.rating-btn:hover  { filter: brightness(0.93); transform: translateY(-1px); }
+.rating-btn:active { transform: scale(0.97); }
+
+.rating-btn.again  { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+.rating-btn.hard   { background: #FFF7ED; color: #D97706; border-color: #FED7AA; }
+.rating-btn.good   { background: #EFF6FF; color: #2563EB; border-color: #BFDBFE; }
+.rating-btn.easy   { background: #F0FDF4; color: #16A34A; border-color: #BBF7D0; }
+
+.rating-interval {
+  font-size: 0.7rem;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+/* ── Card list row ─────────────────────────────────────── */
+.card-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 1rem;
+  align-items: start;
+  padding: 1rem;
+  border-bottom: 1px solid #F1F5F9;
+  transition: background 0.15s;
+}
+.card-row:hover { background: #F8FAFC; }
+.card-row:last-child { border-bottom: none; }
+
+/* ── Textarea ──────────────────────────────────────────── */
+textarea.notes-area {
+  resize: vertical;
+  min-height: 200px;
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+/* ── Fade-in animation ─────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+
+/* ── Responsive helpers ────────────────────────────────── */
+@media (max-width: 640px) {
+  .card-text { font-size: 1.1rem; }
+  .card-wrap { height: 240px; }
+  .modal-box { padding: 1.5rem; }
+}

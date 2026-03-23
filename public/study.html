@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study — StudyFlow AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <!-- Nav -->
+  <nav class="bg-white border-b border-slate-100">
+    <div class="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+        </div>
+        <span class="font-bold text-slate-900 text-sm">StudyFlow AI</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span id="deckNameEl" class="text-sm text-slate-500 font-medium truncate max-w-[160px]"></span>
+        <button id="logoutBtn" class="text-sm text-slate-400 hover:text-slate-600 transition-colors">Sign out</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Loading -->
+  <div id="loadingView" class="max-w-3xl mx-auto px-6 py-20 text-center">
+    <div class="spinner mx-auto mb-4" style="width:36px;height:36px;border-width:3px"></div>
+    <p class="text-slate-500 text-sm">Loading your cards…</p>
+  </div>
+
+  <!-- Empty — no cards due -->
+  <div id="emptyView" style="display:none" class="max-w-3xl mx-auto px-6 py-20 text-center">
+    <div class="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+      <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#10B981" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <h2 class="text-xl font-bold text-slate-900 mb-2">All caught up!</h2>
+    <p class="text-slate-500 mb-6">No cards are due for review right now. Check back later.</p>
+    <button id="emptyBackBtn" class="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 px-5 py-2.5 rounded-xl border border-indigo-200 hover:bg-indigo-50 transition-colors">
+      ← Back to Deck
+    </button>
+  </div>
+
+  <!-- Study view -->
+  <div id="studyView" style="display:none" class="max-w-3xl mx-auto px-6 py-8">
+
+    <!-- Progress bar -->
+    <div class="flex items-center gap-4 mb-8">
+      <div class="progress-bar-track flex-1">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <span id="progressText" class="text-xs font-semibold text-slate-400 shrink-0 tabular-nums"></span>
+    </div>
+
+    <!-- Flashcard -->
+    <div class="card-scene mb-4" id="cardScene">
+      <div class="card-wrap" id="cardWrap">
+        <!-- Front -->
+        <div class="card-face card-face--front">
+          <div class="card-label">Question</div>
+          <p class="card-text" id="frontText"></p>
+          <div id="flipHint" class="absolute bottom-5 text-xs text-slate-300 font-medium">Click to reveal · Space</div>
+        </div>
+        <!-- Back -->
+        <div class="card-face card-face--back">
+          <div class="card-label" style="color:#6366f1">Answer</div>
+          <p class="card-text" id="backText"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Show answer button -->
+    <div class="text-center mb-6">
+      <button id="showAnswerBtn"
+        class="bg-white text-slate-700 font-semibold px-8 py-3.5 rounded-2xl border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 transition-colors shadow-sm text-sm">
+        Show Answer
+      </button>
+    </div>
+
+    <!-- Rating buttons (hidden until flipped) -->
+    <div id="ratingBtns" style="display:none" class="space-y-3">
+      <p class="text-xs text-center text-slate-400 font-medium mb-2">How well did you know this?</p>
+      <div class="flex gap-3">
+        <button class="rating-btn again" data-rating="0">
+          Again
+          <span class="rating-interval">&lt; 1 day</span>
+        </button>
+        <button class="rating-btn hard" data-rating="1">
+          Hard
+          <span class="rating-interval">1 day</span>
+        </button>
+        <button class="rating-btn good" data-rating="2">
+          Good
+          <span class="rating-interval">few days</span>
+        </button>
+        <button class="rating-btn easy" data-rating="3">
+          Easy
+          <span class="rating-interval">longer</span>
+        </button>
+      </div>
+      <p class="text-xs text-center text-slate-300 pt-1">Keyboard: 1 Again · 2 Hard · 3 Good · 4 Easy</p>
+    </div>
+  </div>
+
+  <!-- Done view -->
+  <div id="doneView" style="display:none" class="max-w-2xl mx-auto px-6 py-12 text-center">
+    <div class="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+      <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+      </svg>
+    </div>
+    <h2 class="text-2xl font-bold text-slate-900 mb-2">Session Complete!</h2>
+    <p class="text-slate-500 mb-8">Great work. Here's how you did:</p>
+
+    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm mb-8">
+      <div class="text-3xl font-extrabold text-slate-900 mb-1" id="statTotal">0</div>
+      <div class="text-sm text-slate-400 mb-6">cards reviewed</div>
+      <div class="grid grid-cols-4 gap-4">
+        <div class="text-center">
+          <div class="text-xl font-bold text-red-500" id="statAgain">0</div>
+          <div class="text-xs text-slate-400 mt-0.5">Again</div>
+        </div>
+        <div class="text-center">
+          <div class="text-xl font-bold text-amber-500" id="statHard">0</div>
+          <div class="text-xs text-slate-400 mt-0.5">Hard</div>
+        </div>
+        <div class="text-center">
+          <div class="text-xl font-bold text-blue-500" id="statGood">0</div>
+          <div class="text-xs text-slate-400 mt-0.5">Good</div>
+        </div>
+        <div class="text-center">
+          <div class="text-xl font-bold text-emerald-500" id="statEasy">0</div>
+          <div class="text-xs text-slate-400 mt-0.5">Easy</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <button id="backToDeckBtn" class="font-medium text-slate-700 px-6 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors text-sm">
+        Back to Deck
+      </button>
+      <button id="dashboardBtn" class="font-semibold bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors text-sm">
+        Dashboard
+      </button>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/study.js"></script>
+</body>
+</html>
