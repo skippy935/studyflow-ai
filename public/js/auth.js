@@ -1,5 +1,5 @@
 // Redirect if already logged in
-if (localStorage.getItem('sf_token')) window.location.href = '/dashboard.html';
+if (localStorage.getItem('sb_token')) window.location.href = '/dashboard.html';
 
 const modal        = document.getElementById('authModal');
 const modalTitle   = document.getElementById('modalTitle');
@@ -61,8 +61,8 @@ authForm.addEventListener('submit', async (e) => {
     const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
     const body = mode === 'login' ? { email, password } : { name, email, password };
     const data = await apiFetch(endpoint, { method: 'POST', body: JSON.stringify(body) });
-    localStorage.setItem('sf_token', data.token);
-    localStorage.setItem('sf_user', JSON.stringify(data.user));
+    localStorage.setItem('sb_token', data.token);
+    localStorage.setItem('sb_user', JSON.stringify(data.user));
     window.location.href = '/dashboard.html';
   } catch (err) {
     authError.textContent = err.message;
