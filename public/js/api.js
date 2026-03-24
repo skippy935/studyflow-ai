@@ -1,3 +1,9 @@
+// ── One-time key migration (sf_ → sb_) ────────────────────
+if (localStorage.getItem('sf_token')) {
+  localStorage.removeItem('sf_token');
+  localStorage.removeItem('sf_user');
+}
+
 // ── API fetch ─────────────────────────────────────────────
 async function apiFetch(path, options = {}) {
   const token = localStorage.getItem('sb_token');
