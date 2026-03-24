@@ -1,0 +1,182 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Plus, Layers, HelpCircle, FileText, Trash2, BookOpen, Play } from 'lucide-react';
+import toast from 'react-hot-toast';
+import AppLayout from '../components/layout/AppLayout';
+import Button    from '../components/ui/Button';
+import Spinner   from '../components/ui/Spinner';
+import { apiFetch } from '../lib/api';
+import { getUser }  from '../lib/auth';
+import { useTranslation } from '../i18n';
+import type { Deck, Quiz, Summary } from '../types';
+
+type Tab = 'decks' | 'quizzes' | 'summaries';
+
+const DIFF_COLOR = { easy: 'bg-emerald-100 text-emerald-700', medium: 'bg-amber-100 text-amber-700', hard: 'bg-red-100 text-red-700' };
+
+export default function DashboardPage() {
+  const { t }    = useTranslation();
+  const navigate = useNavigate();
+  const user     = getUser();
+  const [tab, setTab] = useState<Tab>('decks');
+  const [decks,     setDecks]     = useState<Deck[]>([]);
+  const [quizzes,   setQuizzes]   = useState<Quiz[]>([]);
+  const [summaries, setSummaries] = useState<Summary[]>([]);
+  const [loading, setLoading]     = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch<{ decks: Deck[] }>('/decks').then(d => setDecks(d.decks)),
+      apiFetch<{ quizzes: Quiz[] }>('/quizzes').then(d => setQuizzes(d.quizzes)),
+      apiFetch<{ summaries: Summary[] }>('/summaries').then(d => setSummaries(d.summaries)),
+    ]).finally(() => setLoading(false));
+  }, []);
+
+  async function deleteDeck(id: number) {
+    if (!confirm('Delete this deck?')) return;
+    await apiFetch(`/decks/${id}`, { method: 'DELETE' });
+    setDecks(prev => prev.filter(d => d.id !== id));
+    toast.success('Deck deleted');
+  }
+
+  async function deleteQuiz(id: number) {
+    if (!confirm('Delete this quiz?')) return;
+    await apiFetch(`/quizzes/${id}`, { method: 'DELETE' });
+    setQuizzes(prev => prev.filter(q => q.id !== id));
+    toast.success('Quiz deleted');
+  }
+
+  async function deleteSummary(id: number) {
+    if (!confirm('Delete this summary?')) return;
+    await apiFetch(`/summaries/${id}`, { method: 'DELETE' });
+    setSummaries(prev => prev.filter(s => s.id !== id));
+    toast.success('Summary deleted');
+  }
+
+  const tabs: { key: Tab; label: string; icon: typeof Layers }[] = [
+    { key: 'decks',     label: t.dashboard.decks,     icon: Layers },
+    { key: 'quizzes',   label: t.dashboard.quizzes,   icon: HelpCircle },
+    { key: 'summaries', label: t.dashboard.summaries, icon: FileText },
+  ];
+
+  return (
+    <AppLayout>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{t.dashboard.welcome}, {user?.displayName?.split(' ')[0]}! 👋</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+        </div>
+        <Button onClick={() => navigate('/create')} size="sm">
+          <Plus className="w-4 h-4" /> {t.dashboard.create}
+        </Button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl mb-6 w-fit">
+        {tabs.map(({ key, label, icon: Icon }) => (
+          <button key={key} onClick={() => setTab(key)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${tab === key ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+            <Icon className="w-4 h-4" /> {label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20"><Spinner size="lg" /></div>
+      ) : (
+        <>
+          {/* Decks */}
+          {tab === 'decks' && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {decks.length === 0 ? (
+                <EmptyState message={t.dashboard.noDecks} onCreate={() => navigate('/create')} label={t.dashboard.createFirst} />
+              ) : decks.map((deck, i) => (
+                <motion.div key={deck.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0" style={{ background: deck.color }}>
+                      {deck.name.charAt(0).toUpperCase()}
+                    </div>
+                    <button onClick={() => deleteDeck(deck.id)} className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-0.5 truncate">{deck.name}</h3>
+                  <p className="text-xs text-slate-400 mb-4">{deck._count?.cards ?? 0} {t.dashboard.cards}</p>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="ghost" className="flex-1 justify-center" onClick={() => navigate(`/deck/${deck.id}`)}>
+                      <BookOpen className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button size="sm" className="flex-1 justify-center" onClick={() => navigate(`/study/${deck.id}`)}>
+                      <Play className="w-3.5 h-3.5" /> {t.dashboard.study}
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Quizzes */}
+          {tab === 'quizzes' && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {quizzes.length === 0 ? (
+                <EmptyState message={t.dashboard.noQuizzes} onCreate={() => navigate('/create')} label={t.dashboard.createFirst} />
+              ) : quizzes.map((quiz, i) => (
+                <motion.div key={quiz.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-950 flex items-center justify-center">
+                      <HelpCircle className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <button onClick={() => deleteQuiz(quiz.id)} className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-0.5 truncate">{quiz.title}</h3>
+                  <p className="text-xs text-slate-400 mb-4">{quiz._count?.questions ?? 0} {t.dashboard.questions}</p>
+                  <Button size="sm" className="w-full justify-center" onClick={() => navigate(`/quiz/${quiz.id}`)}>
+                    <Play className="w-3.5 h-3.5" /> {t.dashboard.takeQuiz}
+                  </Button>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Summaries */}
+          {tab === 'summaries' && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {summaries.length === 0 ? (
+                <EmptyState message={t.dashboard.noSummaries} onCreate={() => navigate('/create')} label={t.dashboard.createFirst} />
+              ) : summaries.map((s, i) => (
+                <motion.div key={s.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/summary/${s.id}`)}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <button onClick={e => { e.stopPropagation(); deleteSummary(s.id); }} className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1 truncate">{s.title}</h3>
+                  <p className="text-xs text-slate-400 line-clamp-2">{s.content.substring(0, 120)}…</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </>
+      )}
+    </AppLayout>
+  );
+}
+
+function EmptyState({ message, onCreate, label }: { message: string; onCreate: () => void; label: string }) {
+  return (
+    <div className="col-span-full flex flex-col items-center py-20 text-center">
+      <p className="text-slate-400 mb-4">{message}</p>
+      <Button variant="ghost" onClick={onCreate} size="sm"><Plus className="w-4 h-4" /> {label}</Button>
+    </div>
+  );
+}

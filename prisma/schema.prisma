@@ -1,0 +1,108 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id               Int            @id @default(autoincrement())
+  email            String         @unique
+  passwordHash     String
+  displayName      String         @default("")
+  avatarUrl        String?
+  uiLanguage       String         @default("en")
+  subscriptionTier String         @default("free")
+  trialEndDate     DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  lastLogin        DateTime?
+
+  decks            Deck[]
+  quizzes          Quiz[]
+  summaries        Summary[]
+  studySessions    StudySession[]
+}
+
+model Deck {
+  id            Int            @id @default(autoincrement())
+  userId        Int
+  name          String
+  description   String         @default("")
+  color         String         @default("#4F46E5")
+  isFavorite    Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cards         Card[]
+  studySessions StudySession[]
+}
+
+model Card {
+  id          Int      @id @default(autoincrement())
+  deckId      Int
+  front       String
+  back        String
+  difficulty  String   @default("medium")
+  easiness    Float    @default(2.5)
+  interval    Int      @default(1)
+  repetitions Int      @default(0)
+  nextReview  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  deck        Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+}
+
+model Quiz {
+  id        Int            @id @default(autoincrement())
+  userId    Int
+  title     String
+  topic     String         @default("")
+  createdAt DateTime       @default(now())
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+}
+
+model QuizQuestion {
+  id           Int     @id @default(autoincrement())
+  quizId       Int
+  type         String  @default("multiple_choice")
+  question     String
+  options      String?
+  correct      String?
+  explanation  String  @default("")
+  sampleAnswer String  @default("")
+  keywords     String?
+
+  quiz         Quiz    @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model Summary {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  topic     String   @default("")
+  content   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudySession {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  deckId       Int
+  cardsStudied Int      @default(0)
+  againCount   Int      @default(0)
+  hardCount    Int      @default(0)
+  goodCount    Int      @default(0)
+  easyCount    Int      @default(0)
+  studiedAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck         Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+}
