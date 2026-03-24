@@ -1,7 +1,7 @@
 {
-  "name": "studyflow-ai",
-  "version": "1.0.0",
-  "description": "AI-powered flashcard study tool",
+  "name": "studybuild",
+  "version": "2.0.0",
+  "description": "AI-powered study tool — flashcards, quizzes, and summaries",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",

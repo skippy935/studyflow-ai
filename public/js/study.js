@@ -5,7 +5,6 @@ document.getElementById('logoutBtn').addEventListener('click', logout);
 const deckId = urlParam('deckId');
 if (!deckId) window.location.href = '/dashboard.html';
 
-// UI elements
 const loadingView  = document.getElementById('loadingView');
 const emptyView    = document.getElementById('emptyView');
 const studyView    = document.getElementById('studyView');
@@ -20,8 +19,11 @@ const backText     = document.getElementById('backText');
 const showAnswerBtn= document.getElementById('showAnswerBtn');
 const ratingBtns   = document.getElementById('ratingBtns');
 const flipHint     = document.getElementById('flipHint');
+const diffBadgeWrap= document.getElementById('diffBadgeWrap');
 
-// Session state
+const DIFF_COLORS = { easy: '#10B981', medium: '#F59E0B', hard: '#EF4444' };
+const DIFF_LABELS = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
+
 let deck, cards, index = 0;
 const ratings = { 0: 0, 1: 0, 2: 0, 3: 0 };
 
@@ -50,6 +52,14 @@ function showCard() {
   const card = cards[index];
   frontText.textContent = card.front;
   backText.textContent  = card.back;
+
+  // Difficulty badge
+  if (card.difficulty && DIFF_LABELS[card.difficulty]) {
+    const color = DIFF_COLORS[card.difficulty];
+    diffBadgeWrap.innerHTML = `<span style="display:inline-block;padding:.2rem .625rem;border-radius:100px;font-size:.7rem;font-weight:700;background:${color}22;color:${color};">${DIFF_LABELS[card.difficulty]}</span>`;
+  } else {
+    diffBadgeWrap.innerHTML = '';
+  }
 
   // Reset flip state
   cardWrap.classList.remove('flipped');
@@ -105,7 +115,6 @@ async function endSession() {
   progressFill.style.width = '100%';
   progressText.textContent = `${cards.length} / ${cards.length}`;
 
-  // Stats
   const total = cards.length;
   document.getElementById('statTotal').textContent = total;
   document.getElementById('statAgain').textContent = ratings[0];
@@ -113,7 +122,6 @@ async function endSession() {
   document.getElementById('statGood').textContent  = ratings[2];
   document.getElementById('statEasy').textContent  = ratings[3];
 
-  // Save session
   try {
     await apiFetch('/api/ai/study-sessions', {
       method: 'POST',

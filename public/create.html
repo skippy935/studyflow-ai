@@ -3,99 +3,112 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Deck — StudyFlow AI</title>
+  <title>Create — StudyBuild</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/app.css">
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body>
 
-  <!-- Nav -->
-  <nav class="bg-white border-b border-slate-100 sticky top-0 z-30">
-    <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <a href="/dashboard.html" class="text-slate-400 hover:text-slate-600 transition-colors">
-          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-          </svg>
+  <nav class="sb-nav">
+    <div class="sb-nav-inner">
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <a href="/dashboard.html" style="color:var(--text-2);display:flex;align-items:center;">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         </a>
-        <div class="flex items-center gap-2">
-          <div class="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-            </svg>
-          </div>
-          <span class="font-bold text-slate-900 text-sm">StudyFlow AI</span>
-        </div>
+        <a href="/dashboard.html" class="sb-logo">
+          <div class="sb-logo-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+          StudyBuild
+        </a>
       </div>
-      <button id="logoutBtn" class="text-sm text-slate-400 hover:text-slate-600 transition-colors">Sign out</button>
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
+        <button class="btn btn-ghost btn-sm" id="logoutBtn">Sign out</button>
+      </div>
     </div>
   </nav>
 
-  <main class="max-w-2xl mx-auto px-6 py-10">
-    <div class="mb-8">
-      <h1 class="text-2xl font-bold text-slate-900 mb-1">Create a New Deck</h1>
-      <p class="text-slate-500 text-sm">Paste your notes below — AI will generate flashcards automatically.</p>
+  <main style="max-width:680px;margin:0 auto;padding:2.5rem 1.5rem;">
+
+    <h1 style="font-size:1.5rem;font-weight:800;color:var(--text);margin:0 0 .375rem;">Create Study Content</h1>
+    <p style="color:var(--text-2);font-size:.875rem;margin:0 0 2rem;">Choose a format, paste your notes, and let AI do the work.</p>
+
+    <!-- Mode selector -->
+    <div style="margin-bottom:1.75rem;">
+      <div class="sb-label">Content type</div>
+      <div class="mode-selector" id="modeSelector">
+        <div class="mode-card selected" data-mode="flashcards">
+          <div class="mode-icon">⚡</div>
+          <div class="mode-label">Flashcards</div>
+          <div class="mode-desc">Question & answer cards</div>
+        </div>
+        <div class="mode-card" data-mode="quiz">
+          <div class="mode-icon">❓</div>
+          <div class="mode-label">Quiz</div>
+          <div class="mode-desc">MCQ + open questions</div>
+        </div>
+        <div class="mode-card" data-mode="summary">
+          <div class="mode-icon">📝</div>
+          <div class="mode-label">Summary</div>
+          <div class="mode-desc">Structured study notes</div>
+        </div>
+      </div>
     </div>
 
-    <form id="createForm" novalidate class="space-y-6">
-
-      <!-- Deck name -->
-      <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-        <h2 class="font-semibold text-slate-900 mb-4">Deck Details</h2>
-        <div class="space-y-4">
+    <form id="createForm" novalidate>
+      <!-- Details card -->
+      <div class="sb-card" style="padding:1.5rem;margin-bottom:1.25rem;">
+        <div style="font-weight:700;color:var(--text);margin-bottom:1rem;">Details</div>
+        <div style="display:flex;flex-direction:column;gap:1rem;">
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">Deck Name <span class="text-red-400">*</span></label>
-            <input id="deckName" type="text" placeholder="e.g. Chapter 4 — Cell Biology" maxlength="100"
-              class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-shadow">
+            <label class="sb-label">Title <span style="color:#EF4444">*</span></label>
+            <input id="titleInput" type="text" class="sb-input" placeholder="e.g. Cell Biology — Chapter 4" maxlength="100">
+          </div>
+          <div id="descRow">
+            <label class="sb-label">Description <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
+            <input id="descInput" type="text" class="sb-input" placeholder="Brief description" maxlength="200">
+          </div>
+          <div id="colorRow">
+            <label class="sb-label">Colour</label>
+            <div id="colorPicker" style="display:flex;gap:.5rem;flex-wrap:wrap;"></div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">Description <span class="text-slate-400 font-normal">(optional)</span></label>
-            <input id="deckDesc" type="text" placeholder="A short description of this deck" maxlength="200"
-              class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-shadow">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Deck Colour</label>
-            <div id="colorPicker" class="flex items-center gap-2.5 flex-wrap"></div>
+            <label class="sb-label">Language</label>
+            <div style="display:flex;gap:.5rem;">
+              <button type="button" class="btn btn-ghost btn-sm lang-btn active" data-lang="en" onclick="setLang('en')">🇬🇧 English</button>
+              <button type="button" class="btn btn-ghost btn-sm lang-btn" data-lang="de" onclick="setLang('de')">🇩🇪 Deutsch</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Notes -->
-      <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-        <h2 class="font-semibold text-slate-900 mb-1">Your Notes</h2>
-        <p class="text-xs text-slate-400 mb-4">Paste lecture notes, a textbook excerpt, or any study material.</p>
-        <textarea id="notes" class="notes-area w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-shadow"
-          placeholder="Paste your notes here…&#10;&#10;Example: The mitochondria is the powerhouse of the cell. It produces ATP through oxidative phosphorylation. The inner membrane contains cristae which increase the surface area for ATP synthase..." rows="10"></textarea>
+      <!-- Notes card -->
+      <div class="sb-card" style="padding:1.5rem;margin-bottom:1.25rem;">
+        <div style="font-weight:700;color:var(--text);margin-bottom:.375rem;">Your Notes</div>
+        <p style="font-size:.75rem;color:var(--text-3);margin:0 0 .875rem;">Paste lecture notes, a textbook excerpt, or any study material.</p>
+        <textarea id="notesInput" class="sb-textarea" placeholder="Paste your notes here…" rows="10"></textarea>
       </div>
 
-      <p id="errorMsg" class="text-red-500 text-sm min-h-[20px]"></p>
+      <p id="errorMsg" style="color:#EF4444;font-size:.875rem;min-height:20px;margin:0 0 .75rem;"></p>
 
-      <button id="generateBtn" type="submit"
-        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-2xl transition-colors flex items-center justify-center gap-2.5 text-sm shadow-lg shadow-indigo-200">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-        </svg>
-        Generate Flashcards with AI
+      <button id="generateBtn" type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:1rem;font-size:.9rem;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Generate with AI
       </button>
     </form>
 
-    <!-- Preview -->
-    <div id="previewSection" style="display:none" class="mt-10">
-      <div class="flex items-center justify-between mb-5">
+    <!-- Preview section -->
+    <div id="previewSection" style="display:none;margin-top:2.5rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem;">
         <div>
-          <h2 class="font-bold text-slate-900 text-lg">Generated Flashcards</h2>
-          <p class="text-sm text-indigo-600 font-medium mt-0.5" id="cardCount"></p>
+          <div style="font-weight:800;font-size:1.1rem;color:var(--text);">Generated Content</div>
+          <div id="previewMeta" style="font-size:.8rem;color:var(--primary);font-weight:600;margin-top:2px;"></div>
         </div>
-        <div class="flex gap-2">
-          <button id="viewDeckBtn" class="text-sm font-medium text-slate-700 px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
-            View Deck
-          </button>
-          <button id="studyNowBtn" class="text-sm font-semibold bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors">
-            Study Now →
-          </button>
+        <div style="display:flex;gap:.5rem;">
+          <button id="viewBtn" class="btn btn-ghost btn-sm">View →</button>
+          <button id="actionBtn" class="btn btn-primary btn-sm">Study Now →</button>
         </div>
       </div>
-      <div id="previewList" class="space-y-2"></div>
+      <div id="previewList" style="display:flex;flex-direction:column;gap:.5rem;"></div>
     </div>
   </main>
 

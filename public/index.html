@@ -3,179 +3,174 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StudyFlow AI — Turn Notes Into Flashcards</title>
+  <title>StudyBuild — Turn Notes Into Knowledge</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/app.css">
 </head>
-<body class="bg-white">
+<body>
 
   <!-- Nav -->
-  <nav class="fixed top-0 inset-x-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100">
-    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-          </svg>
+  <nav class="fixed top-0 inset-x-0 z-40" style="background:var(--surface);border-bottom:1px solid var(--border);">
+    <div style="max-width:1100px;margin:0 auto;padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;">
+      <div class="sb-logo">
+        <div class="sb-logo-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
         </div>
-        <span class="font-bold text-slate-900 text-lg">StudyFlow AI</span>
+        StudyBuild
       </div>
-      <div class="flex items-center gap-3">
-        <a href="#" id="openLogin" class="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">Sign In</a>
-        <a href="#" id="openSignup" class="text-sm font-semibold bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors">Get Started</a>
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <button class="theme-toggle" onclick="toggleTheme()"></button>
+        <a href="#" id="openLogin" class="btn btn-ghost btn-sm">Sign In</a>
+        <a href="#" id="openSignup" class="btn btn-primary btn-sm">Get Started</a>
       </div>
     </div>
   </nav>
 
   <!-- Hero -->
-  <section class="pt-32 pb-20 px-6 text-center max-w-4xl mx-auto">
-    <div class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-8">
+  <section style="padding:8rem 1.5rem 5rem;text-align:center;max-width:860px;margin:0 auto;">
+    <div style="display:inline-flex;align-items:center;gap:.5rem;background:var(--primary-dim);color:var(--primary);font-size:.75rem;font-weight:700;padding:.375rem .875rem;border-radius:100px;margin-bottom:2rem;">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       Powered by Claude AI
     </div>
-    <h1 class="text-5xl sm:text-6xl font-extrabold text-slate-900 leading-tight tracking-tight mb-6">
+    <h1 style="font-size:clamp(2.5rem,6vw,4rem);font-weight:800;color:var(--text);line-height:1.15;letter-spacing:-.02em;margin:0 0 1.25rem;">
       Turn Your Notes Into<br>
-      <span class="text-indigo-600">Flashcards Instantly</span>
+      <span style="color:var(--primary);">Flashcards, Quizzes &amp; Summaries</span>
     </h1>
-    <p class="text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-      Paste your notes, lecture slides, or any text. AI generates targeted flashcards in seconds. Study smarter with spaced repetition.
+    <p style="font-size:1.2rem;color:var(--text-2);max-width:600px;margin:0 auto 2.5rem;line-height:1.7;">
+      Paste your notes and AI generates targeted study materials in seconds. Study smarter with spaced repetition, quizzes, and structured summaries.
     </p>
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-      <a href="#" id="openSignup2" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-4 rounded-2xl text-base transition-colors shadow-lg shadow-indigo-200">
-        Get Started — It's Free
-      </a>
-      <a href="#" id="openLogin2" class="w-full sm:w-auto text-slate-600 hover:text-slate-900 font-medium px-8 py-4 rounded-2xl text-base border border-slate-200 hover:border-slate-300 transition-colors">
-        Sign In →
-      </a>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1rem;">
+      <a href="#" id="openSignup2" class="btn btn-primary" style="padding:.875rem 2rem;font-size:1rem;">Get Started — It's Free</a>
+      <a href="#" id="openLogin2" class="btn btn-ghost" style="padding:.875rem 2rem;font-size:1rem;">Sign In →</a>
     </div>
   </section>
 
   <!-- Steps -->
-  <section class="py-20 bg-slate-50">
-    <div class="max-w-5xl mx-auto px-6">
-      <div class="text-center mb-14">
-        <h2 class="text-3xl font-bold text-slate-900 mb-3">How it works</h2>
-        <p class="text-slate-500">Three steps from notes to mastery.</p>
+  <section style="padding:4rem 1.5rem;background:var(--surface2);">
+    <div style="max-width:1000px;margin:0 auto;">
+      <div style="text-align:center;margin-bottom:3rem;">
+        <h2 style="font-size:1.875rem;font-weight:800;color:var(--text);margin:0 0 .5rem;">How it works</h2>
+        <p style="color:var(--text-2);">Three steps from notes to mastery.</p>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="bg-white rounded-2xl p-8 text-center shadow-sm border border-slate-100">
-          <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-            <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;">
+        <div class="sb-card" style="padding:2rem;text-align:center;">
+          <div style="width:56px;height:56px;background:var(--primary-dim);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
+            <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="var(--primary)" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           </div>
-          <div class="text-xs font-bold text-indigo-400 tracking-widest mb-2">STEP 01</div>
-          <h3 class="font-bold text-slate-900 text-lg mb-2">Paste Your Notes</h3>
-          <p class="text-slate-500 text-sm leading-relaxed">Paste any text — lecture notes, textbook chapters, articles, or study guides.</p>
+          <div style="font-size:.65rem;font-weight:700;color:var(--primary);letter-spacing:.1em;margin-bottom:.5rem;">STEP 01</div>
+          <h3 style="font-weight:700;color:var(--text);font-size:1.125rem;margin:0 0 .5rem;">Paste Your Notes</h3>
+          <p style="color:var(--text-2);font-size:.875rem;line-height:1.6;margin:0;">Paste any text — lecture notes, textbook chapters, articles, or study guides.</p>
         </div>
-        <div class="bg-white rounded-2xl p-8 text-center shadow-sm border border-slate-100">
-          <div class="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-            <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#8B5CF6" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-            </svg>
+        <div class="sb-card" style="padding:2rem;text-align:center;">
+          <div style="width:56px;height:56px;background:#F3E8FF;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
+            <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#8B5CF6" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
           </div>
-          <div class="text-xs font-bold text-purple-400 tracking-widest mb-2">STEP 02</div>
-          <h3 class="font-bold text-slate-900 text-lg mb-2">AI Generates Cards</h3>
-          <p class="text-slate-500 text-sm leading-relaxed">Claude AI identifies key concepts and creates precise question-answer flashcards.</p>
+          <div style="font-size:.65rem;font-weight:700;color:#8B5CF6;letter-spacing:.1em;margin-bottom:.5rem;">STEP 02</div>
+          <h3 style="font-weight:700;color:var(--text);font-size:1.125rem;margin:0 0 .5rem;">AI Generates Content</h3>
+          <p style="color:var(--text-2);font-size:.875rem;line-height:1.6;margin:0;">Claude AI identifies key concepts and creates flashcards, quizzes, or structured summaries.</p>
         </div>
-        <div class="bg-white rounded-2xl p-8 text-center shadow-sm border border-slate-100">
-          <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-            <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#10B981" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
+        <div class="sb-card" style="padding:2rem;text-align:center;">
+          <div style="width:56px;height:56px;background:#D1FAE5;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
+            <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#10B981" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           </div>
-          <div class="text-xs font-bold text-emerald-400 tracking-widest mb-2">STEP 03</div>
-          <h3 class="font-bold text-slate-900 text-lg mb-2">Study &amp; Remember</h3>
-          <p class="text-slate-500 text-sm leading-relaxed">Spaced repetition shows you cards at exactly the right time to maximise retention.</p>
+          <div style="font-size:.65rem;font-weight:700;color:#10B981;letter-spacing:.1em;margin-bottom:.5rem;">STEP 03</div>
+          <h3 style="font-weight:700;color:var(--text);font-size:1.125rem;margin:0 0 .5rem;">Study &amp; Remember</h3>
+          <p style="color:var(--text-2);font-size:.875rem;line-height:1.6;margin:0;">Spaced repetition shows you cards at exactly the right time to maximise retention.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Features -->
-  <section class="py-20">
-    <div class="max-w-5xl mx-auto px-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-8 border border-indigo-100">
-          <div class="text-3xl mb-4">⚡</div>
-          <h3 class="font-bold text-slate-900 text-xl mb-2">Instant Generation</h3>
-          <p class="text-slate-600 leading-relaxed">Paste your notes and get a full set of flashcards in under 10 seconds. No manual work required.</p>
+  <section style="padding:5rem 1.5rem;">
+    <div style="max-width:1000px;margin:0 auto;">
+      <div style="text-align:center;margin-bottom:3rem;">
+        <h2 style="font-size:1.875rem;font-weight:800;color:var(--text);margin:0 0 .5rem;">Everything you need to study</h2>
+        <p style="color:var(--text-2);">Three study modes, one powerful platform.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem;">
+        <div class="sb-card" style="padding:1.75rem;">
+          <div style="font-size:2rem;margin-bottom:.875rem;">⚡</div>
+          <h3 style="font-weight:700;color:var(--text);font-size:1.125rem;margin:0 0 .5rem;">Flashcard Decks</h3>
+          <p style="color:var(--text-2);font-size:.875rem;line-height:1.6;margin:0;">AI-generated cards with difficulty levels. SM-2 spaced repetition to maximise retention.</p>
         </div>
-        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-3xl p-8 border border-emerald-100">
-          <div class="text-3xl mb-4">🧠</div>
-          <h3 class="font-bold text-slate-900 text-xl mb-2">SM-2 Spaced Repetition</h3>
-          <p class="text-slate-600 leading-relaxed">The same algorithm used by Anki. Cards you struggle with appear more often. Cards you know well appear less.</p>
+        <div class="sb-card" style="padding:1.75rem;">
+          <div style="font-size:2rem;margin-bottom:.875rem;">❓</div>
+          <h3 style="font-weight:700;color:var(--text);font-size:1.125rem;margin:0 0 .5rem;">Smart Quizzes</h3>
+          <p style="color:var(--text-2);font-size:.875rem;line-height:1.6;margin:0;">Multiple choice and open questions with explanations and model answers.</p>
         </div>
-        <div class="bg-gradient-to-br from-rose-50 to-orange-50 rounded-3xl p-8 border border-rose-100">
-          <div class="text-3xl mb-4">✏️</div>
-          <h3 class="font-bold text-slate-900 text-xl mb-2">Fully Editable</h3>
-          <p class="text-slate-600 leading-relaxed">Edit, delete, or add cards manually. You're always in control of your study material.</p>
+        <div class="sb-card" style="padding:1.75rem;">
+          <div style="font-size:2rem;margin-bottom:.875rem;">📝</div>
+          <h3 style="font-weight:700;color:var(--text);font-size:1.125rem;margin:0 0 .5rem;">Study Summaries</h3>
+          <p style="color:var(--text-2);font-size:.875rem;line-height:1.6;margin:0;">Structured markdown summaries with key concepts and printable layout.</p>
         </div>
-        <div class="bg-gradient-to-br from-sky-50 to-blue-50 rounded-3xl p-8 border border-sky-100">
-          <div class="text-3xl mb-4">📊</div>
-          <h3 class="font-bold text-slate-900 text-xl mb-2">Session Statistics</h3>
-          <p class="text-slate-600 leading-relaxed">See your progress after every session — again, hard, good, and easy ratings tracked automatically.</p>
+        <div class="sb-card" style="padding:1.75rem;">
+          <div style="font-size:2rem;margin-bottom:.875rem;">🌍</div>
+          <h3 style="font-weight:700;color:var(--text);font-size:1.125rem;margin:0 0 .5rem;">EN &amp; DE Support</h3>
+          <p style="color:var(--text-2);font-size:.875rem;line-height:1.6;margin:0;">Generate study materials in English or German with one click.</p>
+        </div>
+        <div class="sb-card" style="padding:1.75rem;">
+          <div style="font-size:2rem;margin-bottom:.875rem;">🌙</div>
+          <h3 style="font-weight:700;color:var(--text);font-size:1.125rem;margin:0 0 .5rem;">Dark Mode</h3>
+          <p style="color:var(--text-2);font-size:.875rem;line-height:1.6;margin:0;">Easy on the eyes. Toggle between light and dark themes at any time.</p>
+        </div>
+        <div class="sb-card" style="padding:1.75rem;">
+          <div style="font-size:2rem;margin-bottom:.875rem;">✏️</div>
+          <h3 style="font-weight:700;color:var(--text);font-size:1.125rem;margin:0 0 .5rem;">Fully Editable</h3>
+          <p style="color:var(--text-2);font-size:.875rem;line-height:1.6;margin:0;">Edit, delete, or add cards manually. You're always in control of your material.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- CTA -->
-  <section class="py-20 bg-indigo-600">
-    <div class="max-w-2xl mx-auto px-6 text-center">
-      <h2 class="text-4xl font-extrabold text-white mb-4">Start studying smarter today</h2>
-      <p class="text-indigo-200 text-lg mb-8">Free to use. No credit card needed.</p>
-      <a href="#" id="openSignup3" class="inline-block bg-white text-indigo-600 font-bold px-8 py-4 rounded-2xl text-base hover:bg-indigo-50 transition-colors shadow-lg">
+  <section style="padding:5rem 1.5rem;background:var(--primary);text-align:center;">
+    <div style="max-width:600px;margin:0 auto;">
+      <h2 style="font-size:2.25rem;font-weight:800;color:#fff;margin:0 0 .75rem;">Start studying smarter today</h2>
+      <p style="color:rgba(255,255,255,.8);font-size:1.125rem;margin:0 0 2rem;">Free to use. No credit card needed.</p>
+      <a href="#" id="openSignup3" style="display:inline-block;background:#fff;color:var(--primary);font-weight:700;padding:1rem 2rem;border-radius:var(--radius);font-size:1rem;text-decoration:none;">
         Create Free Account →
       </a>
     </div>
   </section>
 
   <!-- Footer -->
-  <footer class="py-8 border-t border-slate-100 text-center">
-    <p class="text-slate-400 text-sm">© 2025 StudyFlow AI. Built with Claude.</p>
+  <footer style="padding:2rem 1.5rem;border-top:1px solid var(--border);text-align:center;">
+    <p style="color:var(--text-3);font-size:.875rem;margin:0;">© 2025 StudyBuild. Built with Claude AI.</p>
   </footer>
 
   <!-- Auth Modal -->
   <div class="modal-backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-box">
-      <div class="flex items-center gap-2.5 mb-6">
-        <div class="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-          </svg>
-        </div>
-        <span class="font-bold text-slate-900">StudyFlow AI</span>
+      <div class="sb-logo" style="margin-bottom:1.5rem;">
+        <div class="sb-logo-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        StudyBuild
       </div>
 
-      <h2 class="text-2xl font-bold text-slate-900 mb-1" id="modalTitle">Create your account</h2>
-      <p class="text-slate-500 text-sm mb-6">Start studying smarter in seconds.</p>
+      <h2 style="font-size:1.5rem;font-weight:800;color:var(--text);margin:0 0 .25rem;" id="modalTitle">Create your account</h2>
+      <p style="color:var(--text-2);font-size:.875rem;margin:0 0 1.5rem;">Start studying smarter in seconds.</p>
 
       <form id="authForm" novalidate>
-        <div class="field-row mb-4">
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Your name</label>
-          <input id="fieldName" type="text" autocomplete="name" placeholder="Alex Smith"
-            class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-shadow">
+        <div class="field-row" style="margin-bottom:1rem;">
+          <label style="display:block;font-size:.875rem;font-weight:500;color:var(--text-2);margin-bottom:.375rem;">Your name</label>
+          <input id="fieldName" type="text" autocomplete="name" placeholder="Alex Smith" class="sb-input">
         </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
-          <input id="fieldEmail" type="email" autocomplete="email" placeholder="you@example.com"
-            class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-shadow">
+        <div style="margin-bottom:1rem;">
+          <label style="display:block;font-size:.875rem;font-weight:500;color:var(--text-2);margin-bottom:.375rem;">Email</label>
+          <input id="fieldEmail" type="email" autocomplete="email" placeholder="you@example.com" class="sb-input">
         </div>
-        <div class="mb-5">
-          <label class="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
-          <input id="fieldPassword" type="password" autocomplete="current-password" placeholder="Min. 6 characters"
-            class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-shadow">
+        <div style="margin-bottom:1.25rem;">
+          <label style="display:block;font-size:.875rem;font-weight:500;color:var(--text-2);margin-bottom:.375rem;">Password</label>
+          <input id="fieldPassword" type="password" autocomplete="current-password" placeholder="Min. 6 characters" class="sb-input">
         </div>
-        <p id="authError" class="text-red-500 text-sm mb-4 min-h-[20px]"></p>
-        <button id="authBtn" type="submit"
-          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm">
+        <p id="authError" style="color:#EF4444;font-size:.875rem;margin-bottom:1rem;min-height:20px;"></p>
+        <button id="authBtn" type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
           Get Started Free
         </button>
       </form>
 
-      <p class="text-center text-sm text-slate-500 mt-5" id="modalToggle">
-        Already have an account? <a href="#" id="switchMode" class="text-indigo-600 font-medium hover:underline">Sign in</a>
+      <p style="text-align:center;font-size:.875rem;color:var(--text-2);margin-top:1.25rem;" id="modalToggle">
+        Already have an account? <a href="#" id="switchMode" style="color:var(--primary);font-weight:600;">Sign in</a>
       </p>
     </div>
   </div>
@@ -183,10 +178,9 @@
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
   <script>
-    // Extra CTA buttons
     document.getElementById('openSignup2')?.addEventListener('click', e => { e.preventDefault(); openModal('signup'); });
     document.getElementById('openSignup3')?.addEventListener('click', e => { e.preventDefault(); openModal('signup'); });
-    document.getElementById('openLogin2')?.addEventListener('click', e => { e.preventDefault(); openModal('login'); });
+    document.getElementById('openLogin2')?.addEventListener('click',  e => { e.preventDefault(); openModal('login'); });
   </script>
 </body>
 </html>

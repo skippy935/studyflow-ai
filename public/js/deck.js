@@ -15,6 +15,9 @@ const studyBtn  = document.getElementById('studyBtn');
 const addCardBtn= document.getElementById('addCardBtn');
 const errorMsg  = document.getElementById('errorMsg');
 
+const DIFF_LABELS = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
+const DIFF_COLORS = { easy: '#10B981', medium: '#F59E0B', hard: '#EF4444' };
+
 let deck, cards;
 
 async function load() {
@@ -36,29 +39,33 @@ function render() {
   dueCount.textContent  = due;
   studyBtn.href = `/study.html?deckId=${deck.id}`;
 
-  // Update header color accent
   document.getElementById('deckColorDot').style.background = deck.color;
+  document.getElementById('deckColorDot').textContent = deck.name.charAt(0).toUpperCase();
 
   noCards.style.display = cards.length ? 'none' : '';
   cardsList.innerHTML   = cards.map(c => cardRowHtml(c)).join('');
   bindCardActions();
 }
 
+function diffBadge(diff) {
+  const label = DIFF_LABELS[diff] || diff || '';
+  const color = DIFF_COLORS[diff] || 'var(--text-3)';
+  if (!label) return '<span style="color:var(--text-3);font-size:.75rem;">—</span>';
+  return `<span style="display:inline-block;padding:.125rem .5rem;border-radius:100px;font-size:.65rem;font-weight:700;background:${color}22;color:${color};">${label}</span>`;
+}
+
 function cardRowHtml(c) {
   return `
-    <div class="card-row" data-id="${c.id}">
-      <div class="text-sm text-slate-700 leading-relaxed">${escHtml(c.front)}</div>
-      <div class="text-sm text-slate-500 leading-relaxed">${escHtml(c.back)}</div>
-      <div class="flex gap-1 shrink-0">
-        <button class="edit-card p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors" title="Edit">
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-          </svg>
+    <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px;gap:1rem;padding:.875rem 1.5rem;border-bottom:1px solid var(--border);align-items:center;" data-id="${c.id}">
+      <div style="font-size:.875rem;color:var(--text);line-height:1.5;">${escHtml(c.front)}</div>
+      <div style="font-size:.875rem;color:var(--text-2);line-height:1.5;">${escHtml(c.back)}</div>
+      <div>${diffBadge(c.difficulty)}</div>
+      <div style="display:flex;gap:.25rem;justify-content:flex-end;">
+        <button class="edit-card" style="padding:.375rem;color:var(--text-3);border-radius:8px;background:none;border:none;cursor:pointer;" title="Edit">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
         </button>
-        <button class="delete-card p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors" title="Delete">
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-          </svg>
+        <button class="delete-card" style="padding:.375rem;color:var(--text-3);border-radius:8px;background:none;border:none;cursor:pointer;" title="Delete">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         </button>
       </div>
     </div>
@@ -67,12 +74,13 @@ function cardRowHtml(c) {
 
 function editRowHtml(c) {
   return `
-    <div class="card-row bg-indigo-50/60" data-id="${c.id}">
-      <textarea class="edit-front w-full text-sm border border-indigo-200 rounded-lg p-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400" rows="2">${escHtml(c.front)}</textarea>
-      <textarea class="edit-back w-full text-sm border border-indigo-200 rounded-lg p-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400" rows="2">${escHtml(c.back)}</textarea>
-      <div class="flex gap-1 shrink-0">
-        <button class="save-card px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Save</button>
-        <button class="cancel-edit px-3 py-1.5 text-xs font-medium text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">Cancel</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px;gap:1rem;padding:.875rem 1.5rem;border-bottom:1px solid var(--border);align-items:start;background:var(--primary-dim);" data-id="${c.id}">
+      <textarea class="edit-front sb-textarea" rows="2" style="min-height:unset;">${escHtml(c.front)}</textarea>
+      <textarea class="edit-back sb-textarea" rows="2" style="min-height:unset;">${escHtml(c.back)}</textarea>
+      <div>${diffBadge(c.difficulty)}</div>
+      <div style="display:flex;gap:.375rem;flex-direction:column;">
+        <button class="save-card btn btn-primary btn-sm" style="justify-content:center;padding:.25rem .625rem;font-size:.75rem;">Save</button>
+        <button class="cancel-edit btn btn-ghost btn-sm" style="justify-content:center;padding:.25rem .625rem;font-size:.75rem;">Cancel</button>
       </div>
     </div>
   `;
@@ -124,15 +132,15 @@ function bindSaveCancel(card) {
 }
 
 addCardBtn.addEventListener('click', () => {
-  // Append a blank add-row
   const temp = document.createElement('div');
-  temp.className = 'card-row bg-emerald-50/60';
+  temp.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 80px 80px;gap:1rem;padding:.875rem 1.5rem;border-bottom:1px solid var(--border);align-items:start;background:var(--surface2);';
   temp.innerHTML = `
-    <textarea class="new-front w-full text-sm border border-emerald-200 rounded-lg p-2 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400" rows="2" placeholder="Question or term…"></textarea>
-    <textarea class="new-back w-full text-sm border border-emerald-200 rounded-lg p-2 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400" rows="2" placeholder="Answer or definition…"></textarea>
-    <div class="flex gap-1 shrink-0">
-      <button class="save-new px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">Add</button>
-      <button class="cancel-new px-3 py-1.5 text-xs font-medium text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">Cancel</button>
+    <textarea class="new-front sb-textarea" rows="2" style="min-height:unset;" placeholder="Question or term…"></textarea>
+    <textarea class="new-back sb-textarea" rows="2" style="min-height:unset;" placeholder="Answer or definition…"></textarea>
+    <div></div>
+    <div style="display:flex;gap:.375rem;flex-direction:column;">
+      <button class="save-new btn btn-primary btn-sm" style="justify-content:center;padding:.25rem .625rem;font-size:.75rem;">Add</button>
+      <button class="cancel-new btn btn-ghost btn-sm" style="justify-content:center;padding:.25rem .625rem;font-size:.75rem;">Cancel</button>
     </div>
   `;
   cardsList.appendChild(temp);
@@ -155,9 +163,5 @@ addCardBtn.addEventListener('click', () => {
     } catch (err) { showToast(err.message, 'error'); }
   });
 });
-
-function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
 
 load();

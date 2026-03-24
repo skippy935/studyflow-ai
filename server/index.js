@@ -9,18 +9,18 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
-// API routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/decks', require('./routes/deckRoutes'));
-app.use('/api', require('./routes/cardRoutes'));
-app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/auth',      require('./routes/authRoutes'));
+app.use('/api/decks',     require('./routes/deckRoutes'));
+app.use('/api',           require('./routes/cardRoutes'));
+app.use('/api/ai',        require('./routes/aiRoutes'));
+app.use('/api/quizzes',   require('./routes/quizRoutes'));
+app.use('/api/summaries', require('./routes/summaryRoutes'));
 
-// Fallback: serve index.html for any unmatched route
-app.get('*', (req, res) => {
+app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`\n🚀 StudyFlow AI running at http://localhost:${PORT}\n`);
+  console.log(`\n🚀 StudyBuild running at http://localhost:${PORT}\n`);
 });

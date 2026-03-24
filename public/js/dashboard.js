@@ -1,88 +1,135 @@
 requireAuth();
-
-const user = getUser();
-document.getElementById('userName').textContent = user?.name || user?.email || 'there';
+document.getElementById('userName').textContent = getUser()?.name || 'there';
 document.getElementById('logoutBtn').addEventListener('click', logout);
 
-const grid    = document.getElementById('deckGrid');
-const empty   = document.getElementById('emptyState');
-const loading = document.getElementById('loadingState');
+// ── Tabs ──────────────────────────────────────────────────
+const tabs = document.querySelectorAll('.sb-tab');
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    ['decks','quizzes','summaries'].forEach(t => {
+      document.getElementById(`tab-${t}`).style.display = tab.dataset.tab === t ? '' : 'none';
+    });
+  });
+});
 
+// ── Load all ──────────────────────────────────────────────
+loadDecks();
+loadQuizzes();
+loadSummaries();
+
+// ── Decks ─────────────────────────────────────────────────
 async function loadDecks() {
-  loading.style.display = '';
-  grid.style.display = 'none';
-
   try {
     const { decks } = await apiFetch('/api/decks');
-    loading.style.display = 'none';
-
-    if (!decks.length) {
-      empty.style.display = '';
-      return;
-    }
-
-    empty.style.display = 'none';
-    grid.style.display = '';
-    grid.innerHTML = decks.map(deck => `
-      <div class="deck-card bg-white rounded-2xl p-6 shadow-sm border border-slate-100 cursor-pointer fade-in" data-id="${deck.id}">
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg"
-               style="background:${deck.color}">
-            ${deck.name.charAt(0).toUpperCase()}
+    document.getElementById('decksLoading').style.display = 'none';
+    if (!decks.length) { document.getElementById('decksEmpty').style.display = ''; return; }
+    const grid = document.getElementById('decksGrid');
+    grid.style.display = 'grid';
+    grid.innerHTML = decks.map(d => `
+      <div class="sb-card fade-in" style="padding:1.25rem;cursor:pointer;" data-id="${d.id}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.875rem;">
+          <div style="width:38px;height:38px;border-radius:10px;background:${d.color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1rem;">
+            ${escHtml(d.name.charAt(0).toUpperCase())}
           </div>
-          <div class="flex items-center gap-2">
-            ${deck.due_count > 0
-              ? `<span class="text-xs font-semibold px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full">${deck.due_count} due</span>`
-              : ''}
-            <button class="text-slate-300 hover:text-red-400 transition-colors p-1 delete-deck" data-id="${deck.id}" title="Delete deck">
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-              </svg>
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            ${d.due_count > 0 ? `<span style="font-size:.7rem;font-weight:700;padding:2px 8px;background:var(--primary-dim);color:var(--primary);border-radius:999px;">${d.due_count} due</span>` : ''}
+            <button class="btn btn-ghost btn-sm del-deck" data-id="${d.id}" style="padding:4px;color:var(--text-3);" title="Delete">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </button>
           </div>
         </div>
-        <h3 class="font-semibold text-slate-900 text-lg leading-tight mb-1">${escHtml(deck.name)}</h3>
-        <p class="text-slate-500 text-sm mb-4 line-clamp-2">${escHtml(deck.description || 'No description')}</p>
-        <div class="flex items-center justify-between">
-          <span class="text-xs text-slate-400">${deck.card_count} card${deck.card_count !== 1 ? 's' : ''}</span>
-          <div class="flex gap-2">
-            <a href="/deck.html?id=${deck.id}"
-               class="text-xs font-medium text-slate-600 hover:text-indigo-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-50">
-              View
-            </a>
-            <a href="/study.html?deckId=${deck.id}"
-               class="text-xs font-semibold text-white px-3 py-1.5 rounded-lg transition-colors"
-               style="background:${deck.color}">
-              Study
-            </a>
+        <div style="font-weight:700;color:var(--text);margin-bottom:.25rem;">${escHtml(d.name)}</div>
+        <div style="font-size:.8rem;color:var(--text-2);margin-bottom:.875rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escHtml(d.description || 'No description')}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:.75rem;color:var(--text-3);">${d.card_count} card${d.card_count !== 1 ? 's' : ''}</span>
+          <div style="display:flex;gap:.375rem;">
+            <a href="/deck.html?id=${d.id}" class="btn btn-ghost btn-sm" style="padding:.375rem .75rem;">View</a>
+            <a href="/study.html?deckId=${d.id}" class="btn btn-primary btn-sm" style="background:${d.color};padding:.375rem .75rem;">Study</a>
           </div>
         </div>
       </div>
     `).join('');
-
-    // Delete buttons
-    grid.querySelectorAll('.delete-deck').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
+    grid.querySelectorAll('.del-deck').forEach(btn => {
+      btn.addEventListener('click', async e => {
         e.stopPropagation();
         if (!confirm('Delete this deck and all its cards?')) return;
-        try {
-          await apiFetch(`/api/decks/${btn.dataset.id}`, { method: 'DELETE' });
-          showToast('Deck deleted', 'success');
-          loadDecks();
-        } catch (err) {
-          showToast(err.message, 'error');
-        }
+        await apiFetch(`/api/decks/${btn.dataset.id}`, { method: 'DELETE' });
+        showToast('Deck deleted', 'success');
+        loadDecks();
       });
     });
-
-  } catch (err) {
-    loading.style.display = 'none';
-    showToast('Failed to load decks', 'error');
-  }
+  } catch { document.getElementById('decksLoading').style.display = 'none'; }
 }
 
-function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// ── Quizzes ───────────────────────────────────────────────
+async function loadQuizzes() {
+  try {
+    const { quizzes } = await apiFetch('/api/quizzes');
+    document.getElementById('quizzesLoading').style.display = 'none';
+    if (!quizzes.length) { document.getElementById('quizzesEmpty').style.display = ''; return; }
+    const grid = document.getElementById('quizzesGrid');
+    grid.style.display = 'grid';
+    grid.innerHTML = quizzes.map(q => `
+      <div class="sb-card fade-in" style="padding:1.25rem;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.875rem;">
+          <div style="width:38px;height:38px;border-radius:10px;background:#7C3AED;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">❓</div>
+          <button class="btn btn-ghost btn-sm del-quiz" data-id="${q.id}" style="padding:4px;color:var(--text-3);">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
+        <div style="font-weight:700;color:var(--text);margin-bottom:.25rem;">${escHtml(q.title)}</div>
+        <div style="font-size:.8rem;color:var(--text-2);margin-bottom:.875rem;">${q.topic ? escHtml(q.topic) : 'No topic'}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:.75rem;color:var(--text-3);">${q.question_count} question${q.question_count !== 1 ? 's' : ''}</span>
+          <a href="/quiz-take.html?id=${q.id}" class="btn btn-primary btn-sm" style="background:#7C3AED;">Take Quiz</a>
+        </div>
+      </div>
+    `).join('');
+    grid.querySelectorAll('.del-quiz').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        if (!confirm('Delete this quiz?')) return;
+        await apiFetch(`/api/quizzes/${btn.dataset.id}`, { method: 'DELETE' });
+        showToast('Quiz deleted', 'success');
+        loadQuizzes();
+      });
+    });
+  } catch { document.getElementById('quizzesLoading').style.display = 'none'; }
 }
 
-loadDecks();
+// ── Summaries ─────────────────────────────────────────────
+async function loadSummaries() {
+  try {
+    const { summaries } = await apiFetch('/api/summaries');
+    document.getElementById('summariesLoading').style.display = 'none';
+    if (!summaries.length) { document.getElementById('summariesEmpty').style.display = ''; return; }
+    const grid = document.getElementById('summariesGrid');
+    grid.style.display = 'grid';
+    grid.innerHTML = summaries.map(s => `
+      <div class="sb-card fade-in" style="padding:1.25rem;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.875rem;">
+          <div style="width:38px;height:38px;border-radius:10px;background:#0EA5E9;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📝</div>
+          <button class="btn btn-ghost btn-sm del-summary" data-id="${s.id}" style="padding:4px;color:var(--text-3);">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
+        <div style="font-weight:700;color:var(--text);margin-bottom:.25rem;">${escHtml(s.title)}</div>
+        <div style="font-size:.8rem;color:var(--text-2);margin-bottom:.875rem;">${s.topic ? escHtml(s.topic) : ''}</div>
+        <div style="display:flex;justify-content:flex-end;">
+          <a href="/summary-view.html?id=${s.id}" class="btn btn-primary btn-sm" style="background:#0EA5E9;">Read</a>
+        </div>
+      </div>
+    `).join('');
+    grid.querySelectorAll('.del-summary').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        if (!confirm('Delete this summary?')) return;
+        await apiFetch(`/api/summaries/${btn.dataset.id}`, { method: 'DELETE' });
+        showToast('Summary deleted', 'success');
+        loadSummaries();
+      });
+    });
+  } catch { document.getElementById('summariesLoading').style.display = 'none'; }
+}
