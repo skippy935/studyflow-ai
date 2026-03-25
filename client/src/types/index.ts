@@ -12,8 +12,18 @@ export interface Deck {
   description: string;
   color: string;
   isFavorite: boolean;
+  examDate?: string | null;
   createdAt: string;
   _count?: { cards: number };
+}
+
+export interface Stats {
+  streak: number;
+  lastStudyDate: string | null;
+  totalCardsLearned: number;
+  weakCards: number;
+  dueToday: number;
+  recentSessions: { id: number; cardsStudied: number; studiedAt: string; deck: { name: string; color: string } }[];
 }
 
 export interface Card {

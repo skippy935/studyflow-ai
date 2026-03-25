@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Layers, HelpCircle, FileText, Upload, Zap } from 'lucide-react';
+import { Layers, HelpCircle, FileText, Upload, Zap, Link } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
@@ -23,6 +23,9 @@ export default function CreatePage() {
   const [color, setColor]       = useState(COLORS[0]);
   const [loading, setLoading]   = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [ytUrl, setYtUrl]       = useState('');
+  const [ytLoading, setYtLoading] = useState(false);
+  const [examDate, setExamDate] = useState('');
   const [error, setError]       = useState('');
   const [preview, setPreview]   = useState<{ label: string; id: number; type: Mode } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -32,6 +35,23 @@ export default function CreatePage() {
     { key: 'quiz',       icon: HelpCircle, label: t.create.mode.quiz       },
     { key: 'summary',    icon: FileText,   label: t.create.mode.summary    },
   ];
+
+  async function handleYouTube() {
+    if (!ytUrl.trim()) return;
+    setYtLoading(true);
+    try {
+      const result = await apiFetch<{ text: string }>('/upload/youtube', {
+        method: 'POST', body: JSON.stringify({ url: ytUrl })
+      });
+      if (result.text) setNotes(prev => prev ? `${prev}\n\n${result.text}` : result.text);
+      toast.success('YouTube transcript imported!');
+      setYtUrl('');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to fetch transcript');
+    } finally {
+      setYtLoading(false);
+    }
+  }
 
   async function handleFileUpload(file: File) {
     setUploading(true);
@@ -55,7 +75,7 @@ export default function CreatePage() {
     try {
       if (mode === 'flashcards') {
         const { deck, cards } = await apiFetch<{ deck: Deck; cards: Card[] }>('/ai/generate', {
-          method: 'POST', body: JSON.stringify({ name: title, description: desc, color, notes, language: lang })
+          method: 'POST', body: JSON.stringify({ name: title, description: desc, color, notes, language: lang, examDate: examDate || null })
         });
         toast.success(`${cards.length} flashcards generated!`);
         setPreview({ label: `${cards.length} flashcards created`, id: deck.id, type: 'flashcards' });
@@ -155,6 +175,28 @@ export default function CreatePage() {
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }} />
             </div>
           </div>
+
+          {/* YouTube URL */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t.create.youtube}</label>
+            <div className="flex gap-2">
+              <input
+                value={ytUrl} onChange={e => setYtUrl(e.target.value)}
+                placeholder={t.create.youtubePlaceholder}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+              <button onClick={handleYouTube} disabled={ytLoading || !ytUrl.trim()}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold disabled:opacity-50 transition-colors">
+                <Link className="w-4 h-4" />
+                {ytLoading ? t.create.youtubeFetching : t.create.youtubeFetch}
+              </button>
+            </div>
+          </div>
+
+          {/* Exam date (flashcards only) */}
+          {mode === 'flashcards' && (
+            <Input label={t.create.examDate} type="date" value={examDate} onChange={e => setExamDate(e.target.value)} />
+          )}
 
           {/* Notes textarea */}
           <div>

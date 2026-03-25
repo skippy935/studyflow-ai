@@ -7,11 +7,11 @@ const router = Router();
 router.use(auth);
 
 router.post('/generate', async (req: AuthRequest, res) => {
-  const { name, description = '', color = '#4F46E5', notes, language = 'en' } = req.body || {};
+  const { name, description = '', color = '#4F46E5', notes, language = 'en', examDate } = req.body || {};
   if (!name) { res.status(400).json({ error: 'Deck name is required' }); return; }
   if (!notes || notes.trim().length < 20) { res.status(400).json({ error: 'Please provide at least 20 characters of notes' }); return; }
 
-  const deck = await prisma.deck.create({ data: { userId: req.userId!, name: name.trim(), description: description.trim(), color } });
+  const deck = await prisma.deck.create({ data: { userId: req.userId!, name: name.trim(), description: description.trim(), color, examDate: examDate ? new Date(examDate) : null } });
 
   try {
     const generated = await generateFlashcards(notes.trim(), language);
@@ -35,7 +35,7 @@ router.post('/quiz-create', async (req: AuthRequest, res) => {
   try {
     const generated = await generateQuiz(notes.trim(), topic || title, language);
     await prisma.quizQuestion.createMany({
-      data: generated.questions.map(q => ({
+      data: generated.questions.map((q: { type: string; question: string; options?: string[]; correct?: string; explanation?: string; sample_answer?: string; keywords?: string[] }) => ({
         quizId: quiz.id, type: q.type, question: q.question,
         options: q.options ? JSON.stringify(q.options) : null,
         correct: q.correct || null, explanation: q.explanation || '',
@@ -44,7 +44,7 @@ router.post('/quiz-create', async (req: AuthRequest, res) => {
       }))
     });
     const questions = await prisma.quizQuestion.findMany({ where: { quizId: quiz.id }, orderBy: { id: 'asc' } });
-    res.status(201).json({ quiz, questions: questions.map(q => ({ ...q, options: q.options ? JSON.parse(q.options) : null, keywords: q.keywords ? JSON.parse(q.keywords) : null })) });
+    res.status(201).json({ quiz, questions: questions.map((q: { options: string | null; keywords: string | null; [key: string]: unknown }) => ({ ...q, options: q.options ? JSON.parse(q.options) : null, keywords: q.keywords ? JSON.parse(q.keywords) : null })) });
   } catch (err) {
     await prisma.quiz.delete({ where: { id: quiz.id } });
     console.error('Quiz generation error:', err);
@@ -70,8 +70,31 @@ router.post('/summary-create', async (req: AuthRequest, res) => {
 router.post('/study-sessions', async (req: AuthRequest, res) => {
   const { deck_id, cards_studied, again_count, hard_count, good_count, easy_count } = req.body || {};
   if (!deck_id) { res.status(400).json({ error: 'deck_id required' }); return; }
-  await prisma.studySession.create({ data: { userId: req.userId!, deckId: Number(deck_id), cardsStudied: cards_studied || 0, againCount: again_count || 0, hardCount: hard_count || 0, goodCount: good_count || 0, easyCount: easy_count || 0 } });
-  res.status(201).json({ success: true });
+
+  const userId = req.userId!;
+  const studied = cards_studied || 0;
+
+  await prisma.studySession.create({
+    data: { userId, deckId: Number(deck_id), cardsStudied: studied, againCount: again_count || 0, hardCount: hard_count || 0, goodCount: good_count || 0, easyCount: easy_count || 0 }
+  });
+
+  // Update streak + total cards learned
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { streak: true, lastStudyDate: true } });
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const last = user?.lastStudyDate ? new Date(user.lastStudyDate) : null;
+  if (last) last.setHours(0, 0, 0, 0);
+
+  let newStreak = 1;
+  if (last && last.getTime() === today.getTime()) newStreak = user?.streak ?? 1;
+  else if (last && last.getTime() === yesterday.getTime()) newStreak = (user?.streak ?? 0) + 1;
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { streak: newStreak, lastStudyDate: new Date(), totalCardsLearned: { increment: studied } }
+  });
+
+  res.status(201).json({ success: true, streak: newStreak });
 });
 
 export default router;

@@ -12,6 +12,7 @@ import quizRoutes     from './routes/quizzes';
 import summaryRoutes  from './routes/summaries';
 import aiRoutes       from './routes/ai';
 import uploadRoutes   from './routes/upload';
+import statsRoutes    from './routes/stats';
 
 const app  = express();
 const PORT = process.env.PORT || 8080;
@@ -26,6 +27,7 @@ app.use('/api/quizzes',   quizRoutes);
 app.use('/api/summaries', summaryRoutes);
 app.use('/api/ai',        aiRoutes);
 app.use('/api/upload',    uploadRoutes);
+app.use('/api/stats',     statsRoutes);
 
 // Serve built React app
 const clientDist = path.join(__dirname, '../client/dist');

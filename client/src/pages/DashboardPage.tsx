@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Layers, HelpCircle, FileText, Trash2, BookOpen, Play } from 'lucide-react';
+import { Plus, Layers, HelpCircle, FileText, Trash2, BookOpen, Play, Flame, Brain, AlertTriangle, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
@@ -9,11 +9,9 @@ import Spinner   from '../components/ui/Spinner';
 import { apiFetch } from '../lib/api';
 import { getUser }  from '../lib/auth';
 import { useTranslation } from '../i18n';
-import type { Deck, Quiz, Summary } from '../types';
+import type { Deck, Quiz, Summary, Stats } from '../types';
 
 type Tab = 'decks' | 'quizzes' | 'summaries';
-
-const DIFF_COLOR = { easy: 'bg-emerald-100 text-emerald-700', medium: 'bg-amber-100 text-amber-700', hard: 'bg-red-100 text-red-700' };
 
 export default function DashboardPage() {
   const { t }    = useTranslation();
@@ -23,6 +21,7 @@ export default function DashboardPage() {
   const [decks,     setDecks]     = useState<Deck[]>([]);
   const [quizzes,   setQuizzes]   = useState<Quiz[]>([]);
   const [summaries, setSummaries] = useState<Summary[]>([]);
+  const [stats,     setStats]     = useState<Stats | null>(null);
   const [loading, setLoading]     = useState(true);
 
   useEffect(() => {
@@ -30,6 +29,7 @@ export default function DashboardPage() {
       apiFetch<{ decks: Deck[] }>('/decks').then(d => setDecks(d.decks)),
       apiFetch<{ quizzes: Quiz[] }>('/quizzes').then(d => setQuizzes(d.quizzes)),
       apiFetch<{ summaries: Summary[] }>('/summaries').then(d => setSummaries(d.summaries)),
+      apiFetch<Stats>('/stats').then(s => setStats(s)),
     ]).finally(() => setLoading(false));
   }, []);
 
@@ -54,6 +54,17 @@ export default function DashboardPage() {
     toast.success('Summary deleted');
   }
 
+  function formatSessionDate(dateStr: string) {
+    const d = new Date(dateStr);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate()-1);
+    const day = new Date(d); day.setHours(0,0,0,0);
+    if (day.getTime() === today.getTime()) return t.stats.today;
+    if (day.getTime() === yesterday.getTime()) return t.stats.yesterday;
+    const diff = Math.floor((today.getTime() - day.getTime()) / 86400000);
+    return `${diff} ${t.stats.daysAgo}`;
+  }
+
   const tabs: { key: Tab; label: string; icon: typeof Layers }[] = [
     { key: 'decks',     label: t.dashboard.decks,     icon: Layers },
     { key: 'quizzes',   label: t.dashboard.quizzes,   icon: HelpCircle },
@@ -62,7 +73,7 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{t.dashboard.welcome}, {user?.displayName?.split(' ')[0]}! 👋</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
@@ -71,6 +82,34 @@ export default function DashboardPage() {
           <Plus className="w-4 h-4" /> {t.dashboard.create}
         </Button>
       </div>
+
+      {/* Stats bar */}
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <StatCard icon={<Flame className="w-5 h-5 text-orange-500" />} value={stats.streak} label={t.stats.streak} bg="bg-orange-50 dark:bg-orange-950" />
+          <StatCard icon={<Brain className="w-5 h-5 text-indigo-500" />} value={stats.totalCardsLearned} label={t.stats.cards} bg="bg-indigo-50 dark:bg-indigo-950" />
+          <StatCard icon={<AlertTriangle className="w-5 h-5 text-red-500" />} value={stats.weakCards} label={t.stats.weak} bg="bg-red-50 dark:bg-red-950" />
+          <StatCard icon={<Calendar className="w-5 h-5 text-emerald-500" />} value={stats.dueToday} label={t.stats.due} bg="bg-emerald-50 dark:bg-emerald-950" />
+        </div>
+      )}
+
+      {/* Recent activity */}
+      {stats && stats.recentSessions.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 mb-6">
+          <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">{t.stats.recentActivity}</h2>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {stats.recentSessions.map(s => (
+              <div key={s.id} className="flex-shrink-0 flex items-center gap-2.5 px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: s.deck.color }} />
+                <div>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{s.deck.name}</p>
+                  <p className="text-xs text-slate-400">{s.cardsStudied} cards · {formatSessionDate(s.studiedAt)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl mb-6 w-fit">
@@ -103,7 +142,13 @@ export default function DashboardPage() {
                     </button>
                   </div>
                   <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-0.5 truncate">{deck.name}</h3>
-                  <p className="text-xs text-slate-400 mb-4">{deck._count?.cards ?? 0} {t.dashboard.cards}</p>
+                  <p className="text-xs text-slate-400 mb-1">{deck._count?.cards ?? 0} {t.dashboard.cards}</p>
+                  {deck.examDate && (
+                    <p className="text-xs text-indigo-500 mb-3 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" /> {new Date(deck.examDate).toLocaleDateString()}
+                    </p>
+                  )}
+                  {!deck.examDate && <div className="mb-3" />}
                   <div className="flex gap-2">
                     <Button size="sm" variant="ghost" className="flex-1 justify-center" onClick={() => navigate(`/deck/${deck.id}`)}>
                       <BookOpen className="w-3.5 h-3.5" />
@@ -169,6 +214,18 @@ export default function DashboardPage() {
         </>
       )}
     </AppLayout>
+  );
+}
+
+function StatCard({ icon, value, label, bg }: { icon: ReactNode; value: number; label: string; bg: string }) {
+  return (
+    <div className={`${bg} rounded-2xl p-4 flex items-center gap-3`}>
+      {icon}
+      <div>
+        <div className="text-xl font-black text-slate-900 dark:text-slate-100">{value}</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
+      </div>
+    </div>
   );
 }
 
