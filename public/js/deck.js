@@ -165,3 +165,101 @@ addCardBtn.addEventListener('click', () => {
 });
 
 load();
+
+// ── Cross-Subject Connections ──────────────────────────────
+const generateConnectionsBtn = document.getElementById('generateConnectionsBtn');
+const connectionsLoading     = document.getElementById('connectionsLoading');
+const connectionsContent     = document.getElementById('connectionsContent');
+
+// Load cached connections on page load
+const cachedConnections = localStorage.getItem(`sb_connections_${deckId}`);
+if (cachedConnections) {
+  try { renderConnections(JSON.parse(cachedConnections)); } catch { /* ignore bad cache */ }
+}
+
+generateConnectionsBtn.addEventListener('click', async () => {
+  if (!cards || !cards.length) { showToast('No cards to analyse yet', 'error'); return; }
+
+  generateConnectionsBtn.disabled = true;
+  generateConnectionsBtn.textContent = '…';
+  connectionsContent.style.display = 'none';
+  connectionsLoading.style.display = '';
+
+  const notes    = cards.map(c => `Q: ${c.front}\nA: ${c.back}`).join('\n\n');
+  const language = getLang();
+
+  try {
+    const { connections } = await apiFetch('/api/ai/connections', {
+      method: 'POST',
+      body: JSON.stringify({ notes, topic: deck.name, language })
+    });
+    localStorage.setItem(`sb_connections_${deckId}`, JSON.stringify(connections));
+    renderConnections(connections);
+    showToast('Connections generated', 'success');
+  } catch (err) {
+    showToast(err.message || 'Failed to generate connections', 'error');
+  } finally {
+    connectionsLoading.style.display = 'none';
+    generateConnectionsBtn.disabled  = false;
+    generateConnectionsBtn.textContent = 'Regenerate';
+  }
+});
+
+function renderConnections(c) {
+  const strengthColor = { high: '#10B981', medium: '#F59E0B', low: '#94A3B8' };
+  const strengthLabel = { high: 'Strong', medium: 'Medium', low: 'Weak' };
+
+  connectionsContent.innerHTML = `
+    ${c.interestingFact ? `
+    <div style="background:var(--primary-dim);border-radius:var(--radius);padding:.875rem 1rem;margin-bottom:1.5rem;display:flex;gap:.75rem;align-items:flex-start;">
+      <span style="font-size:1.25rem;line-height:1.2;">💡</span>
+      <p style="font-size:.875rem;color:var(--text);margin:0;font-style:italic;">"${escHtml(c.interestingFact)}"</p>
+    </div>` : ''}
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem;">
+
+      ${c.relatedSubjects?.length ? `
+      <div>
+        <div style="font-size:.7rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.75rem;">Related Subjects</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;">
+          ${c.relatedSubjects.map(s => `
+          <div style="display:flex;align-items:flex-start;gap:.625rem;padding:.625rem .75rem;background:var(--surface2);border-radius:10px;">
+            <span style="width:6px;height:6px;border-radius:50%;background:${strengthColor[s.strength] || '#94A3B8'};flex-shrink:0;margin-top:.375rem;"></span>
+            <div>
+              <div style="font-size:.825rem;font-weight:700;color:var(--text);">${escHtml(s.subject)}</div>
+              <div style="font-size:.775rem;color:var(--text-2);margin-top:.125rem;">${escHtml(s.connection)}</div>
+            </div>
+            <span style="font-size:.65rem;font-weight:700;color:${strengthColor[s.strength] || '#94A3B8'};margin-left:auto;flex-shrink:0;">${strengthLabel[s.strength] || ''}</span>
+          </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      ${c.realWorldApplications?.length ? `
+      <div>
+        <div style="font-size:.7rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.75rem;">Real-World Uses</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;">
+          ${c.realWorldApplications.map(a => `
+          <div style="padding:.625rem .75rem;background:var(--surface2);border-radius:10px;">
+            <div style="font-size:.825rem;font-weight:700;color:var(--text);">🌍 ${escHtml(a.field)}</div>
+            <div style="font-size:.775rem;color:var(--text-2);margin-top:.125rem;">${escHtml(a.example)}</div>
+          </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      ${c.careerRelevance?.length ? `
+      <div>
+        <div style="font-size:.7rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.75rem;">Career Relevance</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;">
+          ${c.careerRelevance.map(r => `
+          <div style="padding:.625rem .75rem;background:var(--surface2);border-radius:10px;">
+            <div style="font-size:.825rem;font-weight:700;color:var(--text);">🎯 ${escHtml(r.career)}</div>
+            <div style="font-size:.775rem;color:var(--text-2);margin-top:.125rem;">${escHtml(r.why)}</div>
+          </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+    </div>
+  `;
+  connectionsContent.style.display = '';
+  generateConnectionsBtn.textContent = 'Regenerate';
+}

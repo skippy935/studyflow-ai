@@ -83,11 +83,48 @@ db.exec(`
     studied_at    TEXT    NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS exam_dates (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    deck_id    INTEGER NOT NULL REFERENCES decks(id) ON DELETE CASCADE,
+    exam_date  TEXT    NOT NULL,
+    created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(user_id, deck_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS examiner_sessions (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    material_name   TEXT    NOT NULL,
+    material_type   TEXT    NOT NULL DEFAULT 'paste',
+    word_count      INTEGER NOT NULL DEFAULT 0,
+    difficulty      TEXT    NOT NULL DEFAULT 'standard',
+    question_count  INTEGER NOT NULL DEFAULT 10,
+    focus_area      TEXT    DEFAULT NULL,
+    messages        TEXT    NOT NULL DEFAULT '[]',
+    stats           TEXT    NOT NULL DEFAULT '{}',
+    gap_analysis    TEXT    DEFAULT NULL,
+    exchange_count  INTEGER NOT NULL DEFAULT 0,
+    completed       INTEGER NOT NULL DEFAULT 0,
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+    completed_at    TEXT    DEFAULT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS examiner_materials (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id   INTEGER NOT NULL REFERENCES examiner_sessions(id) ON DELETE CASCADE,
+    extracted_text TEXT  NOT NULL,
+    created_at   TEXT   NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_examiner_sessions_user ON examiner_sessions(user_id, created_at);
+
   CREATE INDEX IF NOT EXISTS idx_cards_deck_id     ON cards(deck_id);
   CREATE INDEX IF NOT EXISTS idx_cards_next_review ON cards(next_review);
   CREATE INDEX IF NOT EXISTS idx_decks_user_id     ON decks(user_id);
   CREATE INDEX IF NOT EXISTS idx_quizzes_user_id   ON quizzes(user_id);
   CREATE INDEX IF NOT EXISTS idx_summaries_user_id ON summaries(user_id);
+  CREATE INDEX IF NOT EXISTS idx_exam_dates_user   ON exam_dates(user_id);
 `);
 
 module.exports = db;

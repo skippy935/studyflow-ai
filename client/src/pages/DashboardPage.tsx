@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Layers, HelpCircle, FileText, Trash2, BookOpen, Play, Flame, Brain, AlertTriangle, Calendar } from 'lucide-react';
+import { Plus, Layers, HelpCircle, FileText, Trash2, BookOpen, Play, Flame, Brain, AlertTriangle, Calendar, GraduationCap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
@@ -11,7 +11,17 @@ import { getUser }  from '../lib/auth';
 import { useTranslation } from '../i18n';
 import type { Deck, Quiz, Summary, Stats } from '../types';
 
-type Tab = 'decks' | 'quizzes' | 'summaries';
+type Tab = 'decks' | 'quizzes' | 'summaries' | 'examiner';
+
+interface ExaminerSession {
+  id: number;
+  material_name: string;
+  difficulty: 'standard' | 'hard' | 'brutal';
+  question_count: number;
+  exchange_count: number;
+  completed: number;
+  created_at: string;
+}
 
 export default function DashboardPage() {
   const { t }    = useTranslation();
@@ -21,6 +31,7 @@ export default function DashboardPage() {
   const [decks,     setDecks]     = useState<Deck[]>([]);
   const [quizzes,   setQuizzes]   = useState<Quiz[]>([]);
   const [summaries, setSummaries] = useState<Summary[]>([]);
+  const [examinerSessions, setExaminerSessions] = useState<ExaminerSession[]>([]);
   const [stats,     setStats]     = useState<Stats | null>(null);
   const [loading, setLoading]     = useState(true);
 
@@ -30,6 +41,7 @@ export default function DashboardPage() {
       apiFetch<{ quizzes: Quiz[] }>('/quizzes').then(d => setQuizzes(d.quizzes)),
       apiFetch<{ summaries: Summary[] }>('/summaries').then(d => setSummaries(d.summaries)),
       apiFetch<Stats>('/stats').then(s => setStats(s)),
+      apiFetch<{ sessions: ExaminerSession[] }>('/examiner/sessions').then(d => setExaminerSessions(d.sessions)).catch(() => {}),
     ]).finally(() => setLoading(false));
   }, []);
 
@@ -69,6 +81,7 @@ export default function DashboardPage() {
     { key: 'decks',     label: t.dashboard.decks,     icon: Layers },
     { key: 'quizzes',   label: t.dashboard.quizzes,   icon: HelpCircle },
     { key: 'summaries', label: t.dashboard.summaries, icon: FileText },
+    { key: 'examiner',  label: 'Examiner',             icon: GraduationCap },
   ];
 
   return (
@@ -209,6 +222,53 @@ export default function DashboardPage() {
                   <p className="text-xs text-slate-400 line-clamp-2">{s.content.substring(0, 120)}…</p>
                 </motion.div>
               ))}
+            </motion.div>
+          )}
+
+          {/* Examiner */}
+          {tab === 'examiner' && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Upload your notes — The Examiner tests you on exactly what you uploaded.</p>
+                <Button size="sm" onClick={() => navigate('/examiner')}>
+                  <Plus className="w-4 h-4" /> New Exam
+                </Button>
+              </div>
+              {examinerSessions.length === 0 ? (
+                <div className="flex flex-col items-center py-20 text-center">
+                  <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-950 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🎓</div>
+                  <p className="text-slate-400 mb-4">No exam sessions yet.</p>
+                  <Button variant="ghost" size="sm" onClick={() => navigate('/examiner')}>
+                    <Plus className="w-4 h-4" /> Start your first exam
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {examinerSessions.map((s, i) => {
+                    const DIFF_COLORS: Record<string, string> = { standard: '#3B82F6', hard: '#F59E0B', brutal: '#EF4444' };
+                    const DIFF_LABELS: Record<string, string> = { standard: 'Standard', hard: 'Hard', brutal: 'Brutal' };
+                    return (
+                      <motion.div key={s.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                        className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => navigate(`/examiner/${s.id}`)}>
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center">
+                            <GraduationCap className="w-5 h-5 text-indigo-600" />
+                          </div>
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: (DIFF_COLORS[s.difficulty] || '#3B82F6') + '22', color: DIFF_COLORS[s.difficulty] || '#3B82F6' }}>
+                            {DIFF_LABELS[s.difficulty] || s.difficulty}
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1 truncate">{s.material_name}</h3>
+                        <p className="text-xs text-slate-400 mb-3">
+                          {s.exchange_count} / {s.question_count} questions · {s.completed ? '✅ Complete' : '⏳ In progress'}
+                        </p>
+                        <p className="text-xs text-slate-300 dark:text-slate-600">{new Date(s.created_at).toLocaleDateString()}</p>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
           )}
         </>

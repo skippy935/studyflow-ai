@@ -9,7 +9,9 @@ import DeckPage       from './pages/DeckPage';
 import StudyPage      from './pages/StudyPage';
 import QuizPage       from './pages/QuizPage';
 import SummaryPage    from './pages/SummaryPage';
-import SettingsPage   from './pages/SettingsPage';
+import SettingsPage      from './pages/SettingsPage';
+import ExaminerPage      from './pages/ExaminerPage';
+import ExaminerSessionPage from './pages/ExaminerSessionPage';
 
 function Protected({ children }: { children: React.ReactNode }) {
   return isLoggedIn() ? <>{children}</> : <Navigate to="/login" replace />;
@@ -32,6 +34,8 @@ export default function App() {
       <Route path="/quiz/:id"     element={<Protected><QuizPage /></Protected>} />
       <Route path="/summary/:id"  element={<Protected><SummaryPage /></Protected>} />
       <Route path="/settings"     element={<Protected><SettingsPage /></Protected>} />
+      <Route path="/examiner"     element={<Protected><ExaminerPage /></Protected>} />
+      <Route path="/examiner/:id" element={<Protected><ExaminerSessionPage /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

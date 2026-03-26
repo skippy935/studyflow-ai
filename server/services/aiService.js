@@ -131,4 +131,46 @@ ${notes}`;
   return msg.content[0].text.trim();
 }
 
-module.exports = { generateFlashcards, generateQuiz, generateSummary };
+// ── Cross-Subject Connections ─────────────────────────────────────────────────
+async function generateConnections(notes, topic, language = 'en') {
+  const lang = language === 'de' ? 'German' : 'English';
+  const prompt = `[CONNECTIONS] Analyze these study notes about "${topic}" and find meaningful connections to other subjects, real-world applications, and careers.
+
+Respond in ${lang}. Return ONLY valid JSON, no extra text:
+{
+  "topic": "${topic}",
+  "relatedSubjects": [
+    {"subject": "Name of subject", "connection": "How this topic connects to it (1 sentence)", "strength": "high"}
+  ],
+  "realWorldApplications": [
+    {"field": "Field name", "example": "Specific real-world example (1 sentence)"}
+  ],
+  "careerRelevance": [
+    {"career": "Career title", "why": "Why this knowledge matters for this career (1 sentence)"}
+  ],
+  "interestingFact": "One surprising cross-domain fact about this topic"
+}
+
+Rules:
+- "strength" must be "high", "medium", or "low"
+- Include 2–4 relatedSubjects, 2–3 realWorldApplications, 2–3 careerRelevance entries
+- Keep each text field under 20 words
+
+Notes:
+${notes}`;
+
+  const msg = await client.messages.create({
+    model: 'claude-opus-4-6',
+    max_tokens: 1200,
+    temperature: 0.4,
+    system: SYSTEM_PROMPT,
+    messages: [{ role: 'user', content: prompt }]
+  });
+
+  const text  = msg.content[0].text.trim();
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('Invalid connections response from AI');
+  return JSON.parse(match[0]);
+}
+
+module.exports = { generateFlashcards, generateQuiz, generateSummary, generateConnections };

@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — StudyBuild</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/app.css">
 </head>
@@ -38,11 +41,18 @@
       </a>
     </div>
 
+    <!-- Study Health Panel -->
+    <div id="studyHealth" style="display:none;margin-bottom:1.75rem;">
+      <div id="crammingWarnings"></div>
+      <div id="microDoseNudges"></div>
+    </div>
+
     <!-- Tabs -->
     <div class="sb-tabs" style="margin-bottom:1.75rem;">
-      <button class="sb-tab active" data-tab="decks">⚡ Flashcard Decks</button>
+      <button class="sb-tab active" data-tab="decks">⚡ Flashcards</button>
       <button class="sb-tab" data-tab="quizzes">❓ Quizzes</button>
       <button class="sb-tab" data-tab="summaries">📝 Summaries</button>
+      <button class="sb-tab" data-tab="examiner" style="color:#818cf8;font-weight:700;">🎓 Examiner</button>
     </div>
 
     <!-- Decks tab -->
@@ -88,12 +98,30 @@
       <div id="summariesGrid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;"></div>
     </div>
 
+    <!-- Examiner tab -->
+    <div id="tab-examiner" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
+        <p style="font-size:.875rem;color:var(--text-2);margin:0;">Upload your notes — The Examiner tests you on exactly what you uploaded. No generic questions.</p>
+        <a href="/examiner.html" class="btn btn-primary btn-sm">+ New Exam</a>
+      </div>
+      <div id="examinerLoading" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
+        <div style="background:var(--surface);border-radius:var(--radius);height:140px;border:1px solid var(--border);animation:pulse 1.5s infinite;"></div>
+        <div style="background:var(--surface);border-radius:var(--radius);height:140px;border:1px solid var(--border);animation:pulse 1.5s infinite;"></div>
+      </div>
+      <div id="examinerEmpty" style="display:none;text-align:center;padding:5rem 1rem;">
+        <div style="width:64px;height:64px;background:#312e81;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:2rem;">🎓</div>
+        <p style="color:var(--text-2);margin-bottom:1rem;">No exam sessions yet.</p>
+        <a href="/examiner.html" class="btn btn-primary btn-sm">Start your first exam</a>
+      </div>
+      <div id="examinerGrid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;"></div>
+    </div>
+
   </main>
 
   <style>
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
   </style>
-  <script src="/js/api.js"></script>
-  <script src="/js/dashboard.js"></script>
+  <script src="/js/api.js?v=3"></script>
+  <script src="/js/dashboard.js?v=3"></script>
 </body>
 </html>

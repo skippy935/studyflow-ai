@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Examiner — StudyBuild</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+  <nav class="sb-nav">
+    <div class="sb-nav-inner">
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <a href="/dashboard.html" style="color:var(--text-2);display:flex;"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></a>
+        <a href="/dashboard.html" class="sb-logo">
+          <div class="sb-logo-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+          StudyBuild
+        </a>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <button class="theme-toggle" onclick="toggleTheme()"></button>
+        <button class="btn btn-ghost btn-sm" id="logoutBtn">Sign out</button>
+      </div>
+    </div>
+  </nav>
+
+  <main style="max-width:680px;margin:0 auto;padding:2.5rem 1.5rem;">
+
+    <!-- Step indicator -->
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:2rem;">
+      <div class="step-dot active" id="dot1"></div>
+      <div class="step-line" id="line1"></div>
+      <div class="step-dot" id="dot2"></div>
+      <div class="step-line" id="line2"></div>
+      <div class="step-dot" id="dot3"></div>
+      <span style="font-size:.75rem;color:var(--text-3);margin-left:.75rem;" id="stepLabel">Upload notes</span>
+    </div>
+
+    <!-- ── STEP 1: Upload ───────────────────────────────── -->
+    <div id="step1">
+      <h1 style="font-size:1.5rem;font-weight:800;color:var(--text);margin:0 0 .375rem;">The Examiner</h1>
+      <p style="color:var(--text-2);font-size:.9rem;margin:0 0 1.75rem;">Upload your notes. Every question comes from what <em>you</em> uploaded — nothing else.</p>
+
+      <!-- Drop zone -->
+      <div id="dropZone" style="border:2px dashed var(--border);border-radius:var(--radius);padding:3rem 2rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:1.25rem;position:relative;">
+        <input type="file" id="fileInput" accept=".pdf,.txt,.md,.jpg,.jpeg,.png,.webp,.docx,.doc" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
+        <div id="dropIdle">
+          <div style="width:56px;height:56px;background:var(--primary-dim);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.75rem;">📄</div>
+          <p style="font-weight:700;color:var(--text);margin:0 0 .375rem;">Drop your file here or click to browse</p>
+          <p style="font-size:.8rem;color:var(--text-3);margin:0;">PDF · TXT · MD · JPG · PNG · DOCX</p>
+        </div>
+        <div id="dropLoading" style="display:none;">
+          <div class="spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto .875rem;"></div>
+          <p style="font-weight:600;color:var(--text);margin:0;" id="extractingLabel">Extracting text…</p>
+        </div>
+      </div>
+
+      <!-- Extract error -->
+      <div id="extractError" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--radius);padding:.75rem 1rem;margin-bottom:1rem;font-size:.875rem;color:#EF4444;"></div>
+
+      <!-- Paste zone -->
+      <div style="position:relative;margin-bottom:1rem;">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;">
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+          <span style="font-size:.75rem;color:var(--text-3);font-weight:600;">OR PASTE TEXT</span>
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+        </div>
+        <textarea id="pasteArea" class="sb-textarea" rows="5" placeholder="Paste your notes here (minimum 50 words)…" style="resize:vertical;"></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem;">
+          <span id="pasteWordCount" style="font-size:.75rem;color:var(--text-3);">0 words</span>
+          <button id="usePasteBtn" class="btn btn-ghost btn-sm" disabled>Use These Notes →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Preview ──────────────────────────────── -->
+    <div id="step2" style="display:none;">
+      <div class="sb-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+        <div style="display:flex;align-items:center;gap:.875rem;margin-bottom:1.25rem;">
+          <div style="font-size:2rem;" id="previewIcon">📄</div>
+          <div>
+            <div style="font-weight:700;color:var(--text);" id="previewFileName">—</div>
+            <div style="font-size:.8rem;color:var(--text-3);margin-top:.125rem;" id="previewMeta">—</div>
+          </div>
+        </div>
+        <div style="background:var(--surface2);border-radius:10px;padding:1rem;font-size:.825rem;color:var(--text-2);line-height:1.6;max-height:180px;overflow:hidden;position:relative;" id="previewTextShort"></div>
+        <button id="toggleFullText" style="font-size:.75rem;color:var(--primary);background:none;border:none;cursor:pointer;margin-top:.5rem;padding:0;">Show full text ↓</button>
+        <div id="previewTextFull" style="display:none;background:var(--surface2);border-radius:10px;padding:1rem;font-size:.825rem;color:var(--text-2);line-height:1.6;max-height:320px;overflow-y:auto;margin-top:.5rem;white-space:pre-wrap;"></div>
+        <div id="longNoteWarning" style="display:none;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:.625rem .875rem;margin-top:.875rem;font-size:.8rem;color:#D97706;">
+          ⚠️ Your notes are long. Use the Focus Area field below to direct the exam to specific sections.
+        </div>
+      </div>
+      <button id="changeFileBtn" class="btn btn-ghost btn-sm" style="margin-bottom:1.5rem;">← Upload different file</button>
+
+      <!-- Settings -->
+      <div class="sb-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+        <h2 style="font-weight:800;color:var(--text);font-size:1rem;margin:0 0 1.25rem;">Exam Settings</h2>
+
+        <!-- Difficulty -->
+        <div style="margin-bottom:1.25rem;">
+          <div style="font-size:.75rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;">Difficulty</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.625rem;">
+            <button class="diff-btn" data-diff="standard" style="padding:.75rem .5rem;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface);cursor:pointer;text-align:center;">
+              <div style="font-size:1.25rem;margin-bottom:.25rem;">📚</div>
+              <div style="font-size:.8rem;font-weight:700;color:var(--text);">Standard</div>
+              <div style="font-size:.7rem;color:var(--text-3);">Build up gradually</div>
+            </button>
+            <button class="diff-btn" data-diff="hard" style="padding:.75rem .5rem;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface);cursor:pointer;text-align:center;">
+              <div style="font-size:1.25rem;margin-bottom:.25rem;">🔥</div>
+              <div style="font-size:.8rem;font-weight:700;color:var(--text);">Hard</div>
+              <div style="font-size:.7rem;color:var(--text-3);">Reach depth faster</div>
+            </button>
+            <button class="diff-btn" data-diff="brutal" style="padding:.75rem .5rem;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface);cursor:pointer;text-align:center;">
+              <div style="font-size:1.25rem;margin-bottom:.25rem;">💀</div>
+              <div style="font-size:.8rem;font-weight:700;color:var(--text);">Brutal</div>
+              <div style="font-size:.7rem;color:var(--text-3);">No warmup, full depth</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Question count -->
+        <div style="margin-bottom:1.25rem;">
+          <div style="font-size:.75rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;">Questions</div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+            <button class="qcount-btn" data-count="5"  style="padding:.375rem .875rem;border-radius:999px;border:2px solid var(--border);background:var(--surface);cursor:pointer;font-size:.825rem;font-weight:600;color:var(--text);">5</button>
+            <button class="qcount-btn" data-count="10" style="padding:.375rem .875rem;border-radius:999px;border:2px solid var(--border);background:var(--surface);cursor:pointer;font-size:.825rem;font-weight:600;color:var(--text);">10</button>
+            <button class="qcount-btn" data-count="15" style="padding:.375rem .875rem;border-radius:999px;border:2px solid var(--border);background:var(--surface);cursor:pointer;font-size:.825rem;font-weight:600;color:var(--text);">15</button>
+            <button class="qcount-btn" data-count="custom" style="padding:.375rem .875rem;border-radius:999px;border:2px solid var(--border);background:var(--surface);cursor:pointer;font-size:.825rem;font-weight:600;color:var(--text);">Custom</button>
+            <input type="number" id="customCount" min="3" max="30" placeholder="3–30" style="display:none;width:80px;padding:.375rem .625rem;border-radius:8px;border:2px solid var(--primary);background:var(--surface);color:var(--text);font-size:.825rem;">
+          </div>
+        </div>
+
+        <!-- Focus area -->
+        <div>
+          <div style="font-size:.75rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;">Focus Area <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
+          <input type="text" id="focusArea" class="sb-input" placeholder="e.g. only test me on Chapter 3, or photosynthesis only…">
+        </div>
+      </div>
+
+      <button id="startExamBtn" class="btn btn-primary" style="width:100%;padding:1rem;font-size:1rem;font-weight:800;opacity:.4;" disabled>
+        Start The Exam
+      </button>
+      <div id="startError" style="display:none;margin-top:.75rem;font-size:.825rem;color:#EF4444;text-align:center;"></div>
+    </div>
+
+  </main>
+
+  <style>
+    .step-dot { width:10px;height:10px;border-radius:50%;background:var(--border);transition:background .3s; }
+    .step-dot.active { background:var(--primary); }
+    .step-dot.done { background:#10B981; }
+    .step-line { flex:1;height:2px;background:var(--border);transition:background .3s; }
+    .step-line.done { background:#10B981; }
+    #dropZone:hover, #dropZone.dragging { border-color:var(--primary);background:var(--primary-dim); }
+    .diff-btn.selected { border-color:var(--primary)!important;background:var(--primary-dim)!important; }
+    .qcount-btn.selected { border-color:var(--primary)!important;background:var(--primary-dim)!important;color:var(--primary)!important; }
+  </style>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/examiner.js"></script>
+</body>
+</html>

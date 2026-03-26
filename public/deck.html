@@ -82,6 +82,22 @@
       <div id="cardsList"></div>
     </div>
 
+    <!-- Cross-Subject Connections -->
+    <div class="sb-card" style="overflow:hidden;margin-top:1.5rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--border);">
+        <div>
+          <h2 style="font-weight:700;color:var(--text);font-size:.9375rem;margin:0 0 .125rem;">🔗 Connect the Dots</h2>
+          <p style="font-size:.75rem;color:var(--text-3);margin:0;">AI finds how this topic connects to other subjects, careers &amp; the real world.</p>
+        </div>
+        <button id="generateConnectionsBtn" class="btn btn-ghost btn-sm">Generate</button>
+      </div>
+      <div id="connectionsLoading" style="display:none;padding:2rem;text-align:center;">
+        <div class="spinner" style="width:28px;height:28px;border-width:2px;margin:0 auto .75rem;"></div>
+        <p style="font-size:.825rem;color:var(--text-2);margin:0;">Finding connections…</p>
+      </div>
+      <div id="connectionsContent" style="display:none;padding:1.5rem;"></div>
+    </div>
+
     <p id="errorMsg" style="color:#EF4444;font-size:.875rem;margin-top:1rem;min-height:20px;"></p>
   </main>
 

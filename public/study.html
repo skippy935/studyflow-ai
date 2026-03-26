@@ -26,6 +26,42 @@
     </div>
   </nav>
 
+  <!-- Mood Check-In -->
+  <div id="moodOverlay" style="display:none;max-width:480px;margin:0 auto;padding:4rem 1.5rem;text-align:center;">
+    <div style="width:72px;height:72px;background:var(--primary-dim);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:2.25rem;">🧠</div>
+    <h2 style="font-size:1.25rem;font-weight:800;color:var(--text);margin:0 0 .5rem;">How are you feeling right now?</h2>
+    <p style="color:var(--text-2);font-size:.875rem;margin:0 0 2rem;">I'll adapt your session to match your energy.</p>
+    <div style="display:flex;flex-direction:column;gap:.625rem;max-width:340px;margin:0 auto 1.5rem;">
+      <button class="mood-btn" data-mood="energized" style="display:flex;align-items:center;gap:.75rem;padding:.875rem 1.25rem;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface);cursor:pointer;font-size:.9rem;font-weight:600;color:var(--text);transition:border-color .15s;">🚀 <span>Energized — Push hard today</span></button>
+      <button class="mood-btn" data-mood="good"      style="display:flex;align-items:center;gap:.75rem;padding:.875rem 1.25rem;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface);cursor:pointer;font-size:.9rem;font-weight:600;color:var(--text);transition:border-color .15s;">😊 <span>Good — Normal pace</span></button>
+      <button class="mood-btn" data-mood="okay"      style="display:flex;align-items:center;gap:.75rem;padding:.875rem 1.25rem;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface);cursor:pointer;font-size:.9rem;font-weight:600;color:var(--text);transition:border-color .15s;">😐 <span>Okay — Steady, no pressure</span></button>
+      <button class="mood-btn" data-mood="tired"     style="display:flex;align-items:center;gap:.75rem;padding:.875rem 1.25rem;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface);cursor:pointer;font-size:.9rem;font-weight:600;color:var(--text);transition:border-color .15s;">😴 <span>Tired — Keep it short</span></button>
+      <button class="mood-btn" data-mood="frustrated" style="display:flex;align-items:center;gap:.75rem;padding:.875rem 1.25rem;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface);cursor:pointer;font-size:.9rem;font-weight:600;color:var(--text);transition:border-color .15s;">😤 <span>Frustrated — Easy mode</span></button>
+    </div>
+    <button id="skipMoodBtn" style="font-size:.8rem;color:var(--text-3);background:none;border:none;cursor:pointer;padding:.5rem;">Skip →</button>
+  </div>
+
+  <!-- Frustration Encouragement Overlay -->
+  <div id="frustrationOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:1.5rem;">
+    <div style="background:var(--bg);border-radius:24px;padding:2.5rem 2rem;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.25);">
+      <div style="font-size:3rem;margin-bottom:1rem;">💪</div>
+      <h3 style="font-size:1.125rem;font-weight:800;color:var(--text);margin:0 0 .5rem;">That's how learning works!</h3>
+      <p style="color:var(--text-2);font-size:.875rem;margin:0 0 1.75rem;">Struggling means your brain is building new connections. Every mistake is a step forward.</p>
+      <div style="display:flex;gap:.75rem;justify-content:center;">
+        <button id="takBreakBtn" class="btn btn-ghost">Take a break</button>
+        <button id="keepGoingBtn" class="btn btn-primary">Keep going 💪</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Celebration Flash -->
+  <div id="celebrationFlash" style="display:none;position:fixed;top:5rem;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#10B981,#059669);color:#fff;padding:.75rem 1.5rem;border-radius:999px;font-weight:700;font-size:.9rem;z-index:300;box-shadow:0 8px 24px rgba(16,185,129,.4);pointer-events:none;white-space:nowrap;">
+    🎉 You got it! Great recovery!
+  </div>
+
+  <!-- Mood indicator badge (shown during session) -->
+  <div id="moodBadge" style="display:none;position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:.375rem .875rem;font-size:.75rem;font-weight:600;color:var(--text-2);z-index:10;"></div>
+
   <!-- Loading -->
   <div id="loadingView" style="max-width:720px;margin:0 auto;padding:5rem 1.5rem;text-align:center;">
     <div class="spinner" style="width:36px;height:36px;border-width:3px;margin:0 auto 1rem;"></div>
@@ -104,6 +140,22 @@
         <div><div style="font-size:1.375rem;font-weight:800;color:#3B82F6;" id="statGood">0</div><div style="font-size:.7rem;color:var(--text-3);">Good</div></div>
         <div><div style="font-size:1.375rem;font-weight:800;color:#10B981;" id="statEasy">0</div><div style="font-size:.7rem;color:var(--text-3);">Easy</div></div>
       </div>
+    </div>
+
+    <!-- Reflection Prompts (Metacognition) -->
+    <div id="reflectionSection" style="display:none;margin-bottom:2rem;text-align:left;">
+      <div style="font-size:.75rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.875rem;">🧠 Quick Reflection</div>
+      <div style="display:flex;flex-direction:column;gap:.75rem;">
+        <div class="sb-card" style="padding:1rem;">
+          <p style="font-size:.875rem;font-weight:600;color:var(--text);margin:0 0 .5rem;">What surprised you most in this session?</p>
+          <textarea id="reflectSurprise" class="sb-textarea" rows="2" style="min-height:unset;font-size:.825rem;" placeholder="Write anything…"></textarea>
+        </div>
+        <div class="sb-card" style="padding:1rem;">
+          <p style="font-size:.875rem;font-weight:600;color:var(--text);margin:0 0 .5rem;">What would you approach differently next time?</p>
+          <textarea id="reflectNextTime" class="sb-textarea" rows="2" style="min-height:unset;font-size:.825rem;" placeholder="Write anything…"></textarea>
+        </div>
+      </div>
+      <p style="font-size:.75rem;color:var(--text-3);margin:.75rem 0 0;">Reflection is stored locally only — never sent to our servers.</p>
     </div>
 
     <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">

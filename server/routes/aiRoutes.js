@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const auth = require('../middleware/auth');
-const { generateFlashcards, generateQuiz, generateSummary } = require('../services/aiService');
+const { generateFlashcards, generateQuiz, generateSummary, generateConnections } = require('../services/aiService');
 
 router.use(auth);
 
@@ -85,6 +85,21 @@ router.post('/summary-create', async (req, res) => {
   } catch (err) {
     console.error('Summary generation error:', err.message);
     res.status(422).json({ error: 'Failed to generate summary. Please try again.' });
+  }
+});
+
+// POST /api/ai/connections — cross-subject connections for a deck
+router.post('/connections', async (req, res) => {
+  const { notes, topic, language = 'en' } = req.body || {};
+  if (!topic) return res.status(400).json({ error: 'topic is required' });
+  if (!notes || notes.trim().length < 20) return res.status(400).json({ error: 'Please provide at least 20 characters of notes' });
+
+  try {
+    const connections = await generateConnections(notes.trim(), topic, language);
+    res.json({ connections });
+  } catch (err) {
+    console.error('Connections generation error:', err.message);
+    res.status(422).json({ error: 'Failed to generate connections. Please try again.' });
   }
 });
 
