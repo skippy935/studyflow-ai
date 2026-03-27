@@ -67,6 +67,18 @@ export default function QuizPage() {
   const feedback  = scoreFeedback(pctScore);
   const wrongMcqs = mcqs.filter(q => answers[q.id] !== q.correct);
 
+  // Submit results to missed-questions bank (fire-and-forget)
+  useEffect(() => {
+    if (phase !== 'results' || !quiz) return;
+    const wrongIds = wrongMcqs.map(q => q.id);
+    if (wrongIds.length === 0) return;
+    apiFetch(`/quizzes/${quiz.id}/results`, {
+      method: 'POST',
+      body: JSON.stringify({ wrongIds }),
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   if (loading) return <AppLayout><div className="flex justify-center py-20"><Spinner size="lg" /></div></AppLayout>;
   if (!quiz || !rawQuestions.length) return <AppLayout><p className="text-slate-500">Quiz not found.</p></AppLayout>;
 
@@ -201,11 +213,8 @@ export default function QuizPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Button variant="ghost" className="flex-1 justify-center" onClick={() => navigate('/dashboard')}>Dashboard</Button>
             {wrongMcqs.length > 0 && (
-              <Button variant="ghost" className="flex-1 justify-center" onClick={() => {
-                const topics = wrongMcqs.map(q => q.question.slice(0, 60)).join(',');
-                navigate(`/planner?gaps=${encodeURIComponent(topics)}`);
-              }}>
-                📋 Add weak areas to planner
+              <Button variant="ghost" className="flex-1 justify-center" onClick={() => navigate('/missed-questions')}>
+                ❌ View missed questions
               </Button>
             )}
             <Button className="flex-1 justify-center" onClick={() => { setPhase('intro'); }}>

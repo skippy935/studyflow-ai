@@ -31,6 +31,7 @@ model User {
   examinerSessions  ExaminerSession[]
   subjects          Subject[]
   studyTasks        StudyTask[]
+  missedQuestions   MissedQuestion[]
 }
 
 model Subject {
@@ -85,8 +86,9 @@ model Quiz {
   topic     String         @default("")
   createdAt DateTime       @default(now())
 
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  questions QuizQuestion[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions       QuizQuestion[]
+  missedQuestions MissedQuestion[]
 }
 
 model QuizQuestion {
@@ -100,7 +102,8 @@ model QuizQuestion {
   sampleAnswer String  @default("")
   keywords     String?
 
-  quiz         Quiz    @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quiz            Quiz             @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  missedQuestions MissedQuestion[]
 }
 
 model Summary {
@@ -142,6 +145,21 @@ model ExaminerMaterial {
   createdAt     DateTime        @default(now())
 
   session       ExaminerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model MissedQuestion {
+  id         Int          @id @default(autoincrement())
+  userId     Int
+  questionId Int
+  quizId     Int
+  timesWrong Int          @default(1)
+  lastSeenAt DateTime     @default(now())
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  quiz       Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
 }
 
 model StudyTask {
