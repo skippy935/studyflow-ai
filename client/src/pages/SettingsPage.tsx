@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, Trash2 } from 'lucide-react';
+import { User, Lock, Trash2, Moon, Sun, Monitor } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
@@ -9,8 +9,18 @@ import { apiFetch } from '../lib/api';
 import { getUser, setSession, clearSession } from '../lib/auth';
 import { useTranslation } from '../i18n';
 
+type ThemePreference = 'light' | 'dark' | 'system';
+
+function applyTheme(pref: ThemePreference) {
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = pref === 'dark' || (pref === 'system' && prefersDark);
+  document.documentElement.classList.toggle('dark', isDark);
+  localStorage.setItem('sb_theme', pref === 'system' ? (isDark ? 'dark' : 'light') : pref);
+  localStorage.setItem('sb_theme_pref', pref);
+}
+
 export default function SettingsPage() {
-  const { t, lang, setLang } = useTranslation();
+  const { t, setLang } = useTranslation();
   const navigate = useNavigate();
   const user = getUser();
 
@@ -19,6 +29,14 @@ export default function SettingsPage() {
   const [currentPw, setCurrentPw]     = useState('');
   const [newPw, setNewPw]             = useState('');
   const [saving, setSaving]           = useState(false);
+  const [themePref, setThemePref]     = useState<ThemePreference>(
+    () => (localStorage.getItem('sb_theme_pref') as ThemePreference) || 'system'
+  );
+
+  function handleThemeChange(pref: ThemePreference) {
+    setThemePref(pref);
+    applyTheme(pref);
+  }
 
   async function saveProfile() {
     setSaving(true);
@@ -86,6 +104,32 @@ export default function SettingsPage() {
               </div>
             </div>
             <Button loading={saving} onClick={saveProfile}>{t.settings.save}</Button>
+          </div>
+        </div>
+
+        {/* Appearance */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 mb-5">
+          <div className="flex items-center gap-2 mb-5">
+            <Moon className="w-4 h-4 text-slate-500" />
+            <h2 className="font-bold text-slate-900 dark:text-slate-100">Appearance</h2>
+          </div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Theme</label>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { key: 'light',  icon: Sun,     label: 'Light'  },
+              { key: 'dark',   icon: Moon,    label: 'Dark'   },
+              { key: 'system', icon: Monitor, label: 'System' },
+            ] as { key: ThemePreference; icon: typeof Sun; label: string }[]).map(({ key, icon: Icon, label }) => (
+              <button key={key} onClick={() => handleThemeChange(key)}
+                className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
+                  themePref === key
+                    ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950 text-indigo-600'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300 dark:hover:border-slate-600'
+                }`}>
+                <Icon className="w-5 h-5" />
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 

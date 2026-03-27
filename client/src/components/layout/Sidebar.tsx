@@ -16,7 +16,11 @@ export default function Sidebar() {
   const { t, lang, setLang } = useTranslation();
   const user = getUser();
   const [open, setOpen] = useState(false);
-  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem('sb_theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   function toggleTheme() {
     const next = !dark;
