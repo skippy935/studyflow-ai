@@ -13,6 +13,8 @@ import summaryRoutes  from './routes/summaries';
 import aiRoutes       from './routes/ai';
 import uploadRoutes   from './routes/upload';
 import statsRoutes    from './routes/stats';
+import examinerRoutes from './routes/examiner';
+import extractRoutes  from './routes/extract';
 
 const app  = express();
 const PORT = process.env.PORT || 8080;
@@ -28,6 +30,8 @@ app.use('/api/summaries', summaryRoutes);
 app.use('/api/ai',        aiRoutes);
 app.use('/api/upload',    uploadRoutes);
 app.use('/api/stats',     statsRoutes);
+app.use('/api/examiner',  examinerRoutes);
+app.use('/api/extract',   extractRoutes);
 
 // Serve built React app
 const clientDist = path.join(__dirname, '../client/dist');

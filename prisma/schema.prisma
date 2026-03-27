@@ -22,11 +22,13 @@ model User {
   streak            Int            @default(0)
   lastStudyDate     DateTime?
   totalCardsLearned Int            @default(0)
+  neuroMode         String         @default("normal")
 
   decks             Deck[]
   quizzes           Quiz[]
   summaries         Summary[]
   studySessions     StudySession[]
+  examinerSessions  ExaminerSession[]
 }
 
 model Deck {
@@ -94,6 +96,36 @@ model Summary {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ExaminerSession {
+  id            Int               @id @default(autoincrement())
+  userId        Int
+  materialName  String
+  materialType  String            @default("paste")
+  wordCount     Int               @default(0)
+  difficulty    String            @default("standard")
+  questionCount Int               @default(10)
+  focusArea     String?
+  messages      Json              @default("[]")
+  stats         Json              @default("{}")
+  gapAnalysis   Json?
+  exchangeCount Int               @default(0)
+  completed     Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+  completedAt   DateTime?
+
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  material      ExaminerMaterial?
+}
+
+model ExaminerMaterial {
+  id            Int             @id @default(autoincrement())
+  sessionId     Int             @unique
+  extractedText String
+  createdAt     DateTime        @default(now())
+
+  session       ExaminerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 model StudySession {
