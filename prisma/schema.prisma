@@ -30,6 +30,7 @@ model User {
   studySessions     StudySession[]
   examinerSessions  ExaminerSession[]
   subjects          Subject[]
+  studyTasks        StudyTask[]
 }
 
 model Subject {
@@ -59,6 +60,7 @@ model Deck {
   subject       Subject?       @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   cards         Card[]
   studySessions StudySession[]
+  studyTasks    StudyTask[]
 }
 
 model Card {
@@ -140,6 +142,20 @@ model ExaminerMaterial {
   createdAt     DateTime        @default(now())
 
   session       ExaminerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model StudyTask {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  title     String
+  notes     String    @default("")
+  dueDate   DateTime?
+  deckId    Int?
+  done      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck      Deck?     @relation(fields: [deckId], references: [id], onDelete: SetNull)
 }
 
 model StudySession {

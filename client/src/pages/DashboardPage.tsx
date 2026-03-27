@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Layers, HelpCircle, FileText, Trash2, BookOpen, Play, Flame, Brain, AlertTriangle, Calendar, GraduationCap, FolderOpen, FolderPlus, ChevronRight, ChevronDown, MoreHorizontal, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const [examinerSessions, setExaminerSessions] = useState<ExaminerSession[]>([]);
   const [subjects,  setSubjects]  = useState<Subject[]>([]);
   const [stats,     setStats]     = useState<Stats | null>(null);
+  const [upcomingTasks, setUpcomingTasks] = useState<{ id: number; title: string; dueDate: string | null; done: boolean }[]>([]);
   const [loading, setLoading]     = useState(true);
 
   // Subject UI state
@@ -53,6 +54,8 @@ export default function DashboardPage() {
       apiFetch<Stats>('/stats').then(s => setStats(s)),
       apiFetch<{ sessions: ExaminerSession[] }>('/examiner/sessions').then(d => setExaminerSessions(d.sessions)).catch(() => {}),
       apiFetch<{ subjects: Subject[] }>('/subjects').then(d => setSubjects(d.subjects)).catch(() => {}),
+      apiFetch<{ tasks: { id: number; title: string; dueDate: string | null; done: boolean }[] }>('/planner')
+        .then(d => setUpcomingTasks(d.tasks.filter(t => !t.done).slice(0, 5))).catch(() => {}),
     ]).finally(() => setLoading(false));
   }, []);
 
@@ -197,6 +200,35 @@ export default function DashboardPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming tasks widget */}
+      {upcomingTasks.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Upcoming Tasks</h2>
+            <Link to="/planner" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">View all →</Link>
+          </div>
+          <div className="space-y-2">
+            {upcomingTasks.map(task => {
+              const due = task.dueDate ? new Date(task.dueDate) : null;
+              const now = new Date(); now.setHours(0,0,0,0);
+              const diff = due ? Math.ceil((due.getTime() - now.getTime()) / 86400000) : null;
+              const overdue = diff !== null && diff < 0;
+              return (
+                <div key={task.id} className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${overdue ? 'bg-red-400' : diff === 0 ? 'bg-orange-400' : 'bg-indigo-400'}`} />
+                  <span className="text-sm text-slate-700 dark:text-slate-300 flex-1 truncate">{task.title}</span>
+                  {diff !== null && (
+                    <span className={`text-xs font-semibold flex-shrink-0 ${overdue ? 'text-red-500' : diff === 0 ? 'text-orange-500' : 'text-slate-400'}`}>
+                      {overdue ? `${Math.abs(diff)}d overdue` : diff === 0 ? 'Today' : `${diff}d`}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

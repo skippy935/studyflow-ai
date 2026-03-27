@@ -12,6 +12,7 @@ import SummaryPage    from './pages/SummaryPage';
 import SettingsPage      from './pages/SettingsPage';
 import ExaminerPage      from './pages/ExaminerPage';
 import ExaminerSessionPage from './pages/ExaminerSessionPage';
+import PlannerPage        from './pages/PlannerPage';
 
 function Protected({ children }: { children: React.ReactNode }) {
   return isLoggedIn() ? <>{children}</> : <Navigate to="/login" replace />;
@@ -36,6 +37,7 @@ export default function App() {
       <Route path="/settings"     element={<Protected><SettingsPage /></Protected>} />
       <Route path="/examiner"     element={<Protected><ExaminerPage /></Protected>} />
       <Route path="/examiner/:id" element={<Protected><ExaminerSessionPage /></Protected>} />
+      <Route path="/planner"      element={<Protected><PlannerPage /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Plus, Settings, LogOut, Zap, Menu, X, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, Plus, Settings, LogOut, Zap, Menu, X, Moon, Sun, CalendarCheck } from 'lucide-react';
 import { clearSession, getUser } from '../../lib/auth';
 import { useTranslation } from '../../i18n';
 
 const links = [
   { to: '/dashboard', icon: LayoutDashboard, labelKey: 'dashboard' as const },
   { to: '/create',    icon: Plus,            labelKey: 'create'    as const },
+  { to: '/planner',   icon: CalendarCheck,   labelKey: 'planner'   as const },
   { to: '/settings',  icon: Settings,        labelKey: 'settings'  as const },
 ];
 
@@ -37,6 +38,7 @@ export default function Sidebar() {
   const navLabels: Record<string, string> = {
     dashboard: t.dashboard.title,
     create: t.create.title,
+    planner: 'Study Planner',
     settings: t.settings.title,
   };
 
