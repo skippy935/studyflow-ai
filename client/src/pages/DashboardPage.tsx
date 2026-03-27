@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
 import Spinner   from '../components/ui/Spinner';
+import StreakCalendar from '../components/ui/StreakCalendar';
 import { apiFetch } from '../lib/api';
 import { getUser }  from '../lib/auth';
 import { useTranslation } from '../i18n';
@@ -178,6 +179,9 @@ export default function DashboardPage() {
           <StatCard icon={<Calendar className="w-5 h-5 text-emerald-500" />} value={stats.dueToday} label={t.stats.due} bg="bg-emerald-50 dark:bg-emerald-950" />
         </div>
       )}
+
+      {/* Streak calendar */}
+      {stats && <StreakCalendar streak={stats.streak} />}
 
       {/* Recent activity */}
       {stats && stats.recentSessions.length > 0 && (
