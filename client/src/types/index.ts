@@ -6,8 +6,17 @@ export interface User {
   subscriptionTier: string;
 }
 
+export interface Subject {
+  id: number;
+  name: string;
+  color: string;
+  createdAt: string;
+  _count?: { decks: number };
+}
+
 export interface Deck {
   id: number;
+  subjectId?: number | null;
   name: string;
   description: string;
   color: string;

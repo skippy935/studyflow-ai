@@ -14,6 +14,24 @@ router.get('/', async (req: AuthRequest, res) => {
   res.json({ decks });
 });
 
+// PATCH /api/decks/:id/subject — assign or remove subject
+router.patch('/:id/subject', async (req: AuthRequest, res) => {
+  const id = parseInt(req.params.id);
+  const { subjectId } = req.body || {};
+  try {
+    const deck = await prisma.deck.findFirst({ where: { id, userId: req.userId! } });
+    if (!deck) { res.status(404).json({ error: 'Deck not found' }); return; }
+    if (subjectId !== null && subjectId !== undefined) {
+      const subject = await prisma.subject.findFirst({ where: { id: subjectId, userId: req.userId! } });
+      if (!subject) { res.status(404).json({ error: 'Subject not found' }); return; }
+    }
+    const updated = await prisma.deck.update({ where: { id }, data: { subjectId: subjectId ?? null } });
+    res.json({ deck: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update deck subject' });
+  }
+});
+
 router.post('/', async (req: AuthRequest, res) => {
   const { name, description = '', color = '#4F46E5' } = req.body || {};
   if (!name) { res.status(400).json({ error: 'Deck name is required' }); return; }
