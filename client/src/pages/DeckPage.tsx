@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Pencil, Trash2, Play } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, Play, Download, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
@@ -60,6 +60,45 @@ export default function DeckPage() {
 
   const due = cards.filter(c => new Date(c.nextReview) <= new Date()).length;
 
+  function exportTSV() {
+    const lines = cards.map(c => `${c.front.replace(/\t/g, ' ')}\t${c.back.replace(/\t/g, ' ')}`);
+    const tsv = lines.join('\n');
+    const blob = new Blob([tsv], { type: 'text/plain; charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${deck!.name.replace(/[^a-z0-9]/gi, '_')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${cards.length} cards exported`);
+  }
+
+  async function importTSV(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const text = await file.text();
+    const parsed = text.split('\n')
+      .map(line => {
+        const sep = line.includes('\t') ? '\t' : ',';
+        const parts = line.split(sep);
+        return { front: (parts[0] || '').trim(), back: (parts[1] || '').trim() };
+      })
+      .filter(c => c.front && c.back);
+    if (parsed.length === 0) { toast.error('No valid cards found. Expected tab-separated or CSV lines.'); return; }
+    try {
+      const { imported, skipped } = await apiFetch<{ imported: number; skipped: number }>(
+        `/decks/${id}/cards/bulk`,
+        { method: 'POST', body: JSON.stringify({ cards: parsed }) }
+      );
+      toast.success(`Imported ${imported} cards${skipped > 0 ? `, ${skipped} skipped` : ''}`);
+      const data = await apiFetch<{ deck: Deck; cards: Card[] }>(`/decks/${id}`);
+      setCards(data.cards);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Import failed');
+    }
+  }
+
   return (
     <AppLayout>
       <button onClick={() => navigate('/dashboard')} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-6 transition-colors">
@@ -77,9 +116,22 @@ export default function DeckPage() {
               {deck.description && <p className="text-sm text-slate-400">{deck.description}</p>}
             </div>
           </div>
-          <Button onClick={() => navigate(`/study/${deck.id}`)}>
-            <Play className="w-4 h-4" /> Study Now
-          </Button>
+          <div className="flex items-center gap-2">
+            {cards.length > 0 && (
+              <Button size="sm" variant="ghost" onClick={exportTSV} title="Export for Anki">
+                <Download className="w-4 h-4" /> Export
+              </Button>
+            )}
+            <label className="cursor-pointer">
+              <Button size="sm" variant="ghost" onClick={() => document.getElementById('anki-import')?.click()} title="Import from Anki">
+                <Upload className="w-4 h-4" /> Import
+              </Button>
+              <input id="anki-import" type="file" accept=".txt,.csv,.tsv" className="hidden" onChange={importTSV} />
+            </label>
+            <Button onClick={() => navigate(`/study/${deck.id}`)}>
+              <Play className="w-4 h-4" /> Study Now
+            </Button>
+          </div>
         </div>
         <div className="flex gap-6 mt-5 pt-5 border-t border-slate-100 dark:border-slate-800">
           <div><div className="text-2xl font-black text-slate-900 dark:text-slate-100">{cards.length}</div><div className="text-xs text-slate-400">Total cards</div></div>

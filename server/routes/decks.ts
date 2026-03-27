@@ -85,4 +85,30 @@ router.post('/:id/cards', async (req: AuthRequest, res) => {
   res.status(201).json({ card });
 });
 
+// POST /api/decks/:id/cards/bulk — Anki import
+router.post('/:id/cards/bulk', async (req: AuthRequest, res) => {
+  const deckId = parseInt(req.params.id);
+  const deck = await prisma.deck.findFirst({ where: { id: deckId, userId: req.userId! } });
+  if (!deck) { res.status(404).json({ error: 'Deck not found' }); return; }
+
+  const { cards } = req.body || {};
+  if (!Array.isArray(cards) || cards.length === 0) {
+    res.status(400).json({ error: 'cards array required' }); return;
+  }
+  if (cards.length > 500) {
+    res.status(400).json({ error: 'Max 500 cards per import' }); return;
+  }
+
+  const valid = (cards as { front: string; back: string }[]).filter(
+    c => typeof c.front === 'string' && c.front.trim() &&
+         typeof c.back  === 'string' && c.back.trim()
+  );
+
+  await prisma.card.createMany({
+    data: valid.map(c => ({ deckId, front: c.front.trim(), back: c.back.trim() })),
+  });
+
+  res.status(201).json({ imported: valid.length, skipped: cards.length - valid.length });
+});
+
 export default router;
