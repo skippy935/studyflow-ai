@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Send, StopCircle, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Send, StopCircle, RotateCcw, Download, FileText } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
@@ -213,6 +213,106 @@ export default function ExaminerSessionPage() {
   }
 
   const diff = session.difficulty;
+  const dateStr = new Date().toISOString().slice(0, 10);
+
+  function exportMarkdown() {
+    let md = `# StudyBuild Examiner Report\n\n`;
+    md += `**Material:** ${session!.material_name}\n`;
+    md += `**Date:** ${dateStr}\n`;
+    md += `**Difficulty:** ${DIFF_LABELS[diff] || diff}\n`;
+    md += `**Questions answered:** ${exchangeCount}\n\n---\n\n## Transcript\n\n`;
+
+    let qNum = 0;
+    messages.forEach(msg => {
+      if (msg.role === 'assistant') {
+        qNum++;
+        md += `**Q${qNum}:** ${msg.content}\n\n`;
+      } else {
+        md += `**Answer:** ${msg.content}\n\n`;
+      }
+    });
+
+    if (gap) {
+      md += `---\n\n## Gap Analysis\n\n`;
+      md += `### ✅ What you know\n${gap.solid.length ? gap.solid.map(s => `- ${s}`).join('\n') : '_None demonstrated clearly._'}\n\n`;
+      md += `### ⚠️ Shaky ground\n${gap.shaky.length ? gap.shaky.map(s => `- ${s}`).join('\n') : '_No shaky areas._'}\n\n`;
+      md += `### 🔴 Gaps found\n${gap.gaps.length ? gap.gaps.map(s => `- ${s}`).join('\n') : '_No major gaps._'}\n\n`;
+      md += `### Summary\n${gap.summary}\n\n`;
+      if (gap.nextSteps.length) {
+        md += `### 📌 What to study next\n${gap.nextSteps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n`;
+      }
+    }
+
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `examiner-session-${dateStr}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function exportPDF() {
+    const { default: jsPDF } = await import('jspdf');
+    const doc    = new jsPDF({ unit: 'mm', format: 'a4' });
+    const margin = 20;
+    const maxW   = 170;
+    let   y      = margin;
+
+    function addLine(text: string, size = 10, style: 'normal' | 'bold' | 'italic' = 'normal', rgb: [number, number, number] = [30, 30, 30]) {
+      doc.setFontSize(size);
+      doc.setFont('helvetica', style);
+      doc.setTextColor(...rgb);
+      const lines = doc.splitTextToSize(String(text), maxW) as string[];
+      lines.forEach((ln: string) => {
+        if (y > 272) { doc.addPage(); y = margin; }
+        doc.text(ln, margin, y);
+        y += size * 0.45;
+      });
+      y += 2;
+    }
+
+    function rule() {
+      doc.setDrawColor(210, 210, 210);
+      doc.line(margin, y, 190, y);
+      y += 6;
+    }
+
+    // Header
+    addLine('STUDYBUILD — EXAMINER REPORT', 14, 'bold', [79, 70, 229]);
+    addLine(session!.material_name, 11, 'bold');
+    addLine(`${dateStr}  ·  ${DIFF_LABELS[diff] || diff}  ·  ${exchangeCount} question${exchangeCount !== 1 ? 's' : ''}`, 9, 'normal', [120, 120, 120]);
+    y += 3; rule();
+
+    // Transcript
+    addLine('TRANSCRIPT', 10, 'bold', [79, 70, 229]);
+    y += 1;
+    let qNum = 0;
+    messages.forEach(msg => {
+      if (msg.role === 'assistant') {
+        qNum++;
+        addLine(`Q${qNum}:`, 10, 'bold', [30, 30, 30]);
+        addLine(msg.content, 10, 'normal', [30, 30, 30]);
+      } else {
+        addLine('Answer:', 9, 'bold', [100, 100, 100]);
+        addLine(msg.content, 9, 'italic', [80, 80, 80]);
+      }
+      y += 1;
+    });
+
+    if (gap) {
+      y += 2; rule();
+      addLine('GAP ANALYSIS', 10, 'bold', [79, 70, 229]);
+      y += 1;
+      if (gap.solid.length) { addLine('What you know', 9, 'bold', [16, 185, 129]); gap.solid.forEach(s => addLine(`• ${s}`, 9)); y += 1; }
+      if (gap.shaky.length) { addLine('Shaky ground',  9, 'bold', [245, 158, 11]); gap.shaky.forEach(s => addLine(`• ${s}`, 9)); y += 1; }
+      if (gap.gaps.length)  { addLine('Gaps found',    9, 'bold', [239, 68, 68]);  gap.gaps.forEach(s  => addLine(`• ${s}`, 9)); y += 1; }
+      addLine('Summary', 9, 'bold'); addLine(gap.summary, 9); y += 1;
+      if (gap.nextSteps.length) { addLine('What to study next', 9, 'bold'); gap.nextSteps.forEach((s, i) => addLine(`${i + 1}. ${s}`, 9)); }
+    }
+
+    doc.save(`examiner-session-${dateStr}.pdf`);
+  }
 
   return (
     <AppLayout>
@@ -334,17 +434,27 @@ export default function ExaminerSessionPage() {
             )}
 
             {/* CTAs */}
-            <div className="flex gap-3">
-              <Button className="flex-1 justify-center" onClick={() => {
-                const weakAreas = [...gap.shaky, ...gap.gaps].join(', ');
-                sessionStorage.setItem('examiner_reexamine', JSON.stringify({ focusArea: weakAreas, difficulty: session.difficulty }));
-                navigate('/examiner');
-              }}>
-                <RotateCcw className="w-4 h-4" /> Re-examine weak areas
-              </Button>
-              <Button variant="ghost" className="flex-1 justify-center" onClick={() => navigate('/dashboard')}>
-                Dashboard
-              </Button>
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-3">
+                <Button className="flex-1 justify-center" onClick={() => {
+                  const weakAreas = [...gap.shaky, ...gap.gaps].join(', ');
+                  sessionStorage.setItem('examiner_reexamine', JSON.stringify({ focusArea: weakAreas, difficulty: session.difficulty }));
+                  navigate('/examiner');
+                }}>
+                  <RotateCcw className="w-4 h-4" /> Re-examine weak areas
+                </Button>
+                <Button variant="ghost" className="flex-1 justify-center" onClick={() => navigate('/dashboard')}>
+                  Dashboard
+                </Button>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="secondary" className="flex-1 justify-center" onClick={exportPDF}>
+                  <Download className="w-4 h-4" /> Download PDF
+                </Button>
+                <Button variant="secondary" className="flex-1 justify-center" onClick={exportMarkdown}>
+                  <FileText className="w-4 h-4" /> Download Markdown
+                </Button>
+              </div>
             </div>
           </div>
         )}
