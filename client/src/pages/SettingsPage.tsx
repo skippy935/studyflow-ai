@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, Trash2, Moon, Sun, Monitor } from 'lucide-react';
+import { User, Lock, Trash2, Moon, Sun, Monitor, Trophy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
@@ -8,6 +8,7 @@ import Input     from '../components/ui/Input';
 import { apiFetch } from '../lib/api';
 import { getUser, setSession, clearSession } from '../lib/auth';
 import { useTranslation } from '../i18n';
+import type { Stats } from '../types';
 
 type ThemePreference = 'light' | 'dark' | 'system';
 
@@ -28,6 +29,11 @@ export default function SettingsPage() {
   const [uiLang, setUiLang]           = useState(user?.uiLanguage || 'en');
   const [currentPw, setCurrentPw]     = useState('');
   const [newPw, setNewPw]             = useState('');
+  const [stats, setStats]             = useState<Stats | null>(null);
+
+  useEffect(() => {
+    apiFetch<Stats>('/stats').then(setStats).catch(() => {});
+  }, []);
   const [saving, setSaving]           = useState(false);
   const [themePref, setThemePref]     = useState<ThemePreference>(
     () => (localStorage.getItem('sb_theme_pref') as ThemePreference) || 'system'
@@ -106,6 +112,41 @@ export default function SettingsPage() {
             <Button loading={saving} onClick={saveProfile}>{t.settings.save}</Button>
           </div>
         </div>
+
+        {/* XP & Badges */}
+        {stats && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 mb-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Trophy className="w-4 h-4 text-slate-500" />
+              <h2 className="font-bold text-slate-900 dark:text-slate-100">Level & Badges</h2>
+            </div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-lg font-extrabold text-indigo-600 dark:text-indigo-400">Level {stats.level}</span>
+              <span className="text-xs text-slate-400">{stats.xpProgress.current} / {stats.xpProgress.needed} XP</span>
+            </div>
+            <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-4">
+              <div
+                className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
+                style={{ width: `${Math.min(100, Math.round((stats.xpProgress.current / stats.xpProgress.needed) * 100))}%` }}
+              />
+            </div>
+            {stats.badges.length === 0 ? (
+              <p className="text-sm text-slate-400">No badges yet — keep studying!</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {stats.badges.map(b => (
+                  <div key={b.key} title={b.desc} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950">
+                    <span className="text-xl">{b.emoji}</span>
+                    <div>
+                      <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">{b.label}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{b.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Appearance */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 mb-5">

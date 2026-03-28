@@ -6,6 +6,7 @@ import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
 import Spinner   from '../components/ui/Spinner';
 import { apiFetch } from '../lib/api';
+import toast from 'react-hot-toast';
 import type { Quiz, QuizQuestion } from '../types';
 
 type Phase = 'intro' | 'quiz' | 'results';
@@ -72,10 +73,10 @@ export default function QuizPage() {
     if (phase !== 'results' || !quiz) return;
     const wrongIds = wrongMcqs.map(q => q.id);
     if (wrongIds.length === 0) return;
-    apiFetch(`/quizzes/${quiz.id}/results`, {
+    apiFetch<{ newBadges?: string[] }>(`/quizzes/${quiz.id}/results`, {
       method: 'POST',
       body: JSON.stringify({ wrongIds }),
-    }).catch(() => {});
+    }).then(d => { if (d.newBadges?.length) d.newBadges.forEach(b => toast.success(`🏅 Badge unlocked: ${b.replace(/_/g, ' ')}`, { duration: 4000 })); }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 

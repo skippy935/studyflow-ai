@@ -2,6 +2,7 @@ import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
 import { generateFlashcards, generateQuiz, generateSummary } from '../services/aiService';
+import { awardXP } from '../services/gamification';
 
 const router = Router();
 router.use(auth);
@@ -17,7 +18,8 @@ router.post('/generate', async (req: AuthRequest, res) => {
     const generated = await generateFlashcards(notes.trim(), language);
     await prisma.card.createMany({ data: generated.map(c => ({ deckId: deck.id, front: c.front, back: c.back, difficulty: c.difficulty })) });
     const cards = await prisma.card.findMany({ where: { deckId: deck.id }, orderBy: { id: 'asc' } });
-    res.status(201).json({ deck, cards });
+    const { newBadges } = await awardXP(req.userId!, 10, 'deck_created');
+    res.status(201).json({ deck, cards, newBadges });
   } catch (err: unknown) {
     await prisma.deck.delete({ where: { id: deck.id } });
     console.error('Flashcard generation error:', err);
@@ -94,7 +96,8 @@ router.post('/study-sessions', async (req: AuthRequest, res) => {
     data: { streak: newStreak, lastStudyDate: new Date(), totalCardsLearned: { increment: studied } }
   });
 
-  res.status(201).json({ success: true, streak: newStreak });
+  const { xp, newBadges } = await awardXP(userId, studied * 2, 'study_session');
+  res.status(201).json({ success: true, streak: newStreak, xp, newBadges });
 });
 
 export default router;

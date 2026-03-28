@@ -17,6 +17,8 @@ import examinerRoutes from './routes/examiner';
 import extractRoutes  from './routes/extract';
 import subjectRoutes  from './routes/subjects';
 import plannerRoutes  from './routes/planner';
+import tutorRoutes    from './routes/tutor';
+import { startWeeklyEmailCron } from './services/weeklyEmail';
 
 const app  = express();
 const PORT = process.env.PORT || 8080;
@@ -36,6 +38,7 @@ app.use('/api/examiner',  examinerRoutes);
 app.use('/api/extract',   extractRoutes);
 app.use('/api/subjects',  subjectRoutes);
 app.use('/api/planner',   plannerRoutes);
+app.use('/api/tutor',     tutorRoutes);
 
 // Serve built React app
 const clientDist = path.join(__dirname, '../client/dist');
@@ -46,4 +49,5 @@ app.get('*', (_req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 StudyBuild running at http://localhost:${PORT}`);
+  startWeeklyEmailCron();
 });

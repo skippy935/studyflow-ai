@@ -7,6 +7,7 @@ import Button    from '../components/ui/Button';
 import Spinner   from '../components/ui/Spinner';
 import { apiFetch } from '../lib/api';
 import { useTranslation } from '../i18n';
+import toast from 'react-hot-toast';
 import type { Deck, Card } from '../types';
 
 const DIFF_COLOR = { easy: 'bg-emerald-100 text-emerald-700', medium: 'bg-amber-100 text-amber-700', hard: 'bg-red-100 text-red-700' };
@@ -36,7 +37,9 @@ export default function StudyPage() {
     const next = index + 1;
     if (next >= cards.length) {
       setDone(true);
-      apiFetch('/ai/study-sessions', { method: 'POST', body: JSON.stringify({ deck_id: id, cards_studied: cards.length, again_count: ratings[0], hard_count: ratings[1], good_count: ratings[2], easy_count: ratings[3] }) }).catch(() => {});
+      apiFetch<{ xp?: number; newBadges?: string[] }>('/ai/study-sessions', { method: 'POST', body: JSON.stringify({ deck_id: id, cards_studied: cards.length, again_count: ratings[0], hard_count: ratings[1], good_count: ratings[2], easy_count: ratings[3] }) })
+        .then(d => { if (d.newBadges?.length) d.newBadges.forEach(b => toast.success(`🏅 Badge unlocked: ${b.replace(/_/g, ' ')}`, { duration: 4000 })); })
+        .catch(() => {});
     } else {
       setIndex(next);
       setFlipped(false);

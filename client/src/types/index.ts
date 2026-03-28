@@ -26,6 +26,13 @@ export interface Deck {
   _count?: { cards: number };
 }
 
+export interface Badge {
+  key: string;
+  label: string;
+  emoji: string;
+  desc: string;
+}
+
 export interface Stats {
   streak: number;
   lastStudyDate: string | null;
@@ -33,6 +40,10 @@ export interface Stats {
   weakCards: number;
   dueToday: number;
   recentSessions: { id: number; cardsStudied: number; studiedAt: string; deck: { name: string; color: string } }[];
+  xp: number;
+  level: number;
+  xpProgress: { current: number; needed: number; level: number };
+  badges: Badge[];
 }
 
 export interface Card {

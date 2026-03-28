@@ -10,7 +10,7 @@ import StreakCalendar from '../components/ui/StreakCalendar';
 import { apiFetch } from '../lib/api';
 import { getUser }  from '../lib/auth';
 import { useTranslation } from '../i18n';
-import type { Deck, Quiz, Summary, Stats, Subject } from '../types';
+import type { Deck, Quiz, Summary, Stats, Subject, Badge } from '../types';
 
 type Tab = 'decks' | 'quizzes' | 'summaries' | 'examiner';
 
@@ -180,6 +180,34 @@ export default function DashboardPage() {
           <StatCard icon={<Brain className="w-5 h-5 text-indigo-500" />} value={stats.totalCardsLearned} label={t.stats.cards} bg="bg-indigo-50 dark:bg-indigo-950" />
           <StatCard icon={<AlertTriangle className="w-5 h-5 text-red-500" />} value={stats.weakCards} label={t.stats.weak} bg="bg-red-50 dark:bg-red-950" />
           <StatCard icon={<Calendar className="w-5 h-5 text-emerald-500" />} value={stats.dueToday} label={t.stats.due} bg="bg-emerald-50 dark:bg-emerald-950" />
+        </div>
+      )}
+
+      {/* XP / Level bar */}
+      {stats && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-extrabold text-indigo-600 dark:text-indigo-400">Lv.{stats.level}</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">{stats.xp} XP total</span>
+            </div>
+            <span className="text-xs text-slate-400">{stats.xpProgress.current} / {stats.xpProgress.needed} XP to next level</span>
+          </div>
+          <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
+            <div
+              className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-700"
+              style={{ width: `${Math.min(100, Math.round((stats.xpProgress.current / stats.xpProgress.needed) * 100))}%` }}
+            />
+          </div>
+          {stats.badges.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {stats.badges.map((b: Badge) => (
+                <span key={b.key} title={b.desc} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
+                  {b.emoji} {b.label}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

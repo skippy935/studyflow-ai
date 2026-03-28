@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
+import { awardXP } from '../services/gamification';
 
 const router = Router();
 router.use(auth);
@@ -49,7 +50,8 @@ router.post('/:id/results', async (req: AuthRequest, res) => {
       });
     }
 
-    res.json({ saved: wrongIds.length });
+    const { xp, newBadges } = await awardXP(req.userId!, 20, 'quiz_complete');
+    res.json({ saved: wrongIds.length, xp, newBadges });
   } catch (err) {
     res.status(500).json({ error: 'Failed to save results' });
   }

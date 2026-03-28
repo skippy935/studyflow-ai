@@ -8,6 +8,7 @@ import Input  from '../../components/ui/Input';
 import { apiFetch } from '../../lib/api';
 import { setSession } from '../../lib/auth';
 import { useTranslation } from '../../i18n';
+import GoogleAuthButton from '../../components/ui/GoogleAuthButton';
 import type { User } from '../../types';
 
 export default function LoginPage() {
@@ -59,6 +60,12 @@ export default function LoginPage() {
             {error && <p className="text-sm text-red-500">{error}</p>}
             <Button type="submit" loading={loading} className="w-full" size="lg">{t.auth.loginBtn}</Button>
           </form>
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+            <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">or</span>
+            <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+          </div>
+          <GoogleAuthButton label="Sign in with Google" />
         </div>
       </motion.div>
     </div>

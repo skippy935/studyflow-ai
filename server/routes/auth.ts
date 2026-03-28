@@ -1,8 +1,11 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const router = Router();
 
@@ -80,6 +83,50 @@ router.put('/me', auth, async (req: AuthRequest, res) => {
     res.json({ user: { id: updated.id, email: updated.email, displayName: updated.displayName, uiLanguage: updated.uiLanguage } });
   } catch (err) {
     res.status(500).json({ error: 'Update failed' });
+  }
+});
+
+// POST /api/auth/google — verify Google ID token, upsert user, return JWT
+router.post('/google', async (req, res) => {
+  const { idToken } = req.body || {};
+  if (!idToken) { res.status(400).json({ error: 'idToken required' }); return; }
+
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    if (!payload?.email) { res.status(401).json({ error: 'Invalid Google token' }); return; }
+
+    const { email, name, sub: googleId } = payload;
+
+    let user = await (prisma.user as any).findFirst({
+      where: { OR: [{ googleId }, { email: email.toLowerCase() }] },
+    });
+
+    if (user) {
+      if (!user.googleId) {
+        user = await (prisma.user as any).update({ where: { id: user.id }, data: { googleId } });
+      }
+    } else {
+      user = await (prisma.user as any).create({
+        data: {
+          email: email.toLowerCase(),
+          passwordHash: '',
+          displayName: name || email.split('@')[0],
+          googleId,
+        },
+      });
+    }
+
+    await prisma.user.update({ where: { id: user!.id }, data: { lastLogin: new Date() } });
+
+    const token = jwt.sign({ userId: user!.id }, process.env.JWT_SECRET!, { expiresIn: '30d' });
+    res.json({ token, user: { id: user!.id, email: user!.email, displayName: user!.displayName, uiLanguage: user!.uiLanguage } });
+  } catch (err) {
+    console.error('Google OAuth error:', err);
+    res.status(401).json({ error: 'Google sign-in failed' });
   }
 });
 

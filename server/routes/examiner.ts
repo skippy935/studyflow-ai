@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
 import { buildSystemPrompt, GAP_ANALYSIS_TRIGGER, parseGapAnalysis } from '../services/examinerPrompts';
+import { awardXP } from '../services/gamification';
 
 const router = Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -154,6 +155,9 @@ router.post('/sessions/:id/message', auth, async (req: AuthRequest, res) => {
 
     const gapAnalysis = parseGapAnalysis(fullText);
     const isCompleted = !!gapAnalysis || triggerGapAnalysis;
+    if (isCompleted && !session.completed) {
+      await awardXP(req.userId!, 25, 'exam_complete');
+    }
     const newExchangeCount = isInit ? 0 : session.exchangeCount + (content.trim() && !triggerGapAnalysis ? 1 : 0);
 
     await prisma.examinerSession.update({

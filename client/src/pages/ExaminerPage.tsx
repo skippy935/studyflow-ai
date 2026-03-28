@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, FileText, ChevronRight, AlertCircle } from 'lucide-react';
+import { Upload, FileText, ChevronRight, AlertCircle, Video } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import Button from '../components/ui/Button';
 import { apiFetch } from '../lib/api';
@@ -32,7 +32,8 @@ export default function ExaminerPage() {
   const [focusArea, setFocusArea] = useState('');
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState('');
-  const [showFull, setShowFull] = useState(false);
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [youtubeFetching, setYoutubeFetching] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const extractFile = useCallback(async (file: File) => {
@@ -54,6 +55,26 @@ export default function ExaminerPage() {
     } catch { setExtractError('Network error. Please try again.'); }
     finally { setExtracting(false); }
   }, []);
+
+  const handleYoutube = useCallback(async () => {
+    if (!youtubeUrl.trim()) return;
+    setYoutubeFetching(true);
+    setExtractError('');
+    try {
+      const data = await apiFetch<{ text: string; videoId: string }>('/upload/youtube', {
+        method: 'POST',
+        body: JSON.stringify({ url: youtubeUrl.trim() }),
+      });
+      const words = data.text.trim().split(/\s+/).filter(Boolean).length;
+      if (words < 50) { setExtractError('Transcript too short (under 50 words).'); return; }
+      setMaterial({ text: data.text.trim(), wordCount: words, fileName: `YouTube: ${data.videoId}`, fileType: 'paste' });
+      setStep('settings');
+    } catch (e: any) {
+      setExtractError(e.message || 'Could not fetch transcript.');
+    } finally {
+      setYoutubeFetching(false);
+    }
+  }, [youtubeUrl]);
 
   const handlePaste = useCallback(() => {
     const words = pasteText.trim().split(/\s+/).filter(Boolean).length;
@@ -151,6 +172,29 @@ export default function ExaminerPage() {
                   {extractError}
                 </div>
               )}
+
+              {/* YouTube */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">or YouTube URL</span>
+                <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+              </div>
+              <div className="flex gap-2 mb-4">
+                <div className="flex items-center flex-1 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-900">
+                  <Video className="w-4 h-4 text-red-500 mx-3 flex-shrink-0" />
+                  <input
+                    type="url"
+                    value={youtubeUrl}
+                    onChange={e => setYoutubeUrl(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleYoutube()}
+                    placeholder="https://youtube.com/watch?v=..."
+                    className="flex-1 py-2.5 pr-3 text-sm bg-transparent text-slate-900 dark:text-slate-100 focus:outline-none placeholder-slate-400"
+                  />
+                </div>
+                <Button size="sm" variant="ghost" disabled={!youtubeUrl.trim() || youtubeFetching} onClick={handleYoutube}>
+                  {youtubeFetching ? 'Fetching…' : 'Use →'}
+                </Button>
+              </div>
 
               {/* Paste */}
               <div className="flex items-center gap-3 mb-4">

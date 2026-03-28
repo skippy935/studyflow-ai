@@ -8,6 +8,7 @@ import Input  from '../../components/ui/Input';
 import { apiFetch } from '../../lib/api';
 import { setSession } from '../../lib/auth';
 import { useTranslation } from '../../i18n';
+import GoogleAuthButton from '../../components/ui/GoogleAuthButton';
 import type { User } from '../../types';
 
 const FIELDS = ['email', 'details', 'welcome'] as const;
@@ -69,6 +70,12 @@ export default function RegisterPage() {
                   <Button size="lg" className="w-full" onClick={() => { if (email) setStep(1); }} disabled={!email}>
                     {lang === 'de' ? 'Weiter →' : 'Continue →'}
                   </Button>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">or</span>
+                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                  </div>
+                  <GoogleAuthButton label="Sign up with Google" />
                 </div>
               </motion.div>
             )}

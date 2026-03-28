@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
+import { levelFromXP, xpForNextLevel, BADGE_DEFS } from '../services/gamification';
 
 const router = Router();
 router.use(auth);
@@ -46,7 +47,7 @@ router.get('/', async (req: AuthRequest, res) => {
   const [user, weakCards, dueToday, recentSessions] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { streak: true, lastStudyDate: true, totalCardsLearned: true }
+      select: { streak: true, lastStudyDate: true, totalCardsLearned: true, xp: true, badges: true }
     }),
     prisma.card.count({
       where: { deck: { userId }, easiness: { lt: 1.8 } }
@@ -62,13 +63,21 @@ router.get('/', async (req: AuthRequest, res) => {
     })
   ]);
 
+  const xp = (user as any)?.xp ?? 0;
+  const badgeKeys: string[] = JSON.parse((user as any)?.badges || '[]');
+  const badges = badgeKeys.map(k => ({ key: k, ...BADGE_DEFS[k] })).filter(b => b.label);
+
   res.json({
     streak: user?.streak ?? 0,
     lastStudyDate: user?.lastStudyDate ?? null,
     totalCardsLearned: user?.totalCardsLearned ?? 0,
     weakCards,
     dueToday,
-    recentSessions
+    recentSessions,
+    xp,
+    level: levelFromXP(xp),
+    xpProgress: xpForNextLevel(xp),
+    badges,
   });
 });
 

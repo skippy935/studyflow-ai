@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Pencil, Trash2, Play, Download, Upload } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, Play, Download, Upload, Bot } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
@@ -128,6 +128,9 @@ export default function DeckPage() {
               </Button>
               <input id="anki-import" type="file" accept=".txt,.csv,.tsv" className="hidden" onChange={importTSV} />
             </label>
+            <Button variant="ghost" onClick={() => navigate(`/tutor/${deck.id}`)}>
+              <Bot className="w-4 h-4" /> AI Tutor
+            </Button>
             <Button onClick={() => navigate(`/study/${deck.id}`)}>
               <Play className="w-4 h-4" /> Study Now
             </Button>
