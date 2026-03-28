@@ -3,7 +3,6 @@ import { Resend } from 'resend';
 import prisma from '../lib/prisma';
 import { levelFromXP } from './gamification';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.EMAIL_FROM || 'StudyFlow <noreply@studyflow.app>';
 
 async function sendWeeklyEmails() {
@@ -30,6 +29,7 @@ async function sendWeeklyEmails() {
 
       const html = buildEmailHtml({ name, cardsThisWeek, streak: user.streak ?? 0, level, decksCount, xp: user.xp ?? 0 });
 
+      const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
         from: FROM,
         to: user.email,
