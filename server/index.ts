@@ -19,6 +19,8 @@ import subjectRoutes  from './routes/subjects';
 import plannerRoutes  from './routes/planner';
 import tutorRoutes        from './routes/tutor';
 import leaderboardRoutes  from './routes/leaderboard';
+import teacherRoutes      from './routes/teacher';
+import classesRoutes      from './routes/classes';
 import { startWeeklyEmailCron } from './services/weeklyEmail';
 
 const app  = express();
@@ -41,6 +43,8 @@ app.use('/api/subjects',  subjectRoutes);
 app.use('/api/planner',   plannerRoutes);
 app.use('/api/tutor',        tutorRoutes);
 app.use('/api/leaderboard',  leaderboardRoutes);
+app.use('/api/teacher',      teacherRoutes);
+app.use('/api/classes',      classesRoutes);
 
 // Serve built React app
 const clientDist = path.join(__dirname, '../client/dist');

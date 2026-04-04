@@ -36,6 +36,8 @@ model User {
   learningStyle     String?
   preferredStudyTime String?
 
+  userType          String         @default("student")
+
   decks             Deck[]
   quizzes           Quiz[]
   summaries         Summary[]
@@ -44,6 +46,72 @@ model User {
   subjects          Subject[]
   studyTasks        StudyTask[]
   missedQuestions   MissedQuestion[]
+  teacherProfile    TeacherProfile?
+  classMembers      ClassMember[]
+  submissions       Submission[]
+}
+
+model TeacherProfile {
+  id                 Int      @id @default(autoincrement())
+  userId             Int      @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolName         String   @default("")
+  verificationStatus String   @default("pending")
+  subjects           String   @default("[]")
+  classes            Class[]
+  createdAt          DateTime @default(now())
+}
+
+model Class {
+  id          Int            @id @default(autoincrement())
+  teacherId   Int
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  name        String
+  subject     String         @default("")
+  gradeLevel  String         @default("")
+  joinCode    String         @unique
+  isArchived  Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  members     ClassMember[]
+  assignments Assignment[]
+}
+
+model ClassMember {
+  id       Int      @id @default(autoincrement())
+  classId  Int
+  class    Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId   Int
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([classId, userId])
+}
+
+model Assignment {
+  id          Int          @id @default(autoincrement())
+  classId     Int
+  class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  title       String
+  description String       @default("")
+  dueDate     DateTime?
+  maxXp       Int          @default(10)
+  createdAt   DateTime     @default(now())
+  submissions Submission[]
+}
+
+model Submission {
+  id           Int        @id @default(autoincrement())
+  assignmentId Int
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    Int
+  student      User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  content      String     @default("")
+  submittedAt  DateTime   @default(now())
+  grade        Int?
+  feedback     String     @default("")
+  status       String     @default("submitted")
+
+  @@unique([assignmentId, studentId])
 }
 
 model Subject {
