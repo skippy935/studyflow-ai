@@ -26,6 +26,15 @@ model User {
   xp                Int            @default(0)
   badges            String         @default("[]")
   googleId          String?        @unique
+  emailVerified     Boolean        @default(false)
+  verifyCode        String?
+  verifyCodeExpiry  DateTime?
+  verifyAttempts    Int            @default(0)
+  gradeLevel        String?
+  schoolType        String?
+  bundesland        String?
+  learningStyle     String?
+  preferredStudyTime String?
 
   decks             Deck[]
   quizzes           Quiz[]

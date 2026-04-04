@@ -24,12 +24,16 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const data = await apiFetch<{ token: string; user: User }>('/auth/login', {
+      const data = await apiFetch<{ token: string; user: User; emailVerified: boolean }>('/auth/login', {
         method: 'POST', body: JSON.stringify({ email, password })
       });
-      setSession(data.token, data.user);
-      toast.success('Welcome back!');
-      navigate('/dashboard');
+      setSession(data.token, { ...data.user, emailVerified: data.emailVerified } as any);
+      if (data.emailVerified === false) {
+        navigate('/verify-email');
+      } else {
+        toast.success('Welcome back!');
+        navigate('/dashboard');
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

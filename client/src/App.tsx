@@ -1,8 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { isLoggedIn } from './lib/auth';
+import { isLoggedIn, isEmailVerified } from './lib/auth';
 import LandingPage    from './pages/LandingPage';
 import LoginPage      from './pages/auth/LoginPage';
 import RegisterPage   from './pages/auth/RegisterPage';
+import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import DashboardPage  from './pages/DashboardPage';
 import CreatePage     from './pages/CreatePage';
 import DeckPage       from './pages/DeckPage';
@@ -17,7 +18,9 @@ import MissedQuestionsPage  from './pages/MissedQuestionsPage';
 import TutorPage            from './pages/TutorPage';
 
 function Protected({ children }: { children: React.ReactNode }) {
-  return isLoggedIn() ? <>{children}</> : <Navigate to="/login" replace />;
+  if (!isLoggedIn()) return <Navigate to="/login" replace />;
+  if (!isEmailVerified()) return <Navigate to="/verify-email" replace />;
+  return <>{children}</>;
 }
 
 function PublicOnly({ children }: { children: React.ReactNode }) {
@@ -28,8 +31,9 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login"    element={<PublicOnly><LoginPage /></PublicOnly>} />
-      <Route path="/register" element={<PublicOnly><RegisterPage /></PublicOnly>} />
+      <Route path="/login"        element={<PublicOnly><LoginPage /></PublicOnly>} />
+      <Route path="/register"     element={<PublicOnly><RegisterPage /></PublicOnly>} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/dashboard"    element={<Protected><DashboardPage /></Protected>} />
       <Route path="/create"       element={<Protected><CreatePage /></Protected>} />
       <Route path="/deck/:id"     element={<Protected><DeckPage /></Protected>} />

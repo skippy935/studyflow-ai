@@ -24,3 +24,16 @@ export function clearSession(): void {
 export function isLoggedIn(): boolean {
   return !!getToken();
 }
+
+export function isEmailVerified(): boolean {
+  const user = getUser();
+  // Default true for existing users who predate verification
+  return (user as any)?.emailVerified !== false;
+}
+
+export function setEmailVerified(): void {
+  const user = getUser();
+  if (user) {
+    localStorage.setItem('sb_user', JSON.stringify({ ...user, emailVerified: true }));
+  }
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, Trash2, Moon, Sun, Monitor, Trophy } from 'lucide-react';
+import { User, Lock, Trash2, Moon, Sun, Monitor, Trophy, GraduationCap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
@@ -29,6 +29,11 @@ export default function SettingsPage() {
   const [uiLang, setUiLang]           = useState(user?.uiLanguage || 'en');
   const [currentPw, setCurrentPw]     = useState('');
   const [newPw, setNewPw]             = useState('');
+  const [gradeLevel, setGradeLevel]   = useState((user as any)?.gradeLevel || '');
+  const [schoolType, setSchoolType]   = useState((user as any)?.schoolType || '');
+  const [bundesland, setBundesland]   = useState((user as any)?.bundesland || '');
+  const [learningStyle, setLearningStyle]         = useState((user as any)?.learningStyle || '');
+  const [preferredStudyTime, setPreferredStudyTime] = useState((user as any)?.preferredStudyTime || '');
   const [stats, setStats]             = useState<Stats | null>(null);
 
   useEffect(() => {
@@ -49,7 +54,7 @@ export default function SettingsPage() {
     try {
       const data = await apiFetch<{ user: { id: number; email: string; displayName: string; uiLanguage: string } }>('/auth/me', {
         method: 'PUT' as unknown as 'GET',
-        body: JSON.stringify({ displayName, uiLanguage: uiLang })
+        body: JSON.stringify({ displayName, uiLanguage: uiLang, gradeLevel, schoolType, bundesland, learningStyle, preferredStudyTime })
       });
       const token = localStorage.getItem('sb_token')!;
       setSession(token, { ...data.user, subscriptionTier: user?.subscriptionTier || 'free' });
@@ -110,6 +115,69 @@ export default function SettingsPage() {
               </div>
             </div>
             <Button loading={saving} onClick={saveProfile}>{t.settings.save}</Button>
+          </div>
+        </div>
+
+        {/* Study Profile */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 mb-5">
+          <div className="flex items-center gap-2 mb-5">
+            <GraduationCap className="w-4 h-4 text-slate-500" />
+            <h2 className="font-bold text-slate-900 dark:text-slate-100">Study Profile</h2>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Grade Level</label>
+              <select value={gradeLevel} onChange={e => setGradeLevel(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">Select grade level</option>
+                {['5','6','7','8','9','10','11','12','University'].map(g => <option key={g} value={g}>{g === 'University' ? 'University / College' : `Grade ${g}`}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">School Type</label>
+              <select value={schoolType} onChange={e => setSchoolType(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">Select school type</option>
+                {['Gymnasium','Realschule','Hauptschule','Gesamtschule','Berufsschule','University','Other'].map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bundesland</label>
+              <select value={bundesland} onChange={e => setBundesland(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">Select Bundesland</option>
+                {['Baden-Württemberg','Bayern','Berlin','Brandenburg','Bremen','Hamburg','Hessen','Mecklenburg-Vorpommern','Niedersachsen','Nordrhein-Westfalen','Rheinland-Pfalz','Saarland','Sachsen','Sachsen-Anhalt','Schleswig-Holstein','Thüringen'].map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Learning Style</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'visual',    label: 'Visual',    desc: 'Diagrams & images' },
+                  { key: 'reading',   label: 'Reading',   desc: 'Notes & text' },
+                  { key: 'practice',  label: 'Practice',  desc: 'Exercises & quizzes' },
+                  { key: 'auditory',  label: 'Auditory',  desc: 'Listen & discuss' },
+                ].map(({ key, label, desc }) => (
+                  <button key={key} onClick={() => setLearningStyle(key)}
+                    className={`text-left px-3 py-2.5 rounded-xl border-2 transition-all ${learningStyle === key ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950' : 'border-slate-200 dark:border-slate-700'}`}>
+                    <p className={`text-sm font-semibold ${learningStyle === key ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-300'}`}>{label}</p>
+                    <p className="text-xs text-slate-400">{desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Preferred Study Time</label>
+              <div className="flex gap-2 flex-wrap">
+                {['Morning','Afternoon','Evening','Night'].map(t => (
+                  <button key={t} onClick={() => setPreferredStudyTime(t)}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all ${preferredStudyTime === t ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950 text-indigo-600' : 'border-slate-200 dark:border-slate-700 text-slate-500'}`}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Button loading={saving} onClick={saveProfile}>Save Study Profile</Button>
           </div>
         </div>
 

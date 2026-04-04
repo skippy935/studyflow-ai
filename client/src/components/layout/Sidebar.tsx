@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Plus, Settings, LogOut, Zap, Menu, X, Moon, Sun, CalendarCheck } from 'lucide-react';
+import { LayoutDashboard, Plus, Settings, LogOut, Zap, Moon, Sun, CalendarCheck, GraduationCap, User } from 'lucide-react';
 import { clearSession, getUser } from '../../lib/auth';
 import { useTranslation } from '../../i18n';
 
@@ -12,11 +11,18 @@ const links = [
   { to: '/settings',  icon: Settings,        labelKey: 'settings'  as const },
 ];
 
+const bottomNavLinks = [
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
+  { to: '/create',    icon: Plus,            label: 'Create' },
+  { to: '/examiner',  icon: GraduationCap,   label: 'Exam' },
+  { to: '/planner',   icon: CalendarCheck,   label: 'Plan' },
+  { to: '/settings',  icon: User,            label: 'Profile' },
+];
+
 export default function Sidebar() {
   const navigate = useNavigate();
   const { t, lang, setLang } = useTranslation();
   const user = getUser();
-  const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem('sb_theme');
     if (saved) return saved === 'dark';
@@ -57,7 +63,6 @@ export default function Sidebar() {
         {links.map(({ to, icon: Icon, labelKey }) => (
           <NavLink
             key={to} to={to}
-            onClick={() => setOpen(false)}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                 isActive
@@ -109,7 +114,7 @@ export default function Sidebar() {
         <SidebarContent />
       </aside>
 
-      {/* Mobile header */}
+      {/* Mobile header — logo + theme/lang toggles */}
       <header className="lg:hidden fixed top-0 inset-x-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
@@ -117,34 +122,41 @@ export default function Sidebar() {
           </div>
           <span className="font-bold text-slate-900 dark:text-slate-100">StudyBuild</span>
         </div>
-        <button onClick={() => setOpen(true)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-          <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setLang(lang === 'en' ? 'de' : 'en')}
+            className="text-xs font-semibold px-2 py-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+          >
+            {lang.toUpperCase()}
+          </button>
+          <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500">
+            {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        </div>
       </header>
 
-      {/* Mobile drawer */}
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="lg:hidden fixed inset-0 z-40 bg-black/40" onClick={() => setOpen(false)} />
-            <motion.aside
-              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 flex flex-col"
-            >
-              <div className="absolute top-3 right-3">
-                <button onClick={() => setOpen(false)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                  <X className="w-4 h-4 text-slate-500" />
-                </button>
-              </div>
-              <SidebarContent />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Mobile padding */}
+      {/* Mobile top padding */}
       <div className="lg:hidden h-14" />
+
+      {/* Mobile bottom nav */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex">
+        {bottomNavLinks.map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              `flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-xs font-medium transition-colors ${
+                isActive
+                  ? 'text-indigo-600 dark:text-indigo-400'
+                  : 'text-slate-400 dark:text-slate-500'
+              }`
+            }
+          >
+            <Icon className="w-5 h-5" />
+            <span>{label}</span>
+          </NavLink>
+        ))}
+      </nav>
     </>
   );
 }

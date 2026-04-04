@@ -27,11 +27,11 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
     try {
-      const data = await apiFetch<{ token: string; user: User }>('/auth/register', {
+      const data = await apiFetch<{ token: string; user: User; emailVerified: boolean }>('/auth/register', {
         method: 'POST', body: JSON.stringify({ email, password, name })
       });
-      setSession(data.token, data.user);
-      setStep(2);
+      setSession(data.token, { ...data.user, emailVerified: false } as any);
+      navigate('/verify-email');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
