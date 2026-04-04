@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Pencil, Trash2, Play, Download, Upload, Bot } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, Play, Download, Upload, Bot, CloudOff, Cloud } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
 import Spinner   from '../components/ui/Spinner';
 import { apiFetch } from '../lib/api';
+import { saveDeckOffline, removeOfflineDeck, isStoredOffline } from '../lib/offlineDb';
 import type { Deck, Card } from '../types';
 
 const DIFF = { easy: 'bg-emerald-100 text-emerald-700', medium: 'bg-amber-100 text-amber-700', hard: 'bg-red-100 text-red-700' };
@@ -22,12 +23,36 @@ export default function DeckPage() {
   const [adding, setAdding] = useState(false);
   const [newFront, setNewFront] = useState('');
   const [newBack,  setNewBack]  = useState('');
+  const [savedOffline, setSavedOffline] = useState(false);
+  const [offlineSaving, setOfflineSaving] = useState(false);
 
   useEffect(() => {
     apiFetch<{ deck: Deck; cards: Card[] }>(`/decks/${id}`)
       .then(d => { setDeck(d.deck); setCards(d.cards); })
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (id) isStoredOffline(parseInt(id)).then(setSavedOffline);
+  }, [id]);
+
+  async function toggleOffline() {
+    if (!deck) return;
+    setOfflineSaving(true);
+    try {
+      if (savedOffline) {
+        await removeOfflineDeck(deck.id);
+        setSavedOffline(false);
+        toast.success('Removed from offline storage');
+      } else {
+        await saveDeckOffline({ id: deck.id, name: deck.name, color: deck.color, description: deck.description, cards: cards.map(c => ({ id: c.id, front: c.front, back: c.back })), savedAt: Date.now() });
+        setSavedOffline(true);
+        toast.success(`"${deck.name}" saved for offline use`);
+      }
+    } finally {
+      setOfflineSaving(false);
+    }
+  }
 
   async function saveEdit(cardId: number) {
     const { card } = await apiFetch<{ card: Card }>(`/cards/${cardId}`, {
@@ -117,6 +142,13 @@ export default function DeckPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {cards.length > 0 && (
+              <Button size="sm" variant="ghost" onClick={toggleOffline} loading={offlineSaving}
+                title={savedOffline ? 'Remove from offline storage' : 'Save for offline use'}>
+                {savedOffline ? <Cloud className="w-4 h-4 text-indigo-500" /> : <CloudOff className="w-4 h-4" />}
+                {savedOffline ? 'Saved' : 'Offline'}
+              </Button>
+            )}
             {cards.length > 0 && (
               <Button size="sm" variant="ghost" onClick={exportTSV} title="Export for Anki">
                 <Download className="w-4 h-4" /> Export

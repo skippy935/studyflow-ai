@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { LayoutDashboard, Plus, Settings, LogOut, Zap, Moon, Sun, CalendarCheck, GraduationCap, User, Trophy } from 'lucide-react';
 import { clearSession, getUser } from '../../lib/auth';
 import { useTranslation } from '../../i18n';
@@ -24,6 +25,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { t, lang, setLang } = useTranslation();
   const user = getUser();
+  const isOnline = useOnlineStatus();
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem('sb_theme');
     if (saved) return saved === 'dark';
@@ -119,6 +121,11 @@ export default function Sidebar() {
       {/* Mobile header — logo + theme/lang toggles */}
       <header className="lg:hidden fixed top-0 inset-x-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2">
+          {!isOnline && (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 mr-1">
+              Offline
+            </span>
+          )}
           <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
             <Zap className="w-3.5 h-3.5 text-white fill-white" />
           </div>
