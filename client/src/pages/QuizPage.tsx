@@ -1,7 +1,7 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Shuffle, Check, X, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Shuffle, Check, X, ChevronRight, Timer } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
 import Spinner   from '../components/ui/Spinner';
@@ -42,6 +42,38 @@ export default function QuizPage() {
   const [answers, setAnswers]   = useState<Record<number, string>>({});
   const [submitted, setSubmitted] = useState<Record<number, boolean>>({});
   const [reviewAll, setReviewAll] = useState(false);
+
+  // Timer state
+  const [timerEnabled, setTimerEnabled] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(30);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const advanceQuestion = useCallback((qId: number) => {
+    setSubmitted(s => ({ ...s, [qId]: true }));
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  }, []);
+
+  // Reset + start timer when question changes
+  useEffect(() => {
+    if (!timerEnabled || phase !== 'quiz') return;
+    const q = orderedQ[index];
+    if (!q || submitted[q.id]) return;
+    setTimeLeft(timerSeconds);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          advanceQuestion(q.id);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, phase, timerEnabled]);
 
   useEffect(() => {
     apiFetch<{ quiz: Quiz; questions: QuizQuestion[] }>(`/quizzes/${id}`)
@@ -109,12 +141,31 @@ export default function QuizPage() {
               </div>
             </div>
 
-            <button
-              onClick={() => setShuffled(s => !s)}
-              className={`flex items-center gap-2 mx-auto mb-6 px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${shuffled ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950 text-indigo-600' : 'border-slate-200 dark:border-slate-700 text-slate-500'}`}>
-              <Shuffle className="w-4 h-4" />
-              Shuffle questions {shuffled ? '(on)' : '(off)'}
-            </button>
+            <div className="flex flex-col gap-3 mb-6">
+              <button
+                onClick={() => setShuffled(s => !s)}
+                className={`flex items-center gap-2 mx-auto px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${shuffled ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950 text-indigo-600' : 'border-slate-200 dark:border-slate-700 text-slate-500'}`}>
+                <Shuffle className="w-4 h-4" />
+                Shuffle questions {shuffled ? '(on)' : '(off)'}
+              </button>
+              <button
+                onClick={() => setTimerEnabled(s => !s)}
+                className={`flex items-center gap-2 mx-auto px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${timerEnabled ? 'border-amber-400 bg-amber-50 dark:bg-amber-950 text-amber-600' : 'border-slate-200 dark:border-slate-700 text-slate-500'}`}>
+                <Timer className="w-4 h-4" />
+                Timer per question {timerEnabled ? '(on)' : '(off)'}
+              </button>
+              {timerEnabled && (
+                <div className="flex items-center justify-center gap-2 text-sm">
+                  <span className="text-slate-500">Seconds per question:</span>
+                  {[15, 30, 45, 60].map(s => (
+                    <button key={s} onClick={() => setTimerSeconds(s)}
+                      className={`w-9 h-9 rounded-xl text-xs font-bold border-2 transition-all ${timerSeconds === s ? 'border-amber-400 bg-amber-50 dark:bg-amber-950 text-amber-600' : 'border-slate-200 dark:border-slate-700 text-slate-500'}`}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <Button size="lg" className="w-full justify-center" onClick={startQuiz}>
               Start Quiz →
@@ -241,6 +292,11 @@ export default function QuizPage() {
             <motion.div animate={{ width: `${pct}%` }} className="h-full bg-indigo-600 rounded-full" />
           </div>
           <span className="text-xs font-bold text-slate-400 tabular-nums">{index + 1} / {orderedQ.length}</span>
+          {timerEnabled && !isSubmitted && (
+            <span className={`text-xs font-bold tabular-nums w-8 text-right ${timeLeft <= 10 ? 'text-red-500' : 'text-amber-500'}`}>
+              {timeLeft}s
+            </span>
+          )}
         </div>
 
         <motion.div key={q.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
@@ -310,7 +366,7 @@ export default function QuizPage() {
           <Button size="lg" className="w-full justify-center"
             onClick={() => {
               if (!isSubmitted) {
-                setSubmitted(s => ({ ...s, [q.id]: true }));
+                advanceQuestion(q.id);
               } else {
                 if (index + 1 >= orderedQ.length) setPhase('results');
                 else setIndex(i => i + 1);
