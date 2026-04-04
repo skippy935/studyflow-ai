@@ -1,12 +1,13 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Layers, HelpCircle, FileText, Upload, Zap, Link } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Layers, HelpCircle, FileText, Upload, Zap, Link, CheckCircle, AlertCircle, PenLine } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
 import Input     from '../components/ui/Input';
-import { apiFetch, uploadFile } from '../lib/api';
+import { apiFetch, extractFile } from '../lib/api';
+import type { ExtractResult } from '../lib/api';
 import { useTranslation } from '../i18n';
 import type { Deck, Quiz, Summary, Card, QuizQuestion } from '../types';
 
@@ -23,6 +24,8 @@ export default function CreatePage() {
   const [color, setColor]       = useState(COLORS[0]);
   const [loading, setLoading]   = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [extracted, setExtracted] = useState<ExtractResult | null>(null);
+  const [extractedText, setExtractedText] = useState('');
   const [ytUrl, setYtUrl]       = useState('');
   const [ytLoading, setYtLoading] = useState(false);
   const [examDate, setExamDate] = useState('');
@@ -55,15 +58,26 @@ export default function CreatePage() {
 
   async function handleFileUpload(file: File) {
     setUploading(true);
+    setExtracted(null);
+    setExtractedText('');
     try {
-      const result = await uploadFile(file);
-      if (result.text) setNotes(prev => prev ? `${prev}\n\n${result.text}` : result.text);
-      toast.success(`${file.name} uploaded`);
+      const result = await extractFile(file);
+      setExtracted(result);
+      setExtractedText(result.text);
+      toast.success(`${file.name} extracted — ${result.wordCount} words`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(false);
     }
+  }
+
+  function confirmExtract() {
+    if (!extractedText.trim()) return;
+    setNotes(prev => prev ? `${prev}\n\n${extractedText}` : extractedText);
+    setExtracted(null);
+    setExtractedText('');
+    toast.success('Text added to notes');
   }
 
   async function handleGenerate() {
@@ -164,16 +178,64 @@ export default function CreatePage() {
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t.create.upload}</label>
             <div
-              onClick={() => fileRef.current?.click()}
+              onClick={() => !uploading && fileRef.current?.click()}
               onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFileUpload(f); }}
               onDragOver={e => e.preventDefault()}
               className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center cursor-pointer hover:border-indigo-400 transition-colors"
             >
               <Upload className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-              <p className="text-sm text-slate-500">{uploading ? 'Uploading…' : t.create.uploadHint}</p>
-              <input ref={fileRef} type="file" className="hidden" accept=".pdf,.txt,.jpg,.jpeg,.png,.webp"
+              <p className="text-sm text-slate-500">
+                {uploading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin inline-block" />
+                    {extracted?.isHandwriting ? 'Reading handwritten notes…' : 'Extracting text…'}
+                  </span>
+                ) : t.create.uploadHint}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">PDF, DOCX, TXT, JPG, PNG, WEBP · max 50 MB</p>
+              <input ref={fileRef} type="file" className="hidden" accept=".pdf,.docx,.doc,.txt,.md,.jpg,.jpeg,.png,.webp"
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }} />
             </div>
+
+            {/* Extraction preview */}
+            {extracted && (
+              <AnimatePresence>
+                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                  className="mt-3 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  {/* Meta bar */}
+                  <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-xs">
+                    <PenLine className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    <span className="font-semibold text-slate-600 dark:text-slate-300 truncate">{extracted.fileName}</span>
+                    <span className="text-slate-400">{extracted.wordCount} words{extracted.pageCount ? ` · ${extracted.pageCount}p` : ''}</span>
+                    {extracted.isHandwriting && <span className="text-amber-600 font-medium">Handwritten</span>}
+                    <span className={`ml-auto font-bold flex items-center gap-1 ${extracted.confidence >= 85 ? 'text-emerald-600' : extracted.confidence >= 60 ? 'text-amber-600' : 'text-red-500'}`}>
+                      {extracted.confidence >= 85
+                        ? <CheckCircle className="w-3.5 h-3.5" />
+                        : <AlertCircle className="w-3.5 h-3.5" />
+                      }
+                      {extracted.confidence}% readable
+                    </span>
+                  </div>
+                  {/* Editable text */}
+                  <textarea
+                    value={extractedText}
+                    onChange={e => setExtractedText(e.target.value)}
+                    rows={6}
+                    className="w-full px-4 py-3 text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 font-mono resize-y focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-400"
+                    placeholder="Extracted text…"
+                  />
+                  {extracted.illegibleCount > 0 && (
+                    <p className="px-4 pb-2 text-xs text-amber-600">
+                      ⚠ {extracted.illegibleCount} illegible section{extracted.illegibleCount !== 1 ? 's' : ''} marked — edit above to correct them before adding.
+                    </p>
+                  )}
+                  <div className="flex gap-2 px-4 pb-3">
+                    <Button size="sm" onClick={confirmExtract} className="flex-1 justify-center">Add to notes</Button>
+                    <Button size="sm" variant="ghost" onClick={() => { setExtracted(null); setExtractedText(''); }}>Discard</Button>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            )}
           </div>
 
           {/* YouTube URL */}

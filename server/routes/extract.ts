@@ -5,7 +5,17 @@ import { auth, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
+
+// 50MB for free users — premium can be enforced later
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+
+function calcConfidence(text: string): number {
+  if (!text) return 0;
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const illegible = (text.match(/\[illegible\]/gi) || []).length;
+  if (words === 0) return 0;
+  return Math.round(Math.max(0, ((words - illegible) / words) * 100));
+}
 
 router.post('/', auth, upload.single('file'), async (req: AuthRequest, res) => {
   try {
@@ -15,6 +25,7 @@ router.post('/', auth, upload.single('file'), async (req: AuthRequest, res) => {
     const fileName = req.file.originalname;
     let text = '';
     let pageCount: number | undefined;
+    let isHandwriting = false;
 
     if (ext === 'pdf') {
       const pdfParse = require('pdf-parse');
@@ -34,43 +45,82 @@ router.post('/', auth, upload.single('file'), async (req: AuthRequest, res) => {
     } else if (ext === 'txt' || ext === 'md') {
       text = req.file.buffer.toString('utf-8').trim();
 
-    } else if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+    } else if (['jpg', 'jpeg', 'png', 'webp', 'tiff', 'tif', 'heic'].includes(ext)) {
+      // HEIC and TIFF: Anthropic vision does not support them natively
+      if (ext === 'heic' || ext === 'tiff' || ext === 'tif') {
+        res.status(422).json({
+          error: `${ext.toUpperCase()} format is not supported for OCR. Please convert to JPG or PNG first.`
+        }); return;
+      }
+
       const base64 = req.file.buffer.toString('base64');
       const mediaType = req.file.mimetype as 'image/jpeg' | 'image/png' | 'image/webp';
-      const response = await client.messages.create({
+
+      // First detect if it's handwritten or printed
+      const detectResponse = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 16,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: 'Does this image contain handwritten text? Answer only YES or NO.' }
+          ]
+        }]
+      });
+      const detectText = detectResponse.content[0]?.type === 'text' ? detectResponse.content[0].text.trim().toUpperCase() : '';
+      isHandwriting = detectText.startsWith('YES');
+
+      const ocrPrompt = isHandwriting
+        ? `This image contains HANDWRITTEN student notes. Extract every word carefully.
+Rules:
+- Preserve all structure: headings, bullet points, numbered lists, underlines, arrows
+- For words you cannot read with certainty, write [illegible]
+- Do not paraphrase or correct spelling — copy exactly as written
+- Do not add commentary or descriptions of the image
+- If there are diagrams with labels, extract the labels
+Output ONLY the extracted text.`
+        : `Extract ALL text from this image of printed study material.
+Rules:
+- Preserve structure: headings, bullet points, numbered lists, tables
+- For anything unclear, write [illegible]
+- Do not add commentary — output ONLY the extracted text`;
+
+      const ocrResponse = await client.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         messages: [{
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: `Extract ALL text from this image of student notes or study material.
-Preserve the structure (headings, bullet points, numbered lists) as closely as possible.
-Output ONLY the extracted text — no commentary, no description of the image.
-If you cannot read something clearly, write [illegible] in its place.` }
+            { type: 'text', text: ocrPrompt }
           ]
         }]
       });
-      text = response.content[0]?.type === 'text' ? response.content[0].text.trim() : '';
+      text = ocrResponse.content[0]?.type === 'text' ? ocrResponse.content[0].text.trim() : '';
 
     } else {
-      res.status(422).json({ error: `Unsupported file type: .${ext}. Supported: PDF, DOCX, TXT, MD, JPG, PNG` }); return;
+      res.status(422).json({
+        error: `Unsupported file type: .${ext}. Supported: PDF, DOCX, TXT, MD, JPG, PNG, WEBP`
+      }); return;
     }
 
     const wordCount = text.split(/\s+/).filter(Boolean).length;
+    const confidence = calcConfidence(text);
+    const illegibleCount = (text.match(/\[illegible\]/gi) || []).length;
 
     if (wordCount > 50000) {
       res.status(422).json({ error: 'File too long. Maximum 50,000 words. Upload a specific chapter or section.' }); return;
     }
-    if (wordCount < 50) {
-      res.status(422).json({ error: 'Not enough content extracted. Minimum 50 words needed.' }); return;
+    if (wordCount < 10) {
+      res.status(422).json({ error: 'Not enough content extracted. Minimum 10 words needed.' }); return;
     }
 
     const fileType = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? 'image'
       : (ext === 'docx' || ext === 'doc') ? 'docx'
       : ext;
 
-    res.json({ text, wordCount, pageCount, fileName, fileType });
+    res.json({ text, wordCount, pageCount, fileName, fileType, confidence, isHandwriting, illegibleCount });
   } catch (err: unknown) {
     console.error('Extraction error:', err);
     res.status(500).json({ error: 'Extraction failed: ' + String(err) });

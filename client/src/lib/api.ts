@@ -34,3 +34,30 @@ export async function uploadFile(file: File): Promise<{ url: string; text: strin
   if (!res.ok) throw new Error(data.error || 'Upload failed');
   return data;
 }
+
+export interface ExtractResult {
+  text: string;
+  wordCount: number;
+  pageCount?: number;
+  fileName: string;
+  fileType: string;
+  confidence: number;
+  isHandwriting: boolean;
+  illegibleCount: number;
+}
+
+export async function extractFile(file: File): Promise<ExtractResult> {
+  const token = localStorage.getItem('sb_token');
+  const form  = new FormData();
+  form.append('file', file);
+
+  const res = await fetch(`${BASE}/extract`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Extraction failed');
+  return data;
+}
