@@ -16,6 +16,7 @@ import ExaminerSessionPage from './pages/ExaminerSessionPage';
 import PlannerPage          from './pages/PlannerPage';
 import MissedQuestionsPage  from './pages/MissedQuestionsPage';
 import TutorPage            from './pages/TutorPage';
+import LeaderboardPage      from './pages/LeaderboardPage';
 
 function Protected({ children }: { children: React.ReactNode }) {
   if (!isLoggedIn()) return <Navigate to="/login" replace />;
@@ -46,6 +47,7 @@ export default function App() {
       <Route path="/planner"          element={<Protected><PlannerPage /></Protected>} />
       <Route path="/missed-questions" element={<Protected><MissedQuestionsPage /></Protected>} />
       <Route path="/tutor/:id"        element={<Protected><TutorPage /></Protected>} />
+      <Route path="/leaderboard"      element={<Protected><LeaderboardPage /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -1,22 +1,23 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Plus, Settings, LogOut, Zap, Moon, Sun, CalendarCheck, GraduationCap, User } from 'lucide-react';
+import { LayoutDashboard, Plus, Settings, LogOut, Zap, Moon, Sun, CalendarCheck, GraduationCap, User, Trophy } from 'lucide-react';
 import { clearSession, getUser } from '../../lib/auth';
 import { useTranslation } from '../../i18n';
 
 const links = [
-  { to: '/dashboard', icon: LayoutDashboard, labelKey: 'dashboard' as const },
-  { to: '/create',    icon: Plus,            labelKey: 'create'    as const },
-  { to: '/planner',   icon: CalendarCheck,   labelKey: 'planner'   as const },
-  { to: '/settings',  icon: Settings,        labelKey: 'settings'  as const },
+  { to: '/dashboard',    icon: LayoutDashboard, labelKey: 'dashboard'    as const },
+  { to: '/create',       icon: Plus,            labelKey: 'create'       as const },
+  { to: '/planner',      icon: CalendarCheck,   labelKey: 'planner'      as const },
+  { to: '/leaderboard',  icon: Trophy,          labelKey: 'leaderboard'  as const },
+  { to: '/settings',     icon: Settings,        labelKey: 'settings'     as const },
 ];
 
 const bottomNavLinks = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
-  { to: '/create',    icon: Plus,            label: 'Create' },
-  { to: '/examiner',  icon: GraduationCap,   label: 'Exam' },
-  { to: '/planner',   icon: CalendarCheck,   label: 'Plan' },
-  { to: '/settings',  icon: User,            label: 'Profile' },
+  { to: '/dashboard',   icon: LayoutDashboard, label: 'Home' },
+  { to: '/create',      icon: Plus,            label: 'Create' },
+  { to: '/examiner',    icon: GraduationCap,   label: 'Exam' },
+  { to: '/leaderboard', icon: Trophy,          label: 'Ranks' },
+  { to: '/settings',    icon: User,            label: 'Profile' },
 ];
 
 export default function Sidebar() {
@@ -42,10 +43,11 @@ export default function Sidebar() {
   }
 
   const navLabels: Record<string, string> = {
-    dashboard: t.dashboard.title,
-    create: t.create.title,
-    planner: 'Study Planner',
-    settings: t.settings.title,
+    dashboard:   t.dashboard.title,
+    create:      t.create.title,
+    planner:     'Study Planner',
+    leaderboard: 'Leaderboard',
+    settings:    t.settings.title,
   };
 
   const SidebarContent = () => (
