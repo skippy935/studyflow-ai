@@ -1,12 +1,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
 import Spinner   from '../components/ui/Spinner';
 import { apiFetch } from '../lib/api';
 import { useTranslation } from '../i18n';
+import { useTTS } from '../hooks/useSpeech';
 import toast from 'react-hot-toast';
 import type { Deck, Card } from '../types';
 
@@ -16,6 +17,8 @@ export default function StudyPage() {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t }    = useTranslation();
+  const { speak, stop, supported: ttsSupported } = useTTS();
+  const [ttsEnabled, setTtsEnabled] = useState(() => localStorage.getItem('tts_enabled') === 'true');
   const [deck, setDeck]     = useState<Deck | null>(null);
   const [cards, setCards]   = useState<Card[]>([]);
   const [index, setIndex]   = useState(0);
@@ -29,6 +32,14 @@ export default function StudyPage() {
       .then(d => { setDeck(d.deck); setCards(d.cards); })
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Auto-speak card front when TTS enabled and card changes
+  useEffect(() => {
+    if (ttsEnabled && cards[index]?.front) {
+      speak(cards[index].front);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, ttsEnabled, cards]);
 
   const rateCard = useCallback(async (rating: 0 | 1 | 2 | 3) => {
     const card = cards[index];
@@ -113,6 +124,19 @@ export default function StudyPage() {
                 <motion.div animate={{ width: `${pct}%` }} className="h-full bg-indigo-600 rounded-full" />
               </div>
               <span className="text-xs font-bold text-slate-400 tabular-nums">{index + 1} / {cards.length}</span>
+              {ttsSupported && (
+                <button
+                  onClick={() => {
+                    const next = !ttsEnabled;
+                    setTtsEnabled(next);
+                    localStorage.setItem('tts_enabled', String(next));
+                    if (!next) stop();
+                  }}
+                  title={ttsEnabled ? 'Disable read-aloud' : 'Enable read-aloud'}
+                  className={`p-1.5 rounded-lg transition-colors ${ttsEnabled ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950' : 'text-slate-400 hover:text-slate-600'}`}>
+                  {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                </button>
+              )}
             </div>
 
             {/* Difficulty badge */}

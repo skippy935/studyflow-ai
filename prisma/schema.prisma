@@ -49,6 +49,58 @@ model User {
   teacherProfile    TeacherProfile?
   classMembers      ClassMember[]
   submissions       Submission[]
+  parentLinks       ParentChildLink[] @relation("ChildLinks")
+  childLinks        ParentChildLink[] @relation("ParentLinks")
+  ownedGroups       StudyGroup[]      @relation("OwnedGroups")
+  groupMemberships  StudyGroupMember[] @relation("GroupMemberships")
+}
+
+model StudyGroup {
+  id          Int               @id @default(autoincrement())
+  name        String
+  description String            @default("")
+  joinCode    String            @unique
+  ownerId     Int
+  owner       User              @relation("OwnedGroups", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+  members     StudyGroupMember[]
+  sharedDecks SharedDeck[]
+}
+
+model StudyGroupMember {
+  id        Int        @id @default(autoincrement())
+  groupId   Int
+  group     StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User       @relation("GroupMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime   @default(now())
+
+  @@unique([groupId, userId])
+}
+
+model SharedDeck {
+  id        Int        @id @default(autoincrement())
+  groupId   Int
+  group     StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  deckId    Int
+  deck      Deck       @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  sharedBy  Int
+  sharedAt  DateTime   @default(now())
+
+  @@unique([groupId, deckId])
+}
+
+model ParentChildLink {
+  id         Int      @id @default(autoincrement())
+  parentId   Int
+  childId    Int
+  parent     User     @relation("ParentLinks", fields: [parentId], references: [id], onDelete: Cascade)
+  child      User     @relation("ChildLinks",  fields: [childId],  references: [id], onDelete: Cascade)
+  status     String   @default("pending") // pending, accepted, rejected
+  createdAt  DateTime @default(now())
+  acceptedAt DateTime?
+
+  @@unique([parentId, childId])
 }
 
 model TeacherProfile {
@@ -142,6 +194,7 @@ model Deck {
   cards         Card[]
   studySessions StudySession[]
   studyTasks    StudyTask[]
+  sharedDecks   SharedDeck[]
 }
 
 model Card {

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
-import { LayoutDashboard, Plus, Settings, LogOut, Zap, Moon, Sun, CalendarCheck, GraduationCap, User, Trophy } from 'lucide-react';
+import { LayoutDashboard, Plus, Settings, LogOut, Zap, Moon, Sun, CalendarCheck, GraduationCap, User, Trophy, Bell } from 'lucide-react';
 import { clearSession, getUser } from '../../lib/auth';
 import { useTranslation } from '../../i18n';
+import { apiFetch } from '../../lib/api';
 
 const links = [
   { to: '/dashboard',    icon: LayoutDashboard, labelKey: 'dashboard'    as const },
@@ -43,6 +44,13 @@ export default function Sidebar() {
     clearSession();
     navigate('/');
   }
+
+  const [unreadCount, setUnreadCount] = useState(0);
+  useEffect(() => {
+    apiFetch<{ unreadCount: number }>('/notifications')
+      .then(d => setUnreadCount(d.unreadCount))
+      .catch(() => {});
+  }, []);
 
   const navLabels: Record<string, string> = {
     dashboard:   t.dashboard.title,
@@ -102,6 +110,19 @@ export default function Sidebar() {
             <p className="text-xs text-slate-400 truncate">{user?.email}</p>
           </div>
         </div>
+
+        <NavLink to="/planner"
+          className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
+          <div className="relative">
+            <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full text-[9px] text-white flex items-center justify-center font-bold">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </div>
+          Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''}
+        </NavLink>
 
         <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950 transition-colors">
           <LogOut className="w-4 h-4" />

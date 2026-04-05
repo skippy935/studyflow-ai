@@ -203,4 +203,14 @@ router.put('/me', auth, async (req: AuthRequest, res) => {
   }
 });
 
+// DELETE /api/auth/me — GDPR account deletion
+router.delete('/me', auth, async (req: AuthRequest, res) => {
+  try {
+    await (prisma.user as any).delete({ where: { id: req.userId! } });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Account deletion failed' });
+  }
+});
+
 export default router;

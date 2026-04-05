@@ -7,7 +7,7 @@ import Button    from '../components/ui/Button';
 import Input     from '../components/ui/Input';
 import { apiFetch } from '../lib/api';
 import { getUser, setSession, clearSession } from '../lib/auth';
-import { useTranslation } from '../i18n';
+import { useTranslation, LANGUAGE_OPTIONS, type Language } from '../i18n';
 import type { Stats } from '../types';
 
 type ThemePreference = 'light' | 'dark' | 'system';
@@ -84,9 +84,17 @@ export default function SettingsPage() {
     }
   }
 
-  function deleteAccount() {
+  async function deleteAccount() {
     const confirm = window.prompt(t.settings.deleteConfirm);
-    if (confirm === 'DELETE') { clearSession(); navigate('/'); }
+    if (confirm !== 'DELETE') return;
+    try {
+      await apiFetch('/auth/me', { method: 'DELETE' as unknown as 'GET' });
+      clearSession();
+      navigate('/');
+      toast.success('Account deleted');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Deletion failed');
+    }
   }
 
   return (
@@ -105,11 +113,11 @@ export default function SettingsPage() {
             <Input label={t.settings.email} value={user?.email || ''} disabled className="opacity-60" />
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t.settings.language}</label>
-              <div className="flex gap-2">
-                {(['en','de'] as const).map(l => (
-                  <button key={l} onClick={() => setUiLang(l)}
-                    className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all ${uiLang === l ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950 text-indigo-600' : 'border-slate-200 dark:border-slate-700 text-slate-500'}`}>
-                    {l === 'en' ? 'English' : 'Deutsch'}
+              <div className="flex flex-wrap gap-2">
+                {LANGUAGE_OPTIONS.map(l => (
+                  <button key={l.code} onClick={() => setUiLang(l.code as Language)}
+                    className={`px-3 py-2 rounded-xl text-sm font-semibold border-2 transition-all flex items-center gap-1.5 ${uiLang === l.code ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950 text-indigo-600' : 'border-slate-200 dark:border-slate-700 text-slate-500'}`}>
+                    <span>{l.flag}</span>{l.label}
                   </button>
                 ))}
               </div>
@@ -253,6 +261,15 @@ export default function SettingsPage() {
             <Input label={t.settings.newPassword} type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="New password" />
             <Button loading={saving} onClick={changePassword}>{t.settings.save}</Button>
           </div>
+        </div>
+
+        {/* Data export */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 mb-5">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="font-bold text-slate-900 dark:text-slate-100">Export My Data</h2>
+          </div>
+          <p className="text-sm text-slate-500 mb-4">Download all your decks, cards, study sessions, and tasks as a JSON file.</p>
+          <Button variant="ghost" size="sm" onClick={() => window.location.href = '/api/export/all'}>Download My Data</Button>
         </div>
 
         {/* Danger zone */}

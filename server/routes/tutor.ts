@@ -119,4 +119,103 @@ router.post('/:deckId/chat', auth, async (req: AuthRequest, res) => {
   }
 });
 
+// POST /api/tutor/general — general AI tutor (no deck context)
+router.post('/general', auth, async (req: AuthRequest, res) => {
+  const {
+    messages,
+    subject = '',
+  }: {
+    messages: { role: 'user' | 'assistant'; content: string }[];
+    subject?: string;
+  } = req.body || {};
+
+  if (!messages || messages.length === 0) {
+    res.status(400).json({ error: 'messages required' }); return;
+  }
+
+  const systemPrompt = `You are StudyFlow AI Tutor — a 24/7 academic assistant for students.
+${subject ? `The student is currently studying: ${subject}` : ''}
+
+Your role:
+- Explain any academic topic clearly with appropriate depth and good examples
+- Break complex concepts into digestible parts
+- Use analogies and real-world examples when helpful
+- Encourage the student and build their confidence
+- When asked to solve problems, show your working step by step
+- Keep responses focused and pedagogically effective (2-4 paragraphs typically)
+- If a student shares notes or text, help them understand and review it
+- You are available 24/7 — always be helpful, patient, and encouraging`;
+
+  try {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    const stream = client.messages.stream({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1500,
+      system: systemPrompt,
+      messages,
+    });
+
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+        res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
+      }
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (err) {
+    res.write(`data: ${JSON.stringify({ error: String(err) })}\n\n`);
+    res.end();
+  }
+});
+
+// POST /api/tutor/:deckId/explain-card — explain a specific card
+router.post('/:deckId/explain-card', auth, async (req: AuthRequest, res) => {
+  const deckId = parseInt(req.params.deckId);
+  const { front, back, mode = 'normal' } = req.body || {};
+  if (!front) { res.status(400).json({ error: 'front required' }); return; }
+
+  try {
+    const deck = await prisma.deck.findFirst({
+      where: { id: deckId, userId: req.userId! },
+      select: { name: true },
+    });
+    if (!deck) { res.status(404).json({ error: 'Deck not found' }); return; }
+
+    const prompt = `From the deck "${deck.name}", explain this flashcard in depth so a student can fully understand it:
+
+FRONT (question/term): ${front}
+BACK (answer/definition): ${back || '(student has not seen the answer yet)'}
+
+${mode === 'exam' ? 'Do NOT reveal the answer directly. Instead, guide the student toward understanding through questions and hints.' : 'Give a thorough explanation: what this means, why it matters, any common misconceptions, and a concrete example.'}`;
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    const stream = client.messages.stream({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 800,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+        res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
+      }
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (err) {
+    res.write(`data: ${JSON.stringify({ error: String(err) })}\n\n`);
+    res.end();
+  }
+});
+
 export default router;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Pencil, Trash2, Play, Download, Upload, Bot, CloudOff, Cloud } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, Play, Download, Upload, Bot, CloudOff, Cloud, FileJson, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
@@ -150,8 +150,18 @@ export default function DeckPage() {
               </Button>
             )}
             {cards.length > 0 && (
-              <Button size="sm" variant="ghost" onClick={exportTSV} title="Export for Anki">
-                <Download className="w-4 h-4" /> Export
+              <Button size="sm" variant="ghost" onClick={exportTSV} title="Export for Anki (TSV)">
+                <Download className="w-4 h-4" /> Anki
+              </Button>
+            )}
+            {cards.length > 0 && (
+              <Button size="sm" variant="ghost" onClick={() => window.location.href = `/api/export/deck/${deck!.id}/csv`} title="Export as CSV">
+                <FileText className="w-4 h-4" /> CSV
+              </Button>
+            )}
+            {cards.length > 0 && (
+              <Button size="sm" variant="ghost" onClick={() => window.location.href = `/api/export/deck/${deck!.id}/json`} title="Export as JSON">
+                <FileJson className="w-4 h-4" /> JSON
               </Button>
             )}
             <label className="cursor-pointer">

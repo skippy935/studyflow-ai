@@ -21,6 +21,11 @@ import tutorRoutes        from './routes/tutor';
 import leaderboardRoutes  from './routes/leaderboard';
 import teacherRoutes      from './routes/teacher';
 import classesRoutes      from './routes/classes';
+import parentRoutes       from './routes/parent';
+import groupRoutes        from './routes/groups';
+import exportRoutes       from './routes/export';
+import notificationRoutes from './routes/notifications';
+import supportRoutes      from './routes/support';
 import { startWeeklyEmailCron } from './services/weeklyEmail';
 
 const app  = express();
@@ -28,6 +33,17 @@ const PORT = process.env.PORT || 8080;
 
 app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json({ limit: '10mb' }));
+
+// Health check
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', ts: new Date().toISOString(), uptime: process.uptime() });
+});
+
+// Global error handler
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('[ERROR]', err.message);
+  res.status(500).json({ error: 'Internal server error' });
+});
 
 app.use('/api/auth',      authRoutes);
 app.use('/api/decks',     deckRoutes);
@@ -45,6 +61,11 @@ app.use('/api/tutor',        tutorRoutes);
 app.use('/api/leaderboard',  leaderboardRoutes);
 app.use('/api/teacher',      teacherRoutes);
 app.use('/api/classes',      classesRoutes);
+app.use('/api/parent',       parentRoutes);
+app.use('/api/groups',       groupRoutes);
+app.use('/api/export',        exportRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/support',       supportRoutes);
 
 // Serve built React app
 const clientDist = path.join(__dirname, '../client/dist');
