@@ -24,6 +24,19 @@ import StudyGroupPage       from './pages/StudyGroupPage';
 import GeneralTutorPage     from './pages/GeneralTutorPage';
 import AnalyticsPage        from './pages/AnalyticsPage';
 import PricingPage          from './pages/PricingPage';
+import AdminLoginPage        from './pages/admin/AdminLoginPage';
+import AdminOverviewPage     from './pages/admin/AdminOverviewPage';
+import AdminUsersPage        from './pages/admin/AdminUsersPage';
+import AdminGdprPage         from './pages/admin/AdminGdprPage';
+import AdminFeatureFlagsPage from './pages/admin/AdminFeatureFlagsPage';
+import AdminAiCostsPage      from './pages/admin/AdminAiCostsPage';
+import AdminAuditLogPage     from './pages/admin/AdminAuditLogPage';
+
+function AdminProtected({ children }: { children: React.ReactNode }) {
+  const token = localStorage.getItem('admin_token');
+  if (!token) return <Navigate to="/admin/login" replace />;
+  return <>{children}</>;
+}
 
 function Protected({ children }: { children: React.ReactNode }) {
   if (!isLoggedIn()) return <Navigate to="/login" replace />;
@@ -62,6 +75,15 @@ export default function App() {
       <Route path="/tutor"                element={<Protected><GeneralTutorPage /></Protected>} />
       <Route path="/analytics"            element={<Protected><AnalyticsPage /></Protected>} />
       <Route path="/pricing"              element={<Protected><PricingPage /></Protected>} />
+      {/* Admin */}
+      <Route path="/admin/login"         element={<AdminLoginPage />} />
+      <Route path="/admin"               element={<AdminProtected><AdminOverviewPage /></AdminProtected>} />
+      <Route path="/admin/users"         element={<AdminProtected><AdminUsersPage /></AdminProtected>} />
+      <Route path="/admin/gdpr"          element={<AdminProtected><AdminGdprPage /></AdminProtected>} />
+      <Route path="/admin/feature-flags" element={<AdminProtected><AdminFeatureFlagsPage /></AdminProtected>} />
+      <Route path="/admin/ai-costs"      element={<AdminProtected><AdminAiCostsPage /></AdminProtected>} />
+      <Route path="/admin/audit-log"     element={<AdminProtected><AdminAuditLogPage /></AdminProtected>} />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

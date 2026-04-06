@@ -28,6 +28,16 @@ import notificationRoutes from './routes/notifications';
 import supportRoutes      from './routes/support';
 import { startWeeklyEmailCron } from './services/weeklyEmail';
 
+// Admin routes
+import adminOverviewRoutes    from './routes/admin/overview';
+import adminAuthRoutes        from './routes/admin/auth';
+import adminUsersRoutes       from './routes/admin/users';
+import adminGdprRoutes        from './routes/admin/gdpr';
+import adminFeatureFlagsRoutes from './routes/admin/featureFlags';
+import adminAiCostsRoutes     from './routes/admin/aiCosts';
+import adminSchoolsRoutes     from './routes/admin/schools';
+import adminPromoCodesRoutes  from './routes/admin/promoCodes';
+
 const app  = express();
 const PORT = process.env.PORT || 8080;
 
@@ -66,6 +76,16 @@ app.use('/api/groups',       groupRoutes);
 app.use('/api/export',        exportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/support',       supportRoutes);
+
+// Admin
+app.use('/api/admin',              adminOverviewRoutes);
+app.use('/api/admin/auth',         adminAuthRoutes);
+app.use('/api/admin/users',        adminUsersRoutes);
+app.use('/api/admin/gdpr',         adminGdprRoutes);
+app.use('/api/admin/feature-flags', adminFeatureFlagsRoutes);
+app.use('/api/admin/ai-costs',     adminAiCostsRoutes);
+app.use('/api/admin/schools',      adminSchoolsRoutes);
+app.use('/api/admin/promo-codes',  adminPromoCodesRoutes);
 
 // Serve built React app
 const clientDist = path.join(__dirname, '../client/dist');

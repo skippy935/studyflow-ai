@@ -35,8 +35,29 @@ model User {
   bundesland        String?
   learningStyle     String?
   preferredStudyTime String?
-
   userType          String         @default("student")
+
+  // GDPR fields
+  dateOfBirth             DateTime?
+  isMinor                 Boolean    @default(false)
+  parentalConsentGiven    Boolean    @default(false)
+  parentalConsentEmail    String?
+  parentalConsentDate     DateTime?
+  consentTerms            Boolean    @default(false)
+  consentTermsDate        DateTime?
+  consentMarketing        Boolean    @default(false)
+  consentMarketingDate    DateTime?
+  consentAnalytics        Boolean    @default(false)
+  consentAnalyticsDate    DateTime?
+  consentVersion          String     @default("1.0")
+  consentIp               String?
+  erasureRequestedAt      DateTime?
+  erasureCompletedAt      DateTime?
+  isAnonymized            Boolean    @default(false)
+  isBanned                Boolean    @default(false)
+  bannedAt                DateTime?
+  banReason               String?
+  aiAccessDisabled        Boolean    @default(false)
 
   decks             Deck[]
   quizzes           Quiz[]
@@ -53,6 +74,10 @@ model User {
   childLinks        ParentChildLink[] @relation("ParentLinks")
   ownedGroups       StudyGroup[]      @relation("OwnedGroups")
   groupMemberships  StudyGroupMember[] @relation("GroupMemberships")
+  aiUsageLogs       AiUsageLog[]
+  aiTokenBudget     AiTokenBudget?
+  promoCodeUses     PromoCodeUse[]
+  userAchievements  UserAchievement[]
 }
 
 model StudyGroup {
@@ -96,7 +121,7 @@ model ParentChildLink {
   childId    Int
   parent     User     @relation("ParentLinks", fields: [parentId], references: [id], onDelete: Cascade)
   child      User     @relation("ChildLinks",  fields: [childId],  references: [id], onDelete: Cascade)
-  status     String   @default("pending") // pending, accepted, rejected
+  status     String   @default("pending")
   createdAt  DateTime @default(now())
   acceptedAt DateTime?
 
@@ -322,4 +347,315 @@ model StudySession {
 
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   deck         Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+}
+
+// ─── ADMIN SYSTEM ──────────────────────────────────────────────────────────────
+
+model Admin {
+  id                  Int       @id @default(autoincrement())
+  email               String    @unique
+  passwordHash        String
+  displayName         String    @default("")
+  role                String    @default("MODERATOR") // SUPER_ADMIN, MODERATOR
+  tfaEnabled          Boolean   @default(false)
+  tfaSecret           String?
+  tfaRecoveryCodes    String    @default("[]") // JSON array of hashed codes
+  tfaRecoveryUsed     String    @default("[]")
+  tfaRecoveryReqAt    DateTime?
+  tfaRecoveryApprBy   Int?
+  inviteToken         String?   @unique
+  inviteExpiry        DateTime?
+  inviteAccepted      Boolean   @default(false)
+  lastLoginAt         DateTime?
+  lastActiveAt        DateTime?
+  isActive            Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+
+  auditLogs           AuditLog[]
+}
+
+model AuditLog {
+  id                 Int      @id @default(autoincrement())
+  adminId            Int
+  admin              Admin    @relation(fields: [adminId], references: [id])
+  adminRole          String
+  actionType         String
+  targetUserId       Int?
+  previousValue      Json?
+  newValue           Json?
+  reason             String   @default("")
+  ipAddress          String   @default("")
+  deviceInfo         String   @default("")
+  twoFactorConfirmed Boolean  @default(false)
+  metadata           Json     @default("{}")
+  chainHash          String   @default("")
+  previousHash       String   @default("")
+  createdAt          DateTime @default(now())
+}
+
+// ─── AI COST MANAGEMENT ────────────────────────────────────────────────────────
+
+model AiUsageLog {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature      String   // 'chat', 'ocr', 'quiz_gen', 'explain', 'flashcard', 'examiner', 'tutor'
+  model        String
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  totalTokens  Int      @default(0)
+  costUsd      Decimal  @default(0) @db.Decimal(10, 6)
+  createdAt    DateTime @default(now())
+}
+
+model AiTokenBudget {
+  id                   Int       @id @default(autoincrement())
+  userId               Int       @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionTier     String    @default("free")
+  dailyTokenLimit      Int       @default(10000)
+  monthlyTokenLimit    Int       @default(100000)
+  tokensUsedToday      Int       @default(0)
+  tokensUsedThisMonth  Int       @default(0)
+  budgetOverride       Int?
+  overrideReason       String?
+  lastResetDaily       DateTime  @default(now())
+  lastResetMonthly     DateTime  @default(now())
+}
+
+model AiModelsConfig {
+  id               Int      @id @default(autoincrement())
+  feature          String   @unique
+  activeModel      String
+  fallbackModel    String?
+  costPer1kInput   Decimal  @default(0) @db.Decimal(10, 6)
+  costPer1kOutput  Decimal  @default(0) @db.Decimal(10, 6)
+  isActive         Boolean  @default(true)
+  updatedAt        DateTime @updatedAt
+}
+
+// ─── SCHOOL MANAGEMENT ────────────────────────────────────────────────────────
+
+model School {
+  id                  Int       @id @default(autoincrement())
+  name                String
+  address             String    @default("")
+  city                String    @default("")
+  state               String    @default("")
+  country             String    @default("DE")
+  schoolType          String    @default("") // Gymnasium, Realschule, etc.
+  contactName         String    @default("")
+  contactEmail        String    @default("")
+  verificationStatus  String    @default("pending") // pending, verified, rejected
+  verifiedAt          DateTime?
+  licenseSeats        Int       @default(0)
+  licenseExpiresAt    DateTime?
+  licensePricePerSeat Decimal   @default(2.99) @db.Decimal(10, 2)
+  createdAt           DateTime  @default(now())
+  schoolAdmins        SchoolAdmin[]
+}
+
+model SchoolAdmin {
+  id        Int      @id @default(autoincrement())
+  schoolId  Int
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  userId    Int
+  role      String   @default("school_admin")
+  grantedAt DateTime @default(now())
+
+  @@unique([schoolId, userId])
+}
+
+// ─── FEATURE FLAGS ─────────────────────────────────────────────────────────────
+
+model FeatureFlag {
+  id                      Int       @id @default(autoincrement())
+  key                     String    @unique
+  name                    String
+  description             String    @default("")
+  category                String    @default("core") // ai, gamification, social, payments, core
+  isEnabled               Boolean   @default(true)
+  rolloutPercentage       Int       @default(100)
+  rolloutBy               String    @default("all") // all, subscription, percentage
+  enabledForSubscriptions String    @default("[\"free\",\"premium\",\"school\"]")
+  enabledForUserIds       String    @default("[]")
+  disabledForUserIds      String    @default("[]")
+  isKillSwitch            Boolean   @default(false)
+  changeReason            String    @default("")
+  lastChangedAt           DateTime  @default(now())
+  createdAt               DateTime  @default(now())
+  history                 FeatureFlagHistory[]
+}
+
+model FeatureFlagHistory {
+  id            Int         @id @default(autoincrement())
+  flagId        Int
+  flag          FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  adminId       Int
+  previousState Json
+  newState      Json
+  reason        String      @default("")
+  changedAt     DateTime    @default(now())
+}
+
+// ─── EMAIL & COMMUNICATIONS ───────────────────────────────────────────────────
+
+model EmailTemplate {
+  id                 Int      @id @default(autoincrement())
+  key                String   @unique
+  name               String
+  subject            String
+  bodyHtml           String
+  bodyText           String   @default("")
+  availableVariables String   @default("[]") // JSON
+  category           String   @default("transactional")
+  isActive           Boolean  @default(true)
+  updatedAt          DateTime @updatedAt
+}
+
+model BroadcastMessage {
+  id                 Int       @id @default(autoincrement())
+  name               String
+  subject            String    @default("")
+  bodyHtml           String    @default("")
+  channel            String    @default("email") // email, in_app, all
+  targetSegment      Json      @default("{}")
+  estimatedRecipients Int      @default(0)
+  actualRecipients   Int       @default(0)
+  status             String    @default("draft") // draft, scheduled, sending, sent, cancelled
+  scheduledAt        DateTime?
+  sentAt             DateTime?
+  createdAt          DateTime  @default(now())
+}
+
+// ─── ACHIEVEMENTS & GAMIFICATION ─────────────────────────────────────────────
+
+model Achievement {
+  id           Int      @id @default(autoincrement())
+  key          String   @unique
+  name         String
+  description  String   @default("")
+  iconUrl      String   @default("")
+  xpReward     Int      @default(0)
+  category     String   @default("special") // streak, level, content, social, special
+  triggerType  String   @default("manual") // streak_days, total_xp, tasks_completed, manual
+  triggerValue Int      @default(0)
+  isSecret     Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            Int         @id @default(autoincrement())
+  userId        Int
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId Int
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  awardedAt     DateTime    @default(now())
+  awardedBy     Int?        // admin ID if manually awarded
+  awardReason   String      @default("")
+
+  @@unique([userId, achievementId])
+}
+
+model SpecialXpEvent {
+  id            Int       @id @default(autoincrement())
+  name          String
+  description   String    @default("")
+  multiplier    Decimal   @default(2.0) @db.Decimal(3, 1)
+  bonusFlat     Int       @default(0)
+  appliesTo     String    @default("[\"all\"]") // JSON
+  targetSegment Json      @default("{}")
+  startsAt      DateTime
+  endsAt        DateTime
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+}
+
+// ─── PROMO CODES ──────────────────────────────────────────────────────────────
+
+model PromoCode {
+  id              Int       @id @default(autoincrement())
+  code            String    @unique
+  type            String    // percent_off, fixed_amount, free_trial_days, school_bulk
+  value           Decimal   @db.Decimal(10, 2)
+  appliesTo       String    @default("all")
+  maxUses         Int?
+  usesCount       Int       @default(0)
+  maxUsesPerUser  Int       @default(1)
+  validFrom       DateTime  @default(now())
+  validUntil      DateTime?
+  isActive        Boolean   @default(true)
+  metadata        Json      @default("{}")
+  createdAt       DateTime  @default(now())
+  uses            PromoCodeUse[]
+}
+
+model PromoCodeUse {
+  id               Int       @id @default(autoincrement())
+  codeId           Int
+  code             PromoCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  userId           Int
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  discountApplied  Decimal   @db.Decimal(10, 2)
+  usedAt           DateTime  @default(now())
+}
+
+// ─── ALERTS & REPORTS ─────────────────────────────────────────────────────────
+
+model AlertRule {
+  id              Int       @id @default(autoincrement())
+  name            String
+  metric          String
+  condition       String    // below, above, change_pct
+  threshold       Decimal   @db.Decimal(15, 4)
+  timeWindowHours Int       @default(24)
+  notifyEmails    String    @default("[]") // JSON
+  isActive        Boolean   @default(true)
+  lastTriggeredAt DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+model ScheduledReport {
+  id               Int       @id @default(autoincrement())
+  name             String
+  reportType       String    // daily_kpi, weekly_finance, monthly_growth
+  frequency        String    // daily, weekly, monthly
+  sendAt           String    @default("08:00")
+  sendOn           String    @default("")
+  recipientEmails  String    // JSON
+  format           String    @default("email_only")
+  isActive         Boolean   @default(true)
+  lastSentAt       DateTime?
+  createdAt        DateTime  @default(now())
+}
+
+// ─── BULK ACTION UNDO ─────────────────────────────────────────────────────────
+
+model BulkAction {
+  id               Int       @id @default(autoincrement())
+  adminId          Int
+  actionType       String
+  affectedUserIds  Json
+  previousStates   Json
+  newStates        Json
+  reason           String
+  canUndoUntil     DateTime
+  wasUndone        Boolean   @default(false)
+  undoneAt         DateTime?
+  undoneBy         Int?
+  createdAt        DateTime  @default(now())
+}
+
+// ─── MAINTENANCE MODE ─────────────────────────────────────────────────────────
+
+model MaintenanceWindow {
+  id          Int       @id @default(autoincrement())
+  message     String    @default("Wartungsarbeiten — wir sind gleich zurück.")
+  startsAt    DateTime
+  endsAt      DateTime?
+  isActive    Boolean   @default(false)
+  createdBy   Int
+  createdAt   DateTime  @default(now())
 }

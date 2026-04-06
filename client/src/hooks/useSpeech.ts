@@ -37,21 +37,21 @@ type STTStatus = 'idle' | 'listening' | 'error';
 
 export function useSTT(onResult: (transcript: string) => void) {
   const [status, setStatus] = useState<STTStatus>('idle');
-  const recogRef = useRef<SpeechRecognition | null>(null);
+  const recogRef = useRef<any>(null);
 
   const supported = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
   const start = useCallback((lang = 'en-US') => {
     if (!supported) return;
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recog = new SpeechRecognition();
     recog.lang = lang;
     recog.interimResults = false;
     recog.maxAlternatives = 1;
 
     recog.onstart  = () => setStatus('listening');
-    recog.onresult = (e: SpeechRecognitionEvent) => {
+    recog.onresult = (e: any) => {
       const transcript = e.results[0][0].transcript;
       onResult(transcript);
       setStatus('idle');
