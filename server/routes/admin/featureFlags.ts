@@ -9,10 +9,12 @@ const p = prisma as any;
 
 const DEFAULT_FLAGS = [
   { key: 'ai_chat', name: 'AI Chat Assistant', category: 'ai', isKillSwitch: true, description: 'Master switch for all AI chat functionality' },
+  { key: 'ai_flashcards', name: 'AI Flashcard Generation', category: 'ai', isKillSwitch: true, description: 'AI-generated flashcards from uploaded notes' },
   { key: 'ai_quiz_gen', name: 'AI Quiz Generation', category: 'ai', isKillSwitch: true, description: 'AI-powered quiz generation from uploaded content' },
+  { key: 'ai_summary', name: 'AI Summary Generation', category: 'ai', isKillSwitch: true, description: 'AI-generated study summaries from notes' },
+  { key: 'ai_examiner', name: 'AI Examiner', category: 'ai', isKillSwitch: true, description: 'Socratic exam sessions based on uploaded material' },
   { key: 'ai_ocr', name: 'AI OCR / Document Scan', category: 'ai', isKillSwitch: true, description: 'OCR processing of uploaded images and PDFs' },
   { key: 'ai_explain', name: 'AI Explain Feature', category: 'ai', isKillSwitch: true, description: 'AI explanations for learning content' },
-  { key: 'ai_flashcards', name: 'AI Flashcard Generation', category: 'ai', isKillSwitch: true, description: 'AI-generated flashcards' },
   { key: 'leaderboard', name: 'Leaderboard', category: 'gamification', isKillSwitch: true, description: 'Global and school leaderboards' },
   { key: 'xp_system', name: 'XP & Level System', category: 'gamification', isKillSwitch: true, description: 'XP earning and level-up functionality' },
   { key: 'file_upload', name: 'File Upload', category: 'core', isKillSwitch: true, description: 'All user file uploads (PDFs, images)' },
@@ -28,12 +30,13 @@ const DEFAULT_FLAGS = [
 // GET /api/admin/feature-flags — list all flags
 router.get('/', adminAuth('MODERATOR'), async (req: AdminRequest, res: Response) => {
   try {
-    // Seed defaults if none exist
-    const count = await p.featureFlag.count();
-    if (count === 0) {
-      for (const flag of DEFAULT_FLAGS) {
-        await p.featureFlag.create({ data: flag });
-      }
+    // Upsert defaults — inserts missing flags, leaves existing ones untouched
+    for (const flag of DEFAULT_FLAGS) {
+      await p.featureFlag.upsert({
+        where: { key: flag.key },
+        create: flag,
+        update: { name: flag.name, description: flag.description, isKillSwitch: flag.isKillSwitch },
+      });
     }
 
     const flags = await p.featureFlag.findMany({ orderBy: [{ isKillSwitch: 'desc' }, { category: 'asc' }] });

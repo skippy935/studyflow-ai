@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { Resend } from 'resend';
 import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
+import { featureGuard } from '../middleware/featureGuard';
 
 const router = Router();
 
@@ -35,7 +36,7 @@ async function sendVerifyEmail(email: string, code: string, name: string) {
   });
 }
 
-router.post('/register', async (req, res) => {
+router.post('/register', featureGuard('user_registration'), async (req, res) => {
   const { email, password, name } = req.body || {};
   if (!email || !password || !name) { res.status(400).json({ error: 'All fields required' }); return; }
   if (password.length < 8) { res.status(400).json({ error: 'Password must be at least 8 characters' }); return; }

@@ -2,6 +2,8 @@ import { Router } from 'express';
 import Anthropic from '@anthropic-ai/sdk';
 import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
+import { featureGuard } from '../middleware/featureGuard';
+import { logAiUsage } from '../lib/logAiUsage';
 
 const router = Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -56,7 +58,7 @@ Your role:
 }
 
 // POST /api/tutor/:deckId/chat — SSE streaming tutor chat
-router.post('/:deckId/chat', auth, async (req: AuthRequest, res) => {
+router.post('/:deckId/chat', auth, featureGuard('ai_chat'), async (req: AuthRequest, res) => {
   const deckId = parseInt(req.params.deckId);
   const {
     messages,
@@ -110,6 +112,9 @@ router.post('/:deckId/chat', auth, async (req: AuthRequest, res) => {
       }
     }
 
+    const finalMsg = await stream.finalMessage();
+    logAiUsage({ userId: req.userId!, feature: 'tutor', model: 'claude-sonnet-4-6', inputTokens: finalMsg.usage.input_tokens, outputTokens: finalMsg.usage.output_tokens });
+
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (err) {
@@ -120,7 +125,7 @@ router.post('/:deckId/chat', auth, async (req: AuthRequest, res) => {
 });
 
 // POST /api/tutor/general — general AI tutor (no deck context)
-router.post('/general', auth, async (req: AuthRequest, res) => {
+router.post('/general', auth, featureGuard('ai_chat'), async (req: AuthRequest, res) => {
   const {
     messages,
     subject = '',
@@ -165,6 +170,9 @@ Your role:
       }
     }
 
+    const finalMsgGeneral = await stream.finalMessage();
+    logAiUsage({ userId: req.userId!, feature: 'tutor', model: 'claude-sonnet-4-6', inputTokens: finalMsgGeneral.usage.input_tokens, outputTokens: finalMsgGeneral.usage.output_tokens });
+
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (err) {
@@ -174,7 +182,7 @@ Your role:
 });
 
 // POST /api/tutor/:deckId/explain-card — explain a specific card
-router.post('/:deckId/explain-card', auth, async (req: AuthRequest, res) => {
+router.post('/:deckId/explain-card', auth, featureGuard('ai_chat'), async (req: AuthRequest, res) => {
   const deckId = parseInt(req.params.deckId);
   const { front, back, mode = 'normal' } = req.body || {};
   if (!front) { res.status(400).json({ error: 'front required' }); return; }
@@ -209,6 +217,9 @@ ${mode === 'exam' ? 'Do NOT reveal the answer directly. Instead, guide the stude
         res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
       }
     }
+
+    const finalMsgExplain = await stream.finalMessage();
+    logAiUsage({ userId: req.userId!, feature: 'explain', model: 'claude-sonnet-4-6', inputTokens: finalMsgExplain.usage.input_tokens, outputTokens: finalMsgExplain.usage.output_tokens });
 
     res.write('data: [DONE]\n\n');
     res.end();

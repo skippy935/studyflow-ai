@@ -4,12 +4,14 @@ import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
 import { buildSystemPrompt, GAP_ANALYSIS_TRIGGER, parseGapAnalysis } from '../services/examinerPrompts';
 import { awardXP } from '../services/gamification';
+import { featureGuard } from '../middleware/featureGuard';
+import { logAiUsage } from '../lib/logAiUsage';
 
 const router = Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // POST /api/examiner/sessions — create session
-router.post('/sessions', auth, async (req: AuthRequest, res) => {
+router.post('/sessions', auth, featureGuard('ai_examiner'), async (req: AuthRequest, res) => {
   const { materialName, materialType = 'paste', wordCount = 0,
           difficulty = 'standard', questionCount = 10,
           focusArea, extractedText } = req.body || {};
@@ -87,7 +89,7 @@ router.delete('/sessions/:id', auth, async (req: AuthRequest, res) => {
 });
 
 // POST /api/examiner/sessions/:id/message — SSE streaming
-router.post('/sessions/:id/message', auth, async (req: AuthRequest, res) => {
+router.post('/sessions/:id/message', auth, featureGuard('ai_examiner'), async (req: AuthRequest, res) => {
   const { content = '', triggerGapAnalysis = false } = req.body || {};
 
   try {
@@ -145,6 +147,9 @@ router.post('/sessions/:id/message', auth, async (req: AuthRequest, res) => {
         res.write(`data: ${JSON.stringify({ text })}\n\n`);
       }
     }
+
+    const finalMsg = await stream.finalMessage();
+    logAiUsage({ userId: req.userId!, feature: 'examiner', model: 'claude-sonnet-4-6', inputTokens: finalMsg.usage.input_tokens, outputTokens: finalMsg.usage.output_tokens });
 
     // Save to DB after stream ends
     const newMessages = [...storedMessages];

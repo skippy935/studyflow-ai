@@ -3,11 +3,13 @@ import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
 import { generateFlashcards, generateQuiz, generateSummary } from '../services/aiService';
 import { awardXP } from '../services/gamification';
+import { featureGuard } from '../middleware/featureGuard';
+import { logAiUsage } from '../lib/logAiUsage';
 
 const router = Router();
 router.use(auth);
 
-router.post('/generate', async (req: AuthRequest, res) => {
+router.post('/generate', featureGuard('ai_flashcards'), async (req: AuthRequest, res) => {
   const { name, description = '', color = '#4F46E5', notes, language = 'en', examDate } = req.body || {};
   if (!name) { res.status(400).json({ error: 'Deck name is required' }); return; }
   if (!notes || notes.trim().length < 20) { res.status(400).json({ error: 'Please provide at least 20 characters of notes' }); return; }
@@ -15,7 +17,8 @@ router.post('/generate', async (req: AuthRequest, res) => {
   const deck = await prisma.deck.create({ data: { userId: req.userId!, name: name.trim(), description: description.trim(), color, examDate: examDate ? new Date(examDate) : null } });
 
   try {
-    const generated = await generateFlashcards(notes.trim(), language);
+    const { cards: generated, usage } = await generateFlashcards(notes.trim(), language);
+    await logAiUsage({ userId: req.userId!, feature: 'flashcard', model: usage.model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens });
     await prisma.card.createMany({ data: generated.map(c => ({ deckId: deck.id, front: c.front, back: c.back, difficulty: c.difficulty })) });
     const cards = await prisma.card.findMany({ where: { deckId: deck.id }, orderBy: { id: 'asc' } });
     const { newBadges } = await awardXP(req.userId!, 10, 'deck_created');
@@ -27,7 +30,7 @@ router.post('/generate', async (req: AuthRequest, res) => {
   }
 });
 
-router.post('/quiz-create', async (req: AuthRequest, res) => {
+router.post('/quiz-create', featureGuard('ai_quiz_gen'), async (req: AuthRequest, res) => {
   const { title, topic = '', notes, language = 'en' } = req.body || {};
   if (!title) { res.status(400).json({ error: 'Quiz title is required' }); return; }
   if (!notes || notes.trim().length < 20) { res.status(400).json({ error: 'Please provide at least 20 characters of notes' }); return; }
@@ -35,9 +38,10 @@ router.post('/quiz-create', async (req: AuthRequest, res) => {
   const quiz = await prisma.quiz.create({ data: { userId: req.userId!, title: title.trim(), topic: (topic || title).trim() } });
 
   try {
-    const generated = await generateQuiz(notes.trim(), topic || title, language);
+    const { questions: generated, usage } = await generateQuiz(notes.trim(), topic || title, language);
+    await logAiUsage({ userId: req.userId!, feature: 'quiz_gen', model: usage.model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens });
     await prisma.quizQuestion.createMany({
-      data: generated.questions.map((q: { type: string; question: string; options?: string[]; correct?: string; explanation?: string; sample_answer?: string; keywords?: string[] }) => ({
+      data: generated.map((q: { type: string; question: string; options?: string[]; correct?: string; explanation?: string; sample_answer?: string; keywords?: string[] }) => ({
         quizId: quiz.id, type: q.type, question: q.question,
         options: q.options ? JSON.stringify(q.options) : null,
         correct: q.correct || null, explanation: q.explanation || '',
@@ -54,13 +58,14 @@ router.post('/quiz-create', async (req: AuthRequest, res) => {
   }
 });
 
-router.post('/summary-create', async (req: AuthRequest, res) => {
+router.post('/summary-create', featureGuard('ai_summary'), async (req: AuthRequest, res) => {
   const { title, topic = '', notes, language = 'en' } = req.body || {};
   if (!title) { res.status(400).json({ error: 'Summary title is required' }); return; }
   if (!notes || notes.trim().length < 20) { res.status(400).json({ error: 'Please provide at least 20 characters of notes' }); return; }
 
   try {
-    const content = await generateSummary(notes.trim(), topic || title, language);
+    const { content, usage } = await generateSummary(notes.trim(), topic || title, language);
+    await logAiUsage({ userId: req.userId!, feature: 'summary', model: usage.model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens });
     const summary = await prisma.summary.create({ data: { userId: req.userId!, title: title.trim(), topic: (topic || title).trim(), content } });
     res.status(201).json({ summary });
   } catch (err) {
