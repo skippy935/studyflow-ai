@@ -31,6 +31,9 @@ import AdminGdprPage         from './pages/admin/AdminGdprPage';
 import AdminFeatureFlagsPage from './pages/admin/AdminFeatureFlagsPage';
 import AdminAiCostsPage      from './pages/admin/AdminAiCostsPage';
 import AdminAuditLogPage     from './pages/admin/AdminAuditLogPage';
+import AdminSchoolsPage      from './pages/admin/AdminSchoolsPage';
+import AdminPromoCodesPage   from './pages/admin/AdminPromoCodesPage';
+import AdminTeamPage         from './pages/admin/AdminTeamPage';
 
 function AdminProtected({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('admin_token');
@@ -83,6 +86,9 @@ export default function App() {
       <Route path="/admin/feature-flags" element={<AdminProtected><AdminFeatureFlagsPage /></AdminProtected>} />
       <Route path="/admin/ai-costs"      element={<AdminProtected><AdminAiCostsPage /></AdminProtected>} />
       <Route path="/admin/audit-log"     element={<AdminProtected><AdminAuditLogPage /></AdminProtected>} />
+      <Route path="/admin/schools"       element={<AdminProtected><AdminSchoolsPage /></AdminProtected>} />
+      <Route path="/admin/promo-codes"   element={<AdminProtected><AdminPromoCodesPage /></AdminProtected>} />
+      <Route path="/admin/team"          element={<AdminProtected><AdminTeamPage /></AdminProtected>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
