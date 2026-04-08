@@ -214,6 +214,35 @@ router.post('/:id/disable-ai', adminAuth('MODERATOR'), async (req: AdminRequest,
   }
 });
 
+// DELETE /api/admin/users/:id — permanently delete a user and all their data (SUPER_ADMIN only)
+router.delete('/:id', adminAuth('SUPER_ADMIN'), async (req: AdminRequest, res: Response) => {
+  const userId = parseInt(req.params.id);
+  try {
+    const user = await p.user.findUnique({
+      where: { id: userId },
+      select: { email: true, displayName: true, isBanned: true },
+    });
+    if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+
+    // Hard delete — all child records cascade automatically
+    await p.user.delete({ where: { id: userId } });
+
+    await createAuditLog({
+      adminId: req.admin!.id,
+      adminRole: req.admin!.role,
+      actionType: 'USER_DELETED',
+      targetUserId: userId,
+      reason: `Permanently deleted account ${user.email} (${user.displayName})`,
+      ipAddress: req.admin!.ip,
+      deviceInfo: req.admin!.device,
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 // POST /api/admin/users/bulk-ban
 router.post('/bulk-ban', adminAuth('SUPER_ADMIN'), async (req: AdminRequest, res: Response) => {
   const { userIds, reason } = req.body ?? {};

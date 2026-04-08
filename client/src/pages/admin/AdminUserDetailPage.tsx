@@ -5,7 +5,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
 import {
   ArrowLeft, Ban, Zap, BookOpen, Brain, FileText, Clock,
-  Activity, Shield, CheckCircle, XCircle,
+  Activity, Shield, CheckCircle, XCircle, Trash2,
 } from 'lucide-react';
 
 const card = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '16px' } as const;
@@ -26,6 +26,8 @@ export default function AdminUserDetailPage() {
   const [reason, setReason] = useState('');
   const [xpAmount, setXpAmount] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   useEffect(() => {
     adminFetch(`/users/${id}`)
@@ -33,6 +35,19 @@ export default function AdminUserDetailPage() {
       .catch(e => toast.error(e.message))
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function deleteAccount() {
+    setSaving(true);
+    try {
+      await adminFetch(`/users/${id}`, { method: 'DELETE' });
+      toast.success('Account permanently deleted');
+      navigate('/admin/users');
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function action(endpoint: string, body: object) {
     setSaving(true);
@@ -160,6 +175,12 @@ export default function AdminUserDetailPage() {
                 style={{ background: 'rgba(124,58,237,0.15)', color: 'var(--accent-purple)', border: '1px solid rgba(124,58,237,0.3)' }}>
                 <Brain className="w-3.5 h-3.5" />
                 {user.aiAccessDisabled ? 'Enable AI' : 'Disable AI'}
+              </button>
+              <button
+                onClick={() => { setDeleteModal(true); setDeleteConfirmText(''); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--danger)', border: '1px solid rgba(239,68,68,0.4)' }}>
+                <Trash2 className="w-3.5 h-3.5" /> Delete Account
               </button>
             </div>
           </div>
@@ -495,6 +516,48 @@ export default function AdminUserDetailPage() {
                 className="flex-1 py-2 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
                 style={{ background: aiModal === 'disable' ? 'var(--danger)' : 'var(--success)' }}>
                 {saving ? '…' : aiModal === 'disable' ? 'Disable AI' : 'Enable AI'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete account modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)' }}>
+          <div style={{ ...card, maxWidth: '420px', width: '100%', padding: '24px', border: '1px solid rgba(239,68,68,0.4)' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(239,68,68,0.15)' }}>
+                <Trash2 className="w-5 h-5" style={{ color: 'var(--danger)' }} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Delete Account</h2>
+                <p className="text-xs" style={{ color: 'var(--danger)' }}>This cannot be undone</p>
+              </div>
+            </div>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+              Permanently deletes <strong style={{ color: 'var(--text-primary)' }}>{user.email}</strong> and all their data — decks, cards, quizzes, summaries, exam sessions, study history, and AI usage logs.
+            </p>
+            <p className="text-xs mb-2 font-semibold" style={{ color: 'var(--text-secondary)' }}>
+              Type <span style={{ color: 'var(--danger)' }}>DELETE</span> to confirm
+            </p>
+            <input
+              value={deleteConfirmText}
+              onChange={e => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+              className="w-full px-3 py-2 rounded-xl text-sm outline-none mb-4 font-mono"
+              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--danger)' }}
+            />
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteModal(false)} className="flex-1 py-2.5 rounded-xl text-sm"
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                Cancel
+              </button>
+              <button onClick={deleteAccount} disabled={deleteConfirmText !== 'DELETE' || saving}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40"
+                style={{ background: 'var(--danger)' }}>
+                {saving ? 'Deleting…' : 'Delete Forever'}
               </button>
             </div>
           </div>
