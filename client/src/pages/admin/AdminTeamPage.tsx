@@ -2,40 +2,54 @@ import { useEffect, useState } from 'react';
 import { adminFetch } from '../../lib/adminApi';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
-import { Plus, Shield, User, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, UserPlus, Shield, User, Clock, CheckCircle, XCircle, Trash2, Eye, EyeOff } from 'lucide-react';
 
 const card = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '16px' } as const;
+
+type Mode = 'invite' | 'create';
 
 export default function AdminTeamPage() {
   const [admins, setAdmins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [inviteModal, setInviteModal] = useState(false);
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'MODERATOR' | 'SUPER_ADMIN'>('MODERATOR');
-  const [notes, setNotes] = useState('');
+  const [modal, setModal] = useState<Mode | null>(null);
   const [saving, setSaving] = useState(false);
-  const [inviteResult, setInviteResult] = useState<{ url: string; token: string } | null>(null);
 
-  useEffect(() => {
+  // Invite fields
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'MODERATOR' | 'SUPER_ADMIN'>('MODERATOR');
+  const [inviteNotes, setInviteNotes] = useState('');
+  const [inviteResult, setInviteResult] = useState<{ url: string } | null>(null);
+
+  // Create fields
+  const [createEmail, setCreateEmail] = useState('');
+  const [createName, setCreateName] = useState('');
+  const [createPassword, setCreatePassword] = useState('');
+  const [createRole, setCreateRole] = useState<'MODERATOR' | 'SUPER_ADMIN'>('MODERATOR');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Deactivate confirm
+  const [deactivateTarget, setDeactivateTarget] = useState<any | null>(null);
+
+  function loadAdmins() {
     adminFetch('/auth/admins')
       .then(setAdmins)
       .catch(e => toast.error(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(() => { loadAdmins(); }, []);
 
   async function sendInvite() {
-    if (!email.trim()) return;
+    if (!inviteEmail.trim()) return;
     setSaving(true);
     try {
       const data = await adminFetch('/auth/invite', {
         method: 'POST',
-        body: JSON.stringify({ email, role, notes }),
+        body: JSON.stringify({ email: inviteEmail, role: inviteRole, notes: inviteNotes }),
       });
-      setInviteResult({ url: data.inviteUrl, token: data.inviteToken });
+      setInviteResult({ url: data.inviteUrl });
       toast.success('Invite created');
-      // Refresh list
-      const updated = await adminFetch('/auth/admins');
-      setAdmins(updated);
+      loadAdmins();
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -43,12 +57,52 @@ export default function AdminTeamPage() {
     }
   }
 
-  function reset() {
-    setInviteModal(false);
-    setEmail('');
-    setRole('MODERATOR');
-    setNotes('');
-    setInviteResult(null);
+  async function createAdmin() {
+    if (!createEmail.trim() || !createName.trim() || !createPassword.trim()) return;
+    setSaving(true);
+    try {
+      await adminFetch('/auth/create-admin', {
+        method: 'POST',
+        body: JSON.stringify({ email: createEmail, password: createPassword, displayName: createName, role: createRole }),
+      });
+      toast.success(`Admin ${createEmail} created`);
+      resetModals();
+      loadAdmins();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deactivateAdmin(adminId: number) {
+    try {
+      await adminFetch(`/auth/admins/${adminId}`, { method: 'DELETE' });
+      toast.success('Admin deactivated');
+      setDeactivateTarget(null);
+      loadAdmins();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  }
+
+  async function reactivateAdmin(adminId: number) {
+    try {
+      await adminFetch(`/auth/admins/${adminId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isActive: true }),
+      });
+      toast.success('Admin reactivated');
+      loadAdmins();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  }
+
+  function resetModals() {
+    setModal(null);
+    setInviteEmail(''); setInviteRole('MODERATOR'); setInviteNotes(''); setInviteResult(null);
+    setCreateEmail(''); setCreateName(''); setCreatePassword(''); setCreateRole('MODERATOR'); setShowPassword(false);
   }
 
   const roleColor: Record<string, string> = {
@@ -58,6 +112,7 @@ export default function AdminTeamPage() {
 
   const active = admins.filter(a => a.isActive && a.inviteAccepted);
   const pending = admins.filter(a => !a.inviteAccepted);
+  const inactive = admins.filter(a => !a.isActive && a.inviteAccepted);
 
   return (
     <AdminLayout>
@@ -69,18 +124,25 @@ export default function AdminTeamPage() {
               {active.length} active admin{active.length !== 1 ? 's' : ''} · max 3 Super Admins, 10 Moderators
             </p>
           </div>
-          <button onClick={() => setInviteModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white"
-            style={{ background: 'var(--accent-purple)' }}>
-            <Plus className="w-4 h-4" /> Invite Admin
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setModal('create')}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white"
+              style={{ background: 'var(--accent-cyan)' }}>
+              <UserPlus className="w-4 h-4" /> Create Admin
+            </button>
+            <button onClick={() => setModal('invite')}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white"
+              style={{ background: 'var(--accent-purple)' }}>
+              <Plus className="w-4 h-4" /> Invite Link
+            </button>
+          </div>
         </div>
 
         {/* Role limits */}
         <div className="grid grid-cols-2 gap-4">
           {[
-            { label: 'Super Admins', count: admins.filter(a => a.role === 'SUPER_ADMIN' && a.inviteAccepted).length, max: 3, color: 'var(--accent-purple)', icon: Shield },
-            { label: 'Moderators', count: admins.filter(a => a.role === 'MODERATOR' && a.inviteAccepted).length, max: 10, color: 'var(--accent-cyan)', icon: User },
+            { label: 'Super Admins', count: admins.filter(a => a.role === 'SUPER_ADMIN' && a.inviteAccepted && a.isActive).length, max: 3, color: 'var(--accent-purple)', icon: Shield },
+            { label: 'Moderators', count: admins.filter(a => a.role === 'MODERATOR' && a.inviteAccepted && a.isActive).length, max: 10, color: 'var(--accent-cyan)', icon: User },
           ].map(item => (
             <div key={item.label} style={card} className="p-5 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -123,24 +185,27 @@ export default function AdminTeamPage() {
                     <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{admin.email}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <div className="text-right hidden md:block">
                     <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Last login</p>
                     <p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
-                      {admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleDateString('de-DE') : 'Never'}
+                      {admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleDateString('en-GB') : 'Never'}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                      style={{ background: `${roleColor[admin.role] ?? '#666'}20`, color: roleColor[admin.role] ?? '#666' }}>
-                      {admin.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Moderator'}
-                    </span>
-                    {admin.tfaEnabled ? (
-                      <span title="2FA enabled"><CheckCircle className="w-4 h-4" style={{ color: 'var(--success)' }} /></span>
-                    ) : (
-                      <span title="2FA not set up"><XCircle className="w-4 h-4" style={{ color: 'var(--warning)' }} /></span>
-                    )}
-                  </div>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                    style={{ background: `${roleColor[admin.role] ?? '#666'}20`, color: roleColor[admin.role] ?? '#666' }}>
+                    {admin.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Moderator'}
+                  </span>
+                  {admin.tfaEnabled ? (
+                    <span title="2FA enabled"><CheckCircle className="w-4 h-4" style={{ color: 'var(--success)' }} /></span>
+                  ) : (
+                    <span title="2FA not set up"><XCircle className="w-4 h-4" style={{ color: 'var(--warning)' }} /></span>
+                  )}
+                  <button onClick={() => setDeactivateTarget(admin)} title="Deactivate"
+                    className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                    style={{ color: 'var(--danger)' }}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -173,10 +238,10 @@ export default function AdminTeamPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                          {new Date(a.createdAt).toLocaleDateString('de-DE')}
+                          {new Date(a.createdAt).toLocaleDateString('en-GB')}
                         </td>
                         <td className="px-4 py-3 text-xs" style={{ color: expired ? 'var(--danger)' : 'var(--text-secondary)' }}>
-                          {a.inviteExpiry ? new Date(a.inviteExpiry).toLocaleDateString('de-DE') : '—'}
+                          {a.inviteExpiry ? new Date(a.inviteExpiry).toLocaleDateString('en-GB') : '—'}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5">
@@ -195,6 +260,28 @@ export default function AdminTeamPage() {
           </div>
         )}
 
+        {/* Inactive admins */}
+        {inactive.length > 0 && (
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--text-secondary)' }}>Deactivated Admins</h2>
+            <div style={card} className="divide-y">
+              {inactive.map(admin => (
+                <div key={admin.id} className="flex items-center justify-between p-4 opacity-60" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div>
+                    <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{admin.displayName || admin.email}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{admin.email}</p>
+                  </div>
+                  <button onClick={() => reactivateAdmin(admin.id)}
+                    className="text-xs px-3 py-1.5 rounded-xl font-semibold"
+                    style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--success)', border: '1px solid rgba(16,185,129,0.3)' }}>
+                    Reactivate
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Security note */}
         <div className="p-4 rounded-xl text-xs" style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)', color: 'var(--text-secondary)' }}>
           <p className="font-semibold mb-1" style={{ color: 'var(--accent-purple)' }}>Security Requirements</p>
@@ -202,17 +289,82 @@ export default function AdminTeamPage() {
         </div>
       </div>
 
-      {/* Invite modal */}
-      {inviteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
+      {/* ── Create Admin Modal ── */}
+      {modal === 'create' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
+          <div style={{ ...card, maxWidth: '440px', width: '100%', padding: '24px' }}>
+            <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Create Admin Directly</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Email *</label>
+                <input type="email" value={createEmail} onChange={e => setCreateEmail(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl text-sm outline-none"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Display Name *</label>
+                <input value={createName} onChange={e => setCreateName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl text-sm outline-none"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Password * (min 16 chars)</label>
+                <div className="relative">
+                  <input type={showPassword ? 'text' : 'password'} value={createPassword} onChange={e => setCreatePassword(e.target.value)}
+                    className="w-full px-3 py-2 pr-10 rounded-xl text-sm outline-none"
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+                  <button onClick={() => setShowPassword(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                    style={{ color: 'var(--text-secondary)' }}>
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {createPassword.length > 0 && createPassword.length < 16 && (
+                  <p className="text-xs mt-1" style={{ color: 'var(--danger)' }}>{createPassword.length}/16 characters</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Role</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['MODERATOR', 'SUPER_ADMIN'] as const).map(r => (
+                    <button key={r} onClick={() => setCreateRole(r)}
+                      className="py-2.5 rounded-xl text-sm font-semibold transition-all"
+                      style={{
+                        background: createRole === r ? `${r === 'SUPER_ADMIN' ? 'var(--accent-purple)' : 'var(--accent-cyan)'}25` : 'rgba(255,255,255,0.06)',
+                        color: createRole === r ? (r === 'SUPER_ADMIN' ? 'var(--accent-purple)' : 'var(--accent-cyan)') : 'var(--text-secondary)',
+                        border: `1px solid ${createRole === r ? (r === 'SUPER_ADMIN' ? 'rgba(124,58,237,0.5)' : 'rgba(6,182,212,0.5)') : 'var(--border)'}`,
+                      }}>
+                      {r === 'SUPER_ADMIN' ? 'Super Admin' : 'Moderator'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={resetModals} className="flex-1 py-2.5 rounded-xl text-sm"
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>Cancel</button>
+              <button onClick={createAdmin}
+                disabled={saving || !createEmail.trim() || !createName.trim() || createPassword.length < 16}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: 'var(--accent-cyan)' }}>
+                {saving ? 'Creating…' : 'Create Admin'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Invite Link Modal ── */}
+      {modal === 'invite' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
           <div style={{ ...card, maxWidth: '440px', width: '100%', padding: '24px' }}>
             {!inviteResult ? (
               <>
-                <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Invite Admin</h2>
+                <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Invite via Link</h2>
                 <div className="space-y-3">
                   <div>
                     <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Email *</label>
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                    <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl text-sm outline-none"
                       style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
                   </div>
@@ -220,12 +372,12 @@ export default function AdminTeamPage() {
                     <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Role</label>
                     <div className="grid grid-cols-2 gap-2">
                       {(['MODERATOR', 'SUPER_ADMIN'] as const).map(r => (
-                        <button key={r} onClick={() => setRole(r)}
+                        <button key={r} onClick={() => setInviteRole(r)}
                           className="py-2.5 rounded-xl text-sm font-semibold transition-all"
                           style={{
-                            background: role === r ? `${roleColor[r]}25` : 'rgba(255,255,255,0.06)',
-                            color: role === r ? roleColor[r] : 'var(--text-secondary)',
-                            border: `1px solid ${role === r ? roleColor[r] + '50' : 'var(--border)'}`,
+                            background: inviteRole === r ? `${r === 'SUPER_ADMIN' ? 'var(--accent-purple)' : 'var(--accent-cyan)'}25` : 'rgba(255,255,255,0.06)',
+                            color: inviteRole === r ? (r === 'SUPER_ADMIN' ? 'var(--accent-purple)' : 'var(--accent-cyan)') : 'var(--text-secondary)',
+                            border: `1px solid ${inviteRole === r ? (r === 'SUPER_ADMIN' ? 'rgba(124,58,237,0.5)' : 'rgba(6,182,212,0.5)') : 'var(--border)'}`,
                           }}>
                           {r === 'SUPER_ADMIN' ? 'Super Admin' : 'Moderator'}
                         </button>
@@ -234,7 +386,7 @@ export default function AdminTeamPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Notes (optional)</label>
-                    <input value={notes} onChange={e => setNotes(e.target.value)}
+                    <input value={inviteNotes} onChange={e => setInviteNotes(e.target.value)}
                       placeholder="e.g. Customer support team"
                       className="w-full px-3 py-2 rounded-xl text-sm outline-none"
                       style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
@@ -244,19 +396,19 @@ export default function AdminTeamPage() {
                   </p>
                 </div>
                 <div className="flex gap-3 mt-5">
-                  <button onClick={reset} className="flex-1 py-2.5 rounded-xl text-sm"
+                  <button onClick={resetModals} className="flex-1 py-2.5 rounded-xl text-sm"
                     style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>Cancel</button>
-                  <button onClick={sendInvite} disabled={saving || !email.trim()}
+                  <button onClick={sendInvite} disabled={saving || !inviteEmail.trim()}
                     className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
-                    style={{ background: 'var(--accent-purple)' }}>{saving ? 'Sending…' : 'Send Invite'}</button>
+                    style={{ background: 'var(--accent-purple)' }}>{saving ? 'Sending…' : 'Generate Link'}</button>
                 </div>
               </>
             ) : (
               <>
                 <div className="text-center mb-5">
                   <CheckCircle className="w-10 h-10 mx-auto mb-2" style={{ color: 'var(--success)' }} />
-                  <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Invite Created</h2>
-                  <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Send this link to {email}</p>
+                  <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Invite Link Created</h2>
+                  <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Send this to {inviteEmail}</p>
                 </div>
                 <div className="p-3 rounded-xl mb-4" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)' }}>
                   <p className="text-xs font-mono break-all" style={{ color: 'var(--accent-cyan)' }}>
@@ -269,10 +421,29 @@ export default function AdminTeamPage() {
                   style={{ background: 'rgba(6,182,212,0.15)', color: 'var(--accent-cyan)', border: '1px solid rgba(6,182,212,0.3)' }}>
                   Copy Invite Link
                 </button>
-                <button onClick={reset} className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
+                <button onClick={resetModals} className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
                   style={{ background: 'var(--accent-purple)' }}>Done</button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Deactivate confirm ── */}
+      {deactivateTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
+          <div style={{ ...card, maxWidth: '380px', width: '100%', padding: '24px' }}>
+            <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Deactivate Admin</h2>
+            <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+              This will revoke access for <strong style={{ color: 'var(--text-primary)' }}>{deactivateTarget.email}</strong>. They will not be able to log in until reactivated.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeactivateTarget(null)} className="flex-1 py-2.5 rounded-xl text-sm"
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>Cancel</button>
+              <button onClick={() => deactivateAdmin(deactivateTarget.id)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white"
+                style={{ background: 'var(--danger)' }}>Deactivate</button>
+            </div>
           </div>
         </div>
       )}

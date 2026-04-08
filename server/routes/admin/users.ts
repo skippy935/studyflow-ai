@@ -53,15 +53,42 @@ router.get('/:id', adminAuth('MODERATOR'), async (req: AdminRequest, res: Respon
     const user = await p.user.findUnique({
       where: { id: userId },
       include: {
-        decks: { select: { id: true, name: true, createdAt: true, _count: { select: { cards: true } } } },
-        studySessions: { take: 10, orderBy: { studiedAt: 'desc' } },
-        examinerSessions: { take: 5, orderBy: { createdAt: 'desc' }, select: { id: true, materialName: true, difficulty: true, completed: true, createdAt: true } },
-        aiUsageLogs: { take: 20, orderBy: { createdAt: 'desc' } },
+        decks: {
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true, name: true, color: true, createdAt: true,
+            _count: { select: { cards: true, studySessions: true } },
+          },
+        },
+        quizzes: {
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          select: { id: true, title: true, topic: true, createdAt: true, _count: { select: { questions: true } } },
+        },
+        summaries: {
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          select: { id: true, title: true, topic: true, createdAt: true },
+        },
+        studySessions: {
+          orderBy: { studiedAt: 'desc' },
+          take: 30,
+          select: { id: true, deckId: true, cardsStudied: true, againCount: true, hardCount: true, goodCount: true, easyCount: true, studiedAt: true },
+        },
+        examinerSessions: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          select: { id: true, materialName: true, materialType: true, difficulty: true, questionCount: true, exchangeCount: true, completed: true, gapAnalysis: true, createdAt: true, completedAt: true },
+        },
+        aiUsageLogs: { take: 50, orderBy: { createdAt: 'desc' } },
         aiTokenBudget: true,
       },
     });
     if (!user) { res.status(404).json({ error: 'User not found' }); return; }
-    res.json(user);
+
+    // Strip sensitive fields
+    const { passwordHash, verifyCode, verifyCodeExpiry, ...safeUser } = user as any;
+    res.json(safeUser);
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }

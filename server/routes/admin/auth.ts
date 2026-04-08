@@ -131,11 +131,120 @@ router.get('/admins', adminAuth('SUPER_ADMIN'), async (req: AdminRequest, res: R
       select: {
         id: true, email: true, displayName: true, role: true,
         tfaEnabled: true, isActive: true, lastLoginAt: true,
-        inviteAccepted: true, createdAt: true,
+        inviteAccepted: true, inviteExpiry: true, createdAt: true,
       },
       orderBy: { createdAt: 'asc' },
     });
     res.json(admins);
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// POST /api/admin/auth/create-admin — directly create an active admin (SUPER_ADMIN only)
+router.post('/create-admin', adminAuth('SUPER_ADMIN'), async (req: AdminRequest, res: Response) => {
+  const { email, password, displayName, role } = req.body ?? {};
+  if (!email || !password || !displayName || !role) {
+    res.status(400).json({ error: 'email, password, displayName and role are required' }); return;
+  }
+  if (!['SUPER_ADMIN', 'MODERATOR'].includes(role)) {
+    res.status(400).json({ error: 'Invalid role' }); return;
+  }
+  if (password.length < 16) {
+    res.status(400).json({ error: 'Password must be at least 16 characters' }); return;
+  }
+
+  try {
+    const existing = await p.admin.findUnique({ where: { email: email.toLowerCase() } });
+    if (existing) { res.status(409).json({ error: 'Admin with this email already exists' }); return; }
+
+    const hash = await bcrypt.hash(password, 12);
+    const admin = await p.admin.create({
+      data: {
+        email: email.toLowerCase(),
+        passwordHash: hash,
+        displayName,
+        role,
+        isActive: true,
+        inviteAccepted: true,
+      },
+    });
+
+    await createAuditLog({
+      adminId: req.admin!.id,
+      adminRole: req.admin!.role,
+      actionType: 'ADMIN_CREATED',
+      reason: `Directly created admin ${email} as ${role}`,
+      ipAddress: req.admin!.ip,
+      deviceInfo: req.admin!.device,
+    });
+
+    res.status(201).json({
+      ok: true,
+      admin: { id: admin.id, email: admin.email, displayName: admin.displayName, role: admin.role },
+    });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// PATCH /api/admin/auth/admins/:id — update role or active state (SUPER_ADMIN only)
+router.patch('/admins/:id', adminAuth('SUPER_ADMIN'), async (req: AdminRequest, res: Response) => {
+  const targetId = parseInt(req.params.id);
+  const { role, isActive } = req.body ?? {};
+
+  if (targetId === req.admin!.id) {
+    res.status(400).json({ error: 'Cannot modify your own account here' }); return;
+  }
+
+  try {
+    const target = await p.admin.findUnique({ where: { id: targetId } });
+    if (!target) { res.status(404).json({ error: 'Admin not found' }); return; }
+
+    const data: any = {};
+    if (role && ['SUPER_ADMIN', 'MODERATOR'].includes(role)) data.role = role;
+    if (typeof isActive === 'boolean') data.isActive = isActive;
+
+    await p.admin.update({ where: { id: targetId }, data });
+
+    await createAuditLog({
+      adminId: req.admin!.id,
+      adminRole: req.admin!.role,
+      actionType: 'ADMIN_UPDATED',
+      reason: `Updated admin ${target.email}: ${JSON.stringify(data)}`,
+      ipAddress: req.admin!.ip,
+      deviceInfo: req.admin!.device,
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// DELETE /api/admin/auth/admins/:id — deactivate admin (SUPER_ADMIN only)
+router.delete('/admins/:id', adminAuth('SUPER_ADMIN'), async (req: AdminRequest, res: Response) => {
+  const targetId = parseInt(req.params.id);
+  if (targetId === req.admin!.id) {
+    res.status(400).json({ error: 'Cannot deactivate your own account' }); return;
+  }
+
+  try {
+    const target = await p.admin.findUnique({ where: { id: targetId } });
+    if (!target) { res.status(404).json({ error: 'Admin not found' }); return; }
+
+    await p.admin.update({ where: { id: targetId }, data: { isActive: false } });
+
+    await createAuditLog({
+      adminId: req.admin!.id,
+      adminRole: req.admin!.role,
+      actionType: 'ADMIN_DEACTIVATED',
+      reason: `Deactivated admin ${target.email}`,
+      ipAddress: req.admin!.ip,
+      deviceInfo: req.admin!.device,
+    });
+
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }

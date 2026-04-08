@@ -34,6 +34,7 @@ import AdminAuditLogPage     from './pages/admin/AdminAuditLogPage';
 import AdminSchoolsPage      from './pages/admin/AdminSchoolsPage';
 import AdminPromoCodesPage   from './pages/admin/AdminPromoCodesPage';
 import AdminTeamPage         from './pages/admin/AdminTeamPage';
+import AdminUserDetailPage   from './pages/admin/AdminUserDetailPage';
 
 function AdminProtected({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('admin_token');
@@ -89,6 +90,7 @@ export default function App() {
       <Route path="/admin/schools"       element={<AdminProtected><AdminSchoolsPage /></AdminProtected>} />
       <Route path="/admin/promo-codes"   element={<AdminProtected><AdminPromoCodesPage /></AdminProtected>} />
       <Route path="/admin/team"          element={<AdminProtected><AdminTeamPage /></AdminProtected>} />
+      <Route path="/admin/users/:id"    element={<AdminProtected><AdminUserDetailPage /></AdminProtected>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
