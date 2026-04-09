@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, Trash2, Moon, Sun, Monitor, Trophy, GraduationCap } from 'lucide-react';
+import { User, Lock, Trash2, Moon, Sun, Monitor, Trophy, GraduationCap, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
@@ -35,6 +35,28 @@ export default function SettingsPage() {
   const [learningStyle, setLearningStyle]         = useState((user as any)?.learningStyle || '');
   const [preferredStudyTime, setPreferredStudyTime] = useState((user as any)?.preferredStudyTime || '');
   const [stats, setStats]             = useState<Stats | null>(null);
+  const [promoCode, setPromoCode]     = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoResult, setPromoResult] = useState<{ benefit: string } | null>(null);
+
+  async function redeemPromo() {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    setPromoResult(null);
+    try {
+      const data = await apiFetch<{ benefit: string }>('/promo/redeem', {
+        method: 'POST' as unknown as 'GET',
+        body: JSON.stringify({ code: promoCode.trim() }),
+      });
+      setPromoResult(data);
+      setPromoCode('');
+      toast.success('Promo code applied!');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Invalid promo code');
+    } finally {
+      setPromoLoading(false);
+    }
+  }
 
   useEffect(() => {
     apiFetch<Stats>('/stats').then(setStats).catch(() => {});
@@ -261,6 +283,34 @@ export default function SettingsPage() {
             <Input label={t.settings.newPassword} type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="New password" />
             <Button loading={saving} onClick={changePassword}>{t.settings.save}</Button>
           </div>
+        </div>
+
+        {/* Promo Code */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 mb-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Tag className="w-4 h-4 text-slate-500" />
+            <h2 className="font-bold text-slate-900 dark:text-slate-100">Promo Code</h2>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Have a promo code? Enter it below to unlock discounts or free Premium days.</p>
+          <div className="flex gap-2">
+            <input
+              value={promoCode}
+              onChange={e => setPromoCode(e.target.value.toUpperCase())}
+              onKeyDown={e => e.key === 'Enter' && redeemPromo()}
+              placeholder="e.g. SUMMER2026"
+              maxLength={32}
+              className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-mono uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <Button loading={promoLoading} onClick={redeemPromo} disabled={!promoCode.trim()}>
+              Apply
+            </Button>
+          </div>
+          {promoResult && (
+            <div className="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
+              <span className="text-green-500 mt-0.5">✓</span>
+              <p className="text-sm font-medium text-green-700 dark:text-green-300">{promoResult.benefit}</p>
+            </div>
+          )}
         </div>
 
         {/* Data export */}

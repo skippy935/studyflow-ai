@@ -26,6 +26,7 @@ import groupRoutes        from './routes/groups';
 import exportRoutes       from './routes/export';
 import notificationRoutes from './routes/notifications';
 import supportRoutes      from './routes/support';
+import promoRoutes        from './routes/promo';
 import { startWeeklyEmailCron } from './services/weeklyEmail';
 
 // Admin routes
@@ -76,6 +77,7 @@ app.use('/api/groups',       groupRoutes);
 app.use('/api/export',        exportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/support',       supportRoutes);
+app.use('/api/promo',         promoRoutes);
 
 // Admin
 app.use('/api/admin',              adminOverviewRoutes);
