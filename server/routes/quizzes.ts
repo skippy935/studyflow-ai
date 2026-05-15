@@ -15,49 +15,7 @@ router.get('/', async (req: AuthRequest, res) => {
   res.json({ quizzes });
 });
 
-router.get('/:id', async (req: AuthRequest, res) => {
-  const id = parseInt(req.params.id);
-  const quiz = await prisma.quiz.findFirst({ where: { id, userId: req.userId! } });
-  if (!quiz) { res.status(404).json({ error: 'Quiz not found' }); return; }
-  const questions = await prisma.quizQuestion.findMany({ where: { quizId: id }, orderBy: { id: 'asc' } });
-  res.json({ quiz, questions: questions.map(parseQ) });
-});
-
-router.delete('/:id', async (req: AuthRequest, res) => {
-  const id = parseInt(req.params.id);
-  const quiz = await prisma.quiz.findFirst({ where: { id, userId: req.userId! } });
-  if (!quiz) { res.status(404).json({ error: 'Quiz not found' }); return; }
-  await prisma.quiz.delete({ where: { id } });
-  res.json({ success: true });
-});
-
-// POST /api/quizzes/:id/results — save wrong answers to missed questions bank
-router.post('/:id/results', async (req: AuthRequest, res) => {
-  const quizId = parseInt(req.params.id);
-  const { wrongIds }: { wrongIds: number[] } = req.body || {};
-  if (!Array.isArray(wrongIds)) { res.status(400).json({ error: 'wrongIds array required' }); return; }
-
-  try {
-    const quiz = await prisma.quiz.findFirst({ where: { id: quizId, userId: req.userId! } });
-    if (!quiz) { res.status(404).json({ error: 'Quiz not found' }); return; }
-
-    // Upsert: increment timesWrong if already exists, create if not
-    for (const questionId of wrongIds) {
-      await prisma.missedQuestion.upsert({
-        where:  { userId_questionId: { userId: req.userId!, questionId } },
-        update: { timesWrong: { increment: 1 }, lastSeenAt: new Date(), quizId },
-        create: { userId: req.userId!, questionId, quizId, timesWrong: 1 },
-      });
-    }
-
-    const { xp, newBadges } = await awardXP(req.userId!, 20, 'quiz_complete');
-    res.json({ saved: wrongIds.length, xp, newBadges });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to save results' });
-  }
-});
-
-// GET /api/quizzes/missed — list all missed questions
+// GET /api/quizzes/missed — list all missed questions (MUST be before /:id)
 router.get('/missed', async (req: AuthRequest, res) => {
   try {
     const missed = await prisma.missedQuestion.findMany({
@@ -89,6 +47,56 @@ router.delete('/missed/:questionId', async (req: AuthRequest, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to remove missed question' });
+  }
+});
+
+// GET /api/quizzes/:id — must come after /missed
+router.get('/:id', async (req: AuthRequest, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: 'Invalid quiz id' }); return; }
+  try {
+    const quiz = await prisma.quiz.findFirst({ where: { id, userId: req.userId! } });
+    if (!quiz) { res.status(404).json({ error: 'Quiz not found' }); return; }
+    const questions = await prisma.quizQuestion.findMany({ where: { quizId: id }, orderBy: { id: 'asc' } });
+    res.json({ quiz, questions: questions.map(parseQ) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch quiz' });
+  }
+});
+
+router.delete('/:id', async (req: AuthRequest, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: 'Invalid quiz id' }); return; }
+  try {
+    const quiz = await prisma.quiz.findFirst({ where: { id, userId: req.userId! } });
+    if (!quiz) { res.status(404).json({ error: 'Quiz not found' }); return; }
+    await prisma.quiz.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete quiz' });
+  }
+});
+
+// POST /api/quizzes/:id/results — save wrong answers to missed questions bank
+router.post('/:id/results', async (req: AuthRequest, res) => {
+  const quizId = parseInt(req.params.id);
+  if (isNaN(quizId)) { res.status(400).json({ error: 'Invalid quiz id' }); return; }
+  const { wrongIds }: { wrongIds: number[] } = req.body || {};
+  if (!Array.isArray(wrongIds)) { res.status(400).json({ error: 'wrongIds array required' }); return; }
+  try {
+    const quiz = await prisma.quiz.findFirst({ where: { id: quizId, userId: req.userId! } });
+    if (!quiz) { res.status(404).json({ error: 'Quiz not found' }); return; }
+    for (const questionId of wrongIds) {
+      await prisma.missedQuestion.upsert({
+        where:  { userId_questionId: { userId: req.userId!, questionId } },
+        update: { timesWrong: { increment: 1 }, lastSeenAt: new Date(), quizId },
+        create: { userId: req.userId!, questionId, quizId, timesWrong: 1 },
+      });
+    }
+    const { xp, newBadges } = await awardXP(req.userId!, 20, 'quiz_complete');
+    res.json({ saved: wrongIds.length, xp, newBadges });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save results' });
   }
 });
 

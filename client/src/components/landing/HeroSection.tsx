@@ -22,8 +22,9 @@ export default function HeroSection() {
 
         {/* Headline */}
         <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="text-5xl sm:text-6xl lg:text-7xl font-black text-slate-900 dark:text-slate-100 leading-[1.1] tracking-tight mb-6">
-          {t.hero.title}<br />
+          className="text-4xl sm:text-6xl lg:text-7xl font-black text-slate-900 dark:text-slate-100 leading-[1.15] tracking-tight mb-6"
+          style={{ wordBreak: 'break-word', hyphens: 'auto', overflowWrap: 'break-word' }}>
+          {t.hero.title}{' '}
           <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             {t.hero.titleHighlight}
           </span>

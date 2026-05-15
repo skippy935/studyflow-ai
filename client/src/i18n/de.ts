@@ -3,7 +3,7 @@ import type { Translations } from './en';
 export const de: Translations = {
   nav: { signIn: 'Anmelden', getStarted: 'Jetzt starten', signOut: 'Abmelden', dashboard: 'Dashboard' },
   hero: {
-    badge: 'Powered by Claude AI',
+    badge: 'Angetrieben von Claude KI',
     title: 'Verwandle deine Notizen in',
     titleHighlight: 'Flashcards, Quizze & Zusammenfassungen',
     subtitle: 'Füge deine Notizen ein und die KI erstellt in Sekunden gezieltes Lernmaterial. Lerne smarter mit Spaced Repetition.',

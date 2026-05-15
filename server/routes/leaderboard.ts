@@ -8,7 +8,7 @@ router.use(auth);
 
 // GET /api/leaderboard?scope=global&limit=50
 router.get('/', async (req: AuthRequest, res) => {
-  const limit = Math.min(parseInt((req.query.limit as string) || '50', 10), 100);
+  const limit = Math.min(parseInt((req.query.limit as string) || '100', 10), 100);
 
   try {
     const [topUsers, me] = await Promise.all([
