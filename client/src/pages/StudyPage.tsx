@@ -27,9 +27,25 @@ export default function StudyPage() {
   const [done, setDone]       = useState(false);
   const [ratings, setRatings] = useState({ 0: 0, 1: 0, 2: 0, 3: 0 });
 
+  const [reviewingAll, setReviewingAll] = useState(false);
+
   useEffect(() => {
     apiFetch<{ deck: Deck; cards: Card[] }>(`/decks/${id}/due`)
       .then(d => { setDeck(d.deck); setCards(d.cards); })
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const loadAllCards = useCallback(() => {
+    setLoading(true);
+    apiFetch<{ deck: Deck; cards: Card[] }>(`/decks/${id}`)
+      .then(d => {
+        setDeck(d.deck);
+        setCards(d.cards);
+        setIndex(0);
+        setFlipped(false);
+        setDone(false);
+        setReviewingAll(true);
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -89,7 +105,10 @@ export default function StudyPage() {
             <div className="text-5xl mb-4">✅</div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{t.study.allCaughtUp}</h2>
             <p className="text-slate-500 mb-6">{t.study.allCaughtUpDesc}</p>
-            <Button variant="ghost" onClick={() => navigate(`/deck/${id}`)}>{t.study.backToDeck}</Button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button onClick={loadAllCards}>Review All Cards</Button>
+              <Button variant="ghost" onClick={() => navigate(`/deck/${id}`)}>{t.study.backToDeck}</Button>
+            </div>
           </div>
         )}
 
@@ -108,9 +127,13 @@ export default function StudyPage() {
                 ))}
               </div>
             </div>
-            <div className="flex gap-3 justify-center">
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Button onClick={() => { setIndex(0); setFlipped(false); setDone(false); setRatings({ 0: 0, 1: 0, 2: 0, 3: 0 }); }}>
+                🔁 Loop Back to Start
+              </Button>
+              <Button onClick={loadAllCards}>Review All Cards</Button>
               <Button variant="ghost" onClick={() => navigate(`/deck/${id}`)}>{t.study.backToDeck}</Button>
-              <Button onClick={() => navigate('/dashboard')}>Dashboard</Button>
+              <Button variant="ghost" onClick={() => navigate('/dashboard')}>Dashboard</Button>
             </div>
           </motion.div>
         )}
@@ -118,6 +141,11 @@ export default function StudyPage() {
         {/* Study */}
         {!done && cards.length > 0 && card && (
           <>
+            {reviewingAll && (
+              <div className="mb-3 text-xs font-semibold text-indigo-500 bg-indigo-50 dark:bg-indigo-950 rounded-full px-3 py-1 inline-block">
+                Reviewing all cards
+              </div>
+            )}
             {/* Progress */}
             <div className="flex items-center gap-3 mb-6">
               <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
