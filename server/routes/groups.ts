@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
+import { requireTierFeature } from '../middleware/tierGuard';
 
 const router = Router();
 router.use(auth);
@@ -34,7 +35,7 @@ router.get('/', async (req: AuthRequest, res) => {
 });
 
 // POST /api/groups — create a group
-router.post('/', async (req: AuthRequest, res) => {
+router.post('/', requireTierFeature('study_groups'), async (req: AuthRequest, res) => {
   const { name, description = '' } = req.body || {};
   if (!name?.trim()) { res.status(400).json({ error: 'name required' }); return; }
   try {
@@ -63,7 +64,7 @@ router.post('/', async (req: AuthRequest, res) => {
 });
 
 // POST /api/groups/join { joinCode }
-router.post('/join', async (req: AuthRequest, res) => {
+router.post('/join', requireTierFeature('study_groups'), async (req: AuthRequest, res) => {
   const { joinCode } = req.body || {};
   if (!joinCode) { res.status(400).json({ error: 'joinCode required' }); return; }
   try {

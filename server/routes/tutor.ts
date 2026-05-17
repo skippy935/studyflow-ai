@@ -4,6 +4,7 @@ import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
 import { featureGuard } from '../middleware/featureGuard';
 import { logAiUsage } from '../lib/logAiUsage';
+import { buildSagePrompt } from '../services/sageTutorPrompt';
 
 const router = Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -56,6 +57,60 @@ Your role:
 - Never just recite the card verbatim — always explain and expand
 - Be encouraging and pedagogically effective`;
 }
+
+// POST /api/tutor/sage — Sage tutor with uploaded material context
+router.post('/sage', auth, async (req: AuthRequest, res) => {
+  const {
+    messages,
+    extractedText,
+    materialName = 'your notes',
+    examinerGaps,
+  }: {
+    messages: { role: 'user' | 'assistant'; content: string }[];
+    extractedText: string;
+    materialName?: string;
+    examinerGaps?: { shaky: string[]; gaps: string[] };
+  } = req.body || {};
+
+  if (!messages || messages.length === 0) {
+    res.status(400).json({ error: 'messages required' }); return;
+  }
+  if (!extractedText || extractedText.trim().length < 50) {
+    res.status(400).json({ error: 'extractedText required' }); return;
+  }
+
+  const systemPrompt = buildSagePrompt(materialName, extractedText, examinerGaps);
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+
+  try {
+    const stream = client.messages.stream({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1500,
+      system: systemPrompt,
+      messages,
+    });
+
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+        res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
+      }
+    }
+
+    const finalMsg = await stream.finalMessage();
+    logAiUsage({ userId: req.userId!, feature: 'tutor', model: 'claude-sonnet-4-6', inputTokens: finalMsg.usage.input_tokens, outputTokens: finalMsg.usage.output_tokens });
+
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (err) {
+    console.error('Sage tutor error:', err);
+    res.write(`data: ${JSON.stringify({ error: String(err) })}\n\n`);
+    res.end();
+  }
+});
 
 // POST /api/tutor/:deckId/chat — SSE streaming tutor chat
 router.post('/:deckId/chat', auth, featureGuard('ai_chat'), async (req: AuthRequest, res) => {

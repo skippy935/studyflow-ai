@@ -1,9 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { isLoggedIn, isEmailVerified } from './lib/auth';
+import { isLoggedIn } from './lib/auth';
 import LandingPage    from './pages/LandingPage';
 import LoginPage      from './pages/auth/LoginPage';
 import RegisterPage   from './pages/auth/RegisterPage';
-import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import DashboardPage  from './pages/DashboardPage';
 import CreatePage     from './pages/CreatePage';
 import DeckPage       from './pages/DeckPage';
@@ -19,11 +18,17 @@ import TutorPage            from './pages/TutorPage';
 import LeaderboardPage      from './pages/LeaderboardPage';
 import TeacherPage          from './pages/TeacherPage';
 import TeacherClassPage     from './pages/TeacherClassPage';
+import TeacherOnboardingPage from './pages/TeacherOnboardingPage';
+import TeacherPendingPage    from './pages/TeacherPendingPage';
+import JoinClassPage         from './pages/JoinClassPage';
 import ParentPage           from './pages/ParentPage';
 import StudyGroupPage       from './pages/StudyGroupPage';
 import GeneralTutorPage     from './pages/GeneralTutorPage';
+import SageTutorPage        from './pages/SageTutorPage';
 import AnalyticsPage        from './pages/AnalyticsPage';
 import PricingPage          from './pages/PricingPage';
+import BillingPage          from './pages/BillingPage';
+import BillingSuccessPage   from './pages/BillingSuccessPage';
 import AdminLoginPage        from './pages/admin/AdminLoginPage';
 import AdminOverviewPage     from './pages/admin/AdminOverviewPage';
 import AdminUsersPage        from './pages/admin/AdminUsersPage';
@@ -35,6 +40,8 @@ import AdminSchoolsPage      from './pages/admin/AdminSchoolsPage';
 import AdminPromoCodesPage   from './pages/admin/AdminPromoCodesPage';
 import AdminTeamPage         from './pages/admin/AdminTeamPage';
 import AdminUserDetailPage   from './pages/admin/AdminUserDetailPage';
+import AdminTeachersPage     from './pages/admin/AdminTeachersPage';
+import KitsPage              from './pages/KitsPage';
 
 function AdminProtected({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('admin_token');
@@ -44,7 +51,6 @@ function AdminProtected({ children }: { children: React.ReactNode }) {
 
 function Protected({ children }: { children: React.ReactNode }) {
   if (!isLoggedIn()) return <Navigate to="/login" replace />;
-  if (!isEmailVerified()) return <Navigate to="/verify-email" replace />;
   return <>{children}</>;
 }
 
@@ -58,9 +64,9 @@ export default function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login"        element={<PublicOnly><LoginPage /></PublicOnly>} />
       <Route path="/register"     element={<PublicOnly><RegisterPage /></PublicOnly>} />
-      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/dashboard"    element={<Protected><DashboardPage /></Protected>} />
       <Route path="/create"       element={<Protected><CreatePage /></Protected>} />
+      <Route path="/kits"         element={<Protected><KitsPage /></Protected>} />
       <Route path="/deck/:id"     element={<Protected><DeckPage /></Protected>} />
       <Route path="/study/:id"    element={<Protected><StudyPage /></Protected>} />
       <Route path="/quiz/:id"     element={<Protected><QuizPage /></Protected>} />
@@ -72,13 +78,21 @@ export default function App() {
       <Route path="/missed-questions" element={<Protected><MissedQuestionsPage /></Protected>} />
       <Route path="/tutor/:id"        element={<Protected><TutorPage /></Protected>} />
       <Route path="/leaderboard"          element={<Protected><LeaderboardPage /></Protected>} />
-      <Route path="/teacher"              element={<Protected><TeacherPage /></Protected>} />
-      <Route path="/teacher/classes/:id"  element={<Protected><TeacherClassPage /></Protected>} />
+      {/* Teacher routes */}
+      <Route path="/teacher"                element={<Protected><TeacherPage /></Protected>} />
+      <Route path="/teacher/classes/:id"    element={<Protected><TeacherClassPage /></Protected>} />
+      <Route path="/teacher/onboarding"     element={<Protected><TeacherOnboardingPage /></Protected>} />
+      <Route path="/teacher/pending"        element={<Protected><TeacherPendingPage /></Protected>} />
+      {/* Student join */}
+      <Route path="/join"                   element={<Protected><JoinClassPage /></Protected>} />
       <Route path="/parent"               element={<Protected><ParentPage /></Protected>} />
       <Route path="/groups"               element={<Protected><StudyGroupPage /></Protected>} />
       <Route path="/tutor"                element={<Protected><GeneralTutorPage /></Protected>} />
+      <Route path="/sage"                 element={<Protected><SageTutorPage /></Protected>} />
       <Route path="/analytics"            element={<Protected><AnalyticsPage /></Protected>} />
       <Route path="/pricing"              element={<Protected><PricingPage /></Protected>} />
+      <Route path="/billing"              element={<Protected><BillingPage /></Protected>} />
+      <Route path="/billing/success"      element={<Protected><BillingSuccessPage /></Protected>} />
       {/* Admin */}
       <Route path="/admin/login"         element={<AdminLoginPage />} />
       <Route path="/admin"               element={<AdminProtected><AdminOverviewPage /></AdminProtected>} />
@@ -90,7 +104,8 @@ export default function App() {
       <Route path="/admin/schools"       element={<AdminProtected><AdminSchoolsPage /></AdminProtected>} />
       <Route path="/admin/promo-codes"   element={<AdminProtected><AdminPromoCodesPage /></AdminProtected>} />
       <Route path="/admin/team"          element={<AdminProtected><AdminTeamPage /></AdminProtected>} />
-      <Route path="/admin/users/:id"    element={<AdminProtected><AdminUserDetailPage /></AdminProtected>} />
+      <Route path="/admin/users/:id"     element={<AdminProtected><AdminUserDetailPage /></AdminProtected>} />
+      <Route path="/admin/teachers"      element={<AdminProtected><AdminTeachersPage /></AdminProtected>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

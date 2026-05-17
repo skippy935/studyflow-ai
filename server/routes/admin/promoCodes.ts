@@ -130,6 +130,22 @@ router.patch('/:id/deactivate', adminAuth('MODERATOR'), async (req: AdminRequest
   }
 });
 
+// DELETE /api/admin/promo-codes/:id
+router.delete('/:id', adminAuth('SUPER_ADMIN'), async (req: AdminRequest, res: Response) => {
+  const id = parseInt(req.params.id);
+  try {
+    const code = await p.promoCode.findUnique({ where: { id } });
+    if (!code) { res.status(404).json({ error: 'Not found' }); return; }
+    await p.promoCode.delete({ where: { id } });
+    await createAuditLog({
+      adminId: req.admin!.id, adminRole: req.admin!.role,
+      actionType: 'PROMO_CODE_DELETE', reason: `Deleted code ${code.code}`,
+      ipAddress: req.admin!.ip, deviceInfo: req.admin!.device,
+    });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: String(err) }); }
+});
+
 // GET /api/admin/promo-codes/:id/uses
 router.get('/:id/uses', adminAuth('MODERATOR'), async (req: AdminRequest, res: Response) => {
   const id = parseInt(req.params.id);

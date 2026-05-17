@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=700, initial-scale=1.0, viewport-fit=cover">
+<title>StudyBuild</title>
+<style>
+
+/* ─── TOKENS ───────────────────────────────────── */
+:root {
+  --bg:       #0d1117;
+  --s1:       #161c2a;
+  --s2:       #1e2740;
+  --border:   rgba(255,255,255,0.08);
+  --brand:    #6366f1;
+  --bdim:     rgba(99,102,241,0.14);
+  --bglow:    rgba(99,102,241,0.28);
+  --orange:   #f97316;
+  --red:      #ef4444;
+  --green:    #22c55e;
+  --amber:    #f59e0b;
+  --purple:   #a855f7;
+  --t1:       #f1f5f9;
+  --t2:       #94a3b8;
+  --t3:       #4b5563;
+  --r-sm:     clamp(10px, 1.5vw, 16px);
+  --r-md:     clamp(14px, 2vw, 20px);
+  --r-lg:     clamp(18px, 2.5vw, 26px);
+  /* fluid header/nav heights */
+  --H:        clamp(56px, 8.5vw, 80px);
+  --N:        clamp(62px, 9.5vw, 88px);
+  /* fluid spacing */
+  --pad:      clamp(16px, 2.8vw, 28px);
+  --gap:      clamp(12px, 2vw, 22px);
+}
+
+/* ─── RESET ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--t1);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  padding-top: calc(var(--H) + max(env(safe-area-inset-top, 0px), 20px));
+  padding-bottom: calc(var(--N) + env(safe-area-inset-bottom, 0px));
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+button { font: inherit; border: none; background: none; color: inherit; cursor: pointer; }
+svg    { display: block; }
+
+/* ─── TOPBAR ─────────────────────────────────────── */
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 200;
+  height: calc(var(--H) + max(env(safe-area-inset-top, 0px), 20px));
+  padding-top: max(env(safe-area-inset-top, 0px), 20px);
+  padding-left: var(--pad);
+  padding-right: var(--pad);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.5vw, 16px);
+}
+
+.tbar-logo { display: flex; align-items: center; gap: clamp(8px, 1.4vw, 14px); flex: 1; min-width: 0; }
+
+.tbar-mark {
+  width: clamp(32px, 5.5vw, 52px); height: clamp(32px, 5.5vw, 52px);
+  background: var(--brand);
+  border-radius: clamp(9px, 1.4vw, 14px);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.tbar-mark svg { width: clamp(17px, 2.8vw, 27px); height: clamp(17px, 2.8vw, 27px); }
+
+.tbar-name {
+  font-size: clamp(17px, 2.9vw, 26px); font-weight: 800; letter-spacing: -.3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.tbar-right { display: flex; align-items: center; gap: clamp(8px, 1.4vw, 14px); flex-shrink: 0; }
+
+.xp-chip {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--bdim);
+  border: 1px solid var(--bglow);
+  border-radius: 999px;
+  padding: clamp(5px, .8vw, 9px) clamp(11px, 1.8vw, 18px);
+}
+.xp-chip span { font-size: clamp(12px, 2vw, 18px); font-weight: 700; color: var(--brand); white-space: nowrap; }
+
+.ibtn {
+  width: clamp(36px, 6vw, 54px); height: clamp(36px, 6vw, 54px);
+  border-radius: clamp(9px, 1.4vw, 14px);
+  background: var(--s1);
+  display: flex; align-items: center; justify-content: center;
+}
+.ibtn svg { width: clamp(18px, 3vw, 28px); height: clamp(18px, 3vw, 28px); color: var(--t2); }
+.ibtn:active { opacity: .7; }
+
+/* ─── BOTTOM NAV ─────────────────────────────────── */
+.bottomnav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 200;
+  height: calc(var(--N) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--s1);
+  border-top: 1px solid var(--border);
+  display: flex;
+}
+
+.navbtn {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(3px, .5vw, 6px);
+  color: var(--t3);
+  min-height: 44px;
+  transition: color 150ms;
+}
+.navbtn svg  { width: clamp(22px, 3.8vw, 36px); height: clamp(22px, 3.8vw, 36px); }
+.navbtn span { font-size: clamp(10px, 1.7vw, 15px); font-weight: 600; }
+.navbtn.on   { color: var(--brand); }
+
+/* ─── PAGES ──────────────────────────────────────── */
+.page { display: none; padding: var(--pad); padding-top: calc(var(--pad) + clamp(4px, 1vw, 12px)); }
+.page.on { display: flex; flex-direction: column; gap: var(--gap); }
+
+/* ─── CARD ───────────────────────────────────────── */
+.card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--pad);
+}
+
+.card-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: clamp(12px, 2vw, 20px);
+}
+
+.sec-label {
+  font-size: clamp(11px, 1.8vw, 16px); font-weight: 700;
+  text-transform: uppercase; letter-spacing: .7px;
+  color: var(--t3);
+}
+
+.link-sm { font-size: clamp(12px, 2vw, 18px); font-weight: 600; color: var(--brand); }
+
+/* ─── GREETING ───────────────────────────────────── */
+.greeting {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: clamp(12px, 2vw, 20px);
+}
+.g-left { flex: 1; min-width: 0; }
+.g-hi {
+  font-size: clamp(22px, 4.5vw, 42px); font-weight: 800; letter-spacing: -.4px; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.g-date { font-size: clamp(13px, 2.2vw, 20px); color: var(--t2); margin-top: 4px; }
+
+.g-btn {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: clamp(6px, 1vw, 10px);
+  padding: clamp(11px, 1.8vw, 18px) clamp(16px, 2.6vw, 28px);
+  background: var(--brand);
+  border-radius: var(--r-sm);
+  font-size: clamp(14px, 2.3vw, 22px); font-weight: 700; color: #fff;
+  white-space: nowrap; min-height: 44px;
+}
+.g-btn svg { width: clamp(14px, 2.3vw, 22px); height: clamp(14px, 2.3vw, 22px); }
+.g-btn:active { opacity: .85; }
+
+/* ─── XP BAR ─────────────────────────────────────── */
+.xp-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: clamp(9px, 1.5vw, 16px);
+}
+.xp-left { display: flex; align-items: center; gap: clamp(8px, 1.4vw, 14px); min-width: 0; }
+.lv-badge {
+  font-size: clamp(11px, 1.8vw, 17px); font-weight: 800; color: var(--brand);
+  background: var(--bdim); border-radius: 6px; padding: clamp(2px, .4vw, 5px) clamp(7px, 1.2vw, 12px);
+  flex-shrink: 0;
+}
+.xp-lbl { font-size: clamp(12px, 2vw, 18px); font-weight: 600; color: var(--t2); }
+.xp-val { font-size: clamp(12px, 2vw, 18px); font-weight: 600; color: var(--t3); flex-shrink: 0; }
+.xp-track { height: clamp(7px, 1.1vw, 12px); background: var(--s2); border-radius: 99px; overflow: hidden; }
+.xp-fill  { height: 100%; background: linear-gradient(90deg, var(--brand), #818cf8); border-radius: 99px; }
+
+/* ─── STAT GRID ──────────────────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(10px, 1.8vw, 18px);
+}
+
+.scard {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: clamp(14px, 2.4vw, 26px);
+  display: flex; flex-direction: column; gap: clamp(8px, 1.4vw, 14px);
+  position: relative; overflow: hidden;
+}
+.scard::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: clamp(2px, .4vw, 4px);
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  background: var(--ac);
+}
+.scard .sicon {
+  width: clamp(30px, 5.5vw, 52px); height: clamp(30px, 5.5vw, 52px);
+  border-radius: clamp(8px, 1.3vw, 13px);
+  background: color-mix(in srgb, var(--ac) 15%, transparent);
+  display: flex; align-items: center; justify-content: center;
+}
+.scard .sicon svg { width: clamp(15px, 2.7vw, 26px); height: clamp(15px, 2.7vw, 26px); color: var(--ac); }
+.scard .snum  { font-size: clamp(26px, 5.5vw, 52px); font-weight: 800; line-height: 1; letter-spacing: -.5px; }
+.scard .slbl  { font-size: clamp(12px, 1.9vw, 18px); color: var(--t2); margin-top: -4px; }
+.scard .sdelta { font-size: clamp(11px, 1.7vw, 16px); font-weight: 600; color: var(--ac); display: flex; align-items: center; gap: 2px; margin-top: auto; }
+.scard:active { opacity: .9; }
+
+/* ─── HEATMAP ────────────────────────────────────── */
+.hm-scroll {
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.hm-scroll::-webkit-scrollbar { display: none; }
+.hm-grid { display: inline-flex; gap: clamp(3px, .5vw, 5px); }
+.hm-col  { display: flex; flex-direction: column; gap: clamp(3px, .5vw, 5px); }
+.hm-cell {
+  width: clamp(11px, 1.9vw, 18px); height: clamp(11px, 1.9vw, 18px);
+  border-radius: clamp(2px, .4vw, 4px);
+  background: rgba(255,255,255,0.06);
+}
+.hm-cell.l1 { background: rgba(99,102,241,.22); }
+.hm-cell.l2 { background: rgba(99,102,241,.45); }
+.hm-cell.l3 { background: rgba(99,102,241,.70); }
+.hm-cell.l4 { background: rgba(99,102,241,.95); }
+
+.hm-legend {
+  display: flex; align-items: center; gap: 4px; justify-content: flex-end;
+  margin-top: clamp(8px, 1.4vw, 14px);
+}
+.hm-legend span { font-size: clamp(10px, 1.6vw, 15px); color: var(--t3); }
+.lg-cell { width: clamp(10px, 1.7vw, 16px); height: clamp(10px, 1.7vw, 16px); border-radius: 2px; }
+
+/* ─── ACTIVITY ───────────────────────────────────── */
+.act-row {
+  display: flex; align-items: center; gap: clamp(10px, 1.8vw, 18px);
+  padding: clamp(10px, 1.7vw, 18px) 0; border-bottom: 1px solid var(--border);
+}
+.act-row:last-child { border-bottom: none; padding-bottom: 0; }
+.act-dot { width: clamp(8px, 1.3vw, 12px); height: clamp(8px, 1.3vw, 12px); border-radius: 50%; flex-shrink: 0; }
+.act-txt {
+  flex: 1; min-width: 0; font-size: clamp(13px, 2.2vw, 20px); color: var(--t2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.act-time { font-size: clamp(11px, 1.8vw, 17px); color: var(--t3); flex-shrink: 0; }
+
+/* ─── TABS ───────────────────────────────────────── */
+.tabs {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: clamp(4px, .7vw, 7px); display: flex; gap: 2px;
+}
+.tbtn {
+  flex: 1; padding: clamp(8px, 1.4vw, 14px) 4px;
+  border-radius: clamp(8px, 1.3vw, 13px); font-size: clamp(13px, 2.1vw, 19px); font-weight: 600;
+  color: var(--t3);
+  display: flex; align-items: center; justify-content: center; gap: clamp(5px, .9vw, 9px);
+  white-space: nowrap; min-height: clamp(36px, 6vw, 56px);
+  transition: background 150ms, color 150ms;
+}
+.tbtn svg { width: clamp(14px, 2.2vw, 20px); height: clamp(14px, 2.2vw, 20px); flex-shrink: 0; }
+.tbtn.on { background: var(--s2); color: var(--t1); }
+
+.tpanel { display: none; }
+.tpanel.on { display: flex; flex-direction: column; gap: clamp(8px, 1.4vw, 14px); }
+
+/* ─── DECK CARD ──────────────────────────────────── */
+.deck-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: clamp(13px, 2.2vw, 22px); display: flex; align-items: center; gap: clamp(12px, 2vw, 20px);
+  min-height: clamp(66px, 11vw, 100px);
+}
+.deck-card:active { background: var(--s2); }
+
+.d-emoji {
+  font-size: clamp(21px, 4vw, 38px);
+  width: clamp(40px, 7.5vw, 68px); height: clamp(40px, 7.5vw, 68px);
+  background: var(--s2); border-radius: clamp(11px, 1.8vw, 17px);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.d-info { flex: 1; min-width: 0; }
+.d-name {
+  font-size: clamp(14px, 2.4vw, 22px); font-weight: 600; color: var(--t1);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  margin-bottom: clamp(3px, .5vw, 6px);
+}
+.d-meta { font-size: clamp(12px, 1.9vw, 17px); color: var(--t3); display: flex; align-items: center; gap: 5px; }
+
+.dtag {
+  font-size: clamp(11px, 1.7vw, 15px); font-weight: 700;
+  padding: clamp(1px, .3vw, 4px) clamp(6px, 1vw, 10px);
+  border-radius: 5px; flex-shrink: 0;
+}
+.dtag.warn { background: rgba(239,68,68,.15); color: var(--red); }
+.dtag.ok   { background: rgba(34,197,94,.15);  color: var(--green); }
+
+.d-play {
+  width: clamp(36px, 6.5vw, 58px); height: clamp(36px, 6.5vw, 58px);
+  border-radius: clamp(10px, 1.6vw, 16px);
+  background: var(--bdim); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.d-play svg { width: clamp(14px, 2.4vw, 22px); height: clamp(14px, 2.4vw, 22px); color: var(--brand); }
+.d-play:active { opacity: .7; }
+
+/* ─── QUIZ CARD ──────────────────────────────────── */
+.qz-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: clamp(14px, 2.4vw, 24px);
+}
+.qz-top  { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: clamp(10px, 1.7vw, 18px); }
+.qz-ttl  { font-size: clamp(14px, 2.4vw, 22px); font-weight: 600; color: var(--t1); flex: 1; min-width: 0; line-height: 1.3; }
+.qz-pct  { font-size: clamp(17px, 2.8vw, 26px); font-weight: 800; flex-shrink: 0; }
+.qz-pct.good { color: var(--green); }
+.qz-pct.ok   { color: var(--amber); }
+.qz-pct.bad  { color: var(--red); }
+.pbar-track { height: clamp(5px, .9vw, 9px); background: var(--s2); border-radius: 99px; overflow: hidden; margin-bottom: clamp(10px, 1.7vw, 18px); }
+.pbar-fill  { height: 100%; border-radius: 99px; }
+.pbar-fill.good { background: var(--green); }
+.pbar-fill.ok   { background: var(--amber); }
+.pbar-fill.bad  { background: var(--red); }
+.qz-foot { display: flex; align-items: center; justify-content: space-between; }
+.qz-meta { font-size: clamp(12px, 1.9vw, 17px); color: var(--t3); }
+.qz-retake {
+  font-size: clamp(12px, 2vw, 18px); font-weight: 600; color: var(--t2);
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 99px; padding: clamp(6px, 1vw, 11px) clamp(14px, 2.3vw, 22px);
+  min-height: clamp(36px, 6vw, 52px);
+  display: flex; align-items: center;
+}
+
+/* ─── SUMMARY CARD ───────────────────────────────── */
+.sm-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: clamp(13px, 2.2vw, 22px); display: flex; align-items: center; gap: clamp(12px, 2vw, 20px);
+}
+.sm-icon {
+  font-size: clamp(20px, 3.8vw, 36px);
+  width: clamp(38px, 7vw, 64px); height: clamp(38px, 7vw, 64px);
+  border-radius: clamp(10px, 1.6vw, 16px); background: var(--s2);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.sm-info { flex: 1; min-width: 0; }
+.sm-ttl  { font-size: clamp(13px, 2.2vw, 20px); font-weight: 600; color: var(--t1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+.sm-meta { font-size: clamp(11px, 1.8vw, 17px); color: var(--t3); }
+.sm-arr  { color: var(--t3); flex-shrink: 0; }
+
+/* ─── EXAMINER ───────────────────────────────────── */
+.ex-banner {
+  background: linear-gradient(135deg,#14163a,#1b1a4b);
+  border: 1px solid rgba(99,102,241,.28);
+  border-radius: var(--r-lg); padding: clamp(20px, 3.5vw, 36px);
+  position: relative; overflow: hidden;
+}
+.ex-banner::before {
+  content:''; position:absolute; top:-50px; right:-50px;
+  width:140px; height:140px;
+  background: radial-gradient(circle, rgba(99,102,241,.2), transparent 70%);
+  pointer-events:none;
+}
+.ex-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--bdim); border: 1px solid var(--bglow);
+  border-radius: 999px; padding: clamp(3px, .6vw, 7px) clamp(10px, 1.7vw, 16px);
+  font-size: clamp(11px, 1.7vw, 16px); font-weight: 700; color: var(--brand);
+  text-transform: uppercase; letter-spacing: .5px;
+  margin-bottom: clamp(11px, 1.9vw, 18px);
+}
+.ex-head { font-size: clamp(17px, 3vw, 28px); font-weight: 800; letter-spacing: -.3px; line-height: 1.3; margin-bottom: clamp(7px, 1.2vw, 13px); }
+.ex-sub  { font-size: clamp(13px, 2.1vw, 19px); color: var(--t2); line-height: 1.5; margin-bottom: clamp(16px, 2.7vw, 28px); }
+.ex-stats { display: flex; gap: clamp(8px, 1.4vw, 14px); margin-bottom: clamp(16px, 2.7vw, 28px); }
+.ex-stat {
+  flex: 1; background: rgba(255,255,255,.06);
+  border-radius: clamp(10px, 1.6vw, 16px);
+  padding: clamp(10px, 1.7vw, 18px) clamp(8px, 1.3vw, 14px); text-align: center;
+}
+.ex-stat-n { font-size: clamp(18px, 3.2vw, 30px); font-weight: 800; }
+.ex-stat-l { font-size: clamp(11px, 1.7vw, 16px); color: var(--t3); margin-top: 2px; }
+.ex-cta {
+  width: 100%; display: flex; align-items: center; justify-content: center;
+  gap: clamp(8px, 1.4vw, 14px);
+  background: var(--brand); color: #fff;
+  border-radius: var(--r-sm); padding: clamp(13px, 2.2vw, 22px);
+  font-size: clamp(14px, 2.4vw, 22px); font-weight: 700;
+  min-height: clamp(48px, 8vw, 72px);
+}
+.ex-cta:active { opacity: .85; }
+
+/* ─── PROFILE ────────────────────────────────────── */
+.av-block {
+  display: flex; flex-direction: column; align-items: center;
+  padding: clamp(24px, 4vw, 44px) 0 clamp(16px, 2.7vw, 28px);
+}
+.av {
+  width: clamp(72px, 13vw, 110px); height: clamp(72px, 13vw, 110px);
+  border-radius: 50%;
+  background: var(--brand);
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(28px, 5vw, 46px); font-weight: 800; color: #fff;
+  margin-bottom: clamp(12px, 2vw, 20px);
+  box-shadow: 0 0 0 4px var(--s1), 0 0 0 6px var(--bglow);
+}
+.av-name  { font-size: clamp(18px, 3.2vw, 28px); font-weight: 800; margin-bottom: 4px; }
+.av-email { font-size: clamp(13px, 2.2vw, 20px); color: var(--t2); margin-bottom: clamp(12px, 2vw, 20px); }
+.tier-badge {
+  display: flex; align-items: center; gap: 4px;
+  background: linear-gradient(135deg, var(--brand), #818cf8);
+  border-radius: 999px; padding: clamp(4px, .7vw, 8px) clamp(12px, 2vw, 20px);
+  font-size: clamp(12px, 1.9vw, 17px); font-weight: 700; color: #fff;
+}
+
+.plan-row {
+  display: flex; align-items: center; gap: clamp(12px, 2vw, 20px);
+  background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.25);
+  border-radius: var(--r-md); padding: clamp(13px, 2.2vw, 22px);
+}
+.plan-icon { font-size: clamp(24px, 4vw, 38px); flex-shrink: 0; }
+.plan-info { flex: 1; min-width: 0; }
+.plan-title { font-size: clamp(14px, 2.3vw, 20px); font-weight: 700; }
+.plan-sub   { font-size: clamp(12px, 1.9vw, 17px); color: var(--t2); margin-top: 2px; }
+.plan-btn {
+  flex-shrink: 0;
+  background: var(--amber); color: #0f172a;
+  border-radius: 999px;
+  padding: clamp(7px, 1.2vw, 12px) clamp(14px, 2.3vw, 22px);
+  font-size: clamp(13px, 2vw, 18px); font-weight: 700;
+  min-height: clamp(36px, 6vw, 54px);
+  display: flex; align-items: center;
+}
+
+.set-list { display: flex; flex-direction: column; gap: clamp(4px, .7vw, 8px); }
+.set-row {
+  display: flex; align-items: center; gap: clamp(12px, 2vw, 20px);
+  padding: clamp(14px, 2.4vw, 24px); background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r-sm); min-height: clamp(52px, 9vw, 80px);
+}
+.set-row:active { background: var(--s2); }
+.set-icon {
+  width: clamp(32px, 5.5vw, 52px); height: clamp(32px, 5.5vw, 52px);
+  border-radius: clamp(8px, 1.3vw, 13px);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.set-icon svg { width: clamp(16px, 2.7vw, 26px); height: clamp(16px, 2.7vw, 26px); }
+.set-lbl { flex: 1; font-size: clamp(14px, 2.4vw, 22px); font-weight: 500; min-width: 0; }
+.set-row.danger .set-lbl { color: var(--red); }
+.set-chevron { color: var(--t3); }
+.set-chevron svg { width: clamp(14px, 2.3vw, 20px); height: clamp(14px, 2.3vw, 20px); }
+
+/* ─── EMPTY STATE ────────────────────────────────── */
+.empty {
+  text-align: center; padding: clamp(48px, 8vw, 80px) 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.empty svg  { opacity: .3; }
+.empty p    { font-size: clamp(13px, 2.2vw, 20px); color: var(--t2); }
+
+</style>
+</head>
+<body>
+
+<!-- ═══ TOPBAR ══════════════════════════════════════ -->
+<header class="topbar">
+  <div class="tbar-logo">
+    <div class="tbar-mark">
+      <svg viewBox="0 0 24 24" fill="white"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    </div>
+    <span class="tbar-name">StudyBuild</span>
+  </div>
+  <div class="tbar-right">
+    <div class="xp-chip">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="#6366f1"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>
+      <span>2,340 XP</span>
+    </div>
+    <button class="ibtn" aria-label="Notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+
+<!-- ═══ HOME PAGE ════════════════════════════════════ -->
+<div class="page on" id="pg-home">
+
+  <!-- Greeting -->
+  <div class="greeting">
+    <div class="g-left">
+      <div class="g-hi">Hey, Danny! 👋</div>
+      <div class="g-date">Monday, 14 April</div>
+    </div>
+    <button class="g-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Study
+    </button>
+  </div>
+
+  <!-- XP Progress -->
+  <div class="card">
+    <div class="xp-row">
+      <div class="xp-left">
+        <span class="lv-badge">Lv 12</span>
+        <span class="xp-lbl">XP Progress</span>
+      </div>
+      <span class="xp-val">2,340 / 3,000</span>
+    </div>
+    <div class="xp-track">
+      <div class="xp-fill" style="width:78%"></div>
+    </div>
+  </div>
+
+  <!-- Stats 2×2 -->
+  <div class="stat-grid">
+
+    <div class="scard" style="--ac:var(--orange)">
+      <div class="sicon">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div class="snum">14</div>
+      <div class="slbl">Day Streak</div>
+      <div class="sdelta">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+        Best: 21
+      </div>
+    </div>
+
+    <div class="scard" style="--ac:var(--purple)">
+      <div class="sicon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
+      </div>
+      <div class="snum">248</div>
+      <div class="slbl">Cards Learned</div>
+      <div class="sdelta">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+        +12 today
+      </div>
+    </div>
+
+    <div class="scard" style="--ac:var(--red)">
+      <div class="sicon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="snum">18</div>
+      <div class="slbl">Weak Cards</div>
+      <div class="sdelta" style="color:var(--red)">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+        Needs review
+      </div>
+    </div>
+
+    <div class="scard" style="--ac:var(--green)">
+      <div class="sicon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <div class="snum">32</div>
+      <div class="slbl">Due Today</div>
+      <div class="sdelta">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+        On track
+      </div>
+    </div>
+
+  </div><!-- /stat-grid -->
+
+  <!-- Heatmap -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="sec-label">Study Activity</span>
+      <span class="link-sm">12 weeks</span>
+    </div>
+    <div class="hm-scroll">
+      <div class="hm-grid" id="heatmap"></div>
+    </div>
+    <div class="hm-legend">
+      <span>Less</span>
+      <div class="lg-cell" style="background:rgba(255,255,255,.06)"></div>
+      <div class="lg-cell" style="background:rgba(99,102,241,.22)"></div>
+      <div class="lg-cell" style="background:rgba(99,102,241,.50)"></div>
+      <div class="lg-cell" style="background:rgba(99,102,241,.90)"></div>
+      <span>More</span>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="sec-label">Recent Activity</span>
+    </div>
+    <div class="act-row">
+      <div class="act-dot" style="background:var(--green)"></div>
+      <div class="act-txt">Completed "Mitosis &amp; Cell Division" deck</div>
+      <div class="act-time">2m ago</div>
+    </div>
+    <div class="act-row">
+      <div class="act-dot" style="background:var(--purple)"></div>
+      <div class="act-txt">Quiz: Roman Empire — 78%</div>
+      <div class="act-time">1h ago</div>
+    </div>
+    <div class="act-row">
+      <div class="act-dot" style="background:var(--brand)"></div>
+      <div class="act-txt">Examiner session: Chemistry Bonding</div>
+      <div class="act-time">3h ago</div>
+    </div>
+    <div class="act-row">
+      <div class="act-dot" style="background:var(--orange)"></div>
+      <div class="act-txt">Streak extended — Day 14! 🔥</div>
+      <div class="act-time">6h ago</div>
+    </div>
+  </div>
+
+</div><!-- /home -->
+
+
+<!-- ═══ STUDY PAGE ════════════════════════════════════ -->
+<div class="page" id="pg-study">
+
+  <!-- Tab bar -->
+  <div class="tabs">
+    <button class="tbtn on" onclick="switchTab('decks',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
+      Decks
+    </button>
+    <button class="tbtn" onclick="switchTab('quizzes',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+      Quizzes
+    </button>
+    <button class="tbtn" onclick="switchTab('summaries',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Summaries
+    </button>
+  </div>
+
+  <!-- Decks panel -->
+  <div class="tpanel on" id="tp-decks">
+    <div class="deck-card">
+      <div class="d-emoji">🧬</div>
+      <div class="d-info">
+        <div class="d-name">Mitosis &amp; Cell Division</div>
+        <div class="d-meta">42 cards · Biology <span class="dtag ok">8 due</span></div>
+      </div>
+      <button class="d-play"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+    </div>
+    <div class="deck-card">
+      <div class="d-emoji">⚗️</div>
+      <div class="d-info">
+        <div class="d-name">Organic Chemistry Reactions</div>
+        <div class="d-meta">67 cards · Chemistry <span class="dtag warn">18 due</span></div>
+      </div>
+      <button class="d-play"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+    </div>
+    <div class="deck-card">
+      <div class="d-emoji">🏛️</div>
+      <div class="d-info">
+        <div class="d-name">History of the Roman Empire</div>
+        <div class="d-meta">55 cards · History <span class="dtag ok">6 due</span></div>
+      </div>
+      <button class="d-play"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+    </div>
+    <div class="deck-card">
+      <div class="d-emoji">📐</div>
+      <div class="d-info">
+        <div class="d-name">Calculus Fundamentals</div>
+        <div class="d-meta">38 cards · Maths <span class="dtag ok">0 due</span></div>
+      </div>
+      <button class="d-play"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+    </div>
+    <div class="deck-card">
+      <div class="d-emoji">🌍</div>
+      <div class="d-info">
+        <div class="d-name">World Geography</div>
+        <div class="d-meta">90 cards · Geography <span class="dtag warn">12 due</span></div>
+      </div>
+      <button class="d-play"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+    </div>
+  </div>
+
+  <!-- Quizzes panel -->
+  <div class="tpanel" id="tp-quizzes">
+    <div class="qz-card">
+      <div class="qz-top"><div class="qz-ttl">History of the Roman Empire</div><div class="qz-pct ok">78%</div></div>
+      <div class="pbar-track"><div class="pbar-fill ok" style="width:78%"></div></div>
+      <div class="qz-foot"><div class="qz-meta">20 questions · 14 Apr</div><button class="qz-retake">Retake</button></div>
+    </div>
+    <div class="qz-card">
+      <div class="qz-top"><div class="qz-ttl">Organic Chemistry Reactions</div><div class="qz-pct bad">51%</div></div>
+      <div class="pbar-track"><div class="pbar-fill bad" style="width:51%"></div></div>
+      <div class="qz-foot"><div class="qz-meta">25 questions · 13 Apr</div><button class="qz-retake">Retake</button></div>
+    </div>
+    <div class="qz-card">
+      <div class="qz-top"><div class="qz-ttl">Mitosis &amp; Cell Division</div><div class="qz-pct good">92%</div></div>
+      <div class="pbar-track"><div class="pbar-fill good" style="width:92%"></div></div>
+      <div class="qz-foot"><div class="qz-meta">15 questions · 12 Apr</div><button class="qz-retake">Retake</button></div>
+    </div>
+    <div class="qz-card">
+      <div class="qz-top"><div class="qz-ttl">Calculus Fundamentals</div><div class="qz-pct good">88%</div></div>
+      <div class="pbar-track"><div class="pbar-fill good" style="width:88%"></div></div>
+      <div class="qz-foot"><div class="qz-meta">12 questions · 10 Apr</div><button class="qz-retake">Retake</button></div>
+    </div>
+  </div>
+
+  <!-- Summaries panel -->
+  <div class="tpanel" id="tp-summaries">
+    <div class="sm-card">
+      <div class="sm-icon" style="background:rgba(168,85,247,.15)">🧬</div>
+      <div class="sm-info"><div class="sm-ttl">Cell Biology Overview</div><div class="sm-meta">4 min · 2,300 words · 13 Apr</div></div>
+      <svg class="sm-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="sm-card">
+      <div class="sm-icon" style="background:rgba(249,115,22,.15)">🏛️</div>
+      <div class="sm-info"><div class="sm-ttl">Rise &amp; Fall of Rome</div><div class="sm-meta">6 min · 3,800 words · 11 Apr</div></div>
+      <svg class="sm-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="sm-card">
+      <div class="sm-icon" style="background:rgba(99,102,241,.15)">⚗️</div>
+      <div class="sm-info"><div class="sm-ttl">Organic Chem: Key Reactions</div><div class="sm-meta">5 min · 3,100 words · 9 Apr</div></div>
+      <svg class="sm-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
+
+</div><!-- /study -->
+
+
+<!-- ═══ EXAMINER PAGE ══════════════════════════════════ -->
+<div class="page" id="pg-examiner">
+
+  <div class="ex-banner">
+    <div class="ex-tag">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      The Examiner
+    </div>
+    <div class="ex-head">Test yourself on what you actually studied</div>
+    <div class="ex-sub">Upload notes, slides, or PDFs. Questions come exclusively from your material — no generic hints.</div>
+    <div class="ex-stats">
+      <div class="ex-stat"><div class="ex-stat-n">7</div><div class="ex-stat-l">Sessions</div></div>
+      <div class="ex-stat"><div class="ex-stat-n">3</div><div class="ex-stat-l">Gaps found</div></div>
+      <div class="ex-stat"><div class="ex-stat-n">84%</div><div class="ex-stat-l">Solid avg</div></div>
+    </div>
+    <button class="ex-cta">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload Notes &amp; Start Exam
+    </button>
+  </div>
+
+  <div class="sec-label">Past Sessions</div>
+
+  <div class="deck-card">
+    <div class="d-emoji">⚗️</div>
+    <div class="d-info">
+      <div class="d-name">Chemistry Bonding</div>
+      <div class="d-meta">Hard · 10 questions · 2 gaps</div>
+    </div>
+    <span class="dtag warn">2 gaps</span>
+  </div>
+  <div class="deck-card">
+    <div class="d-emoji">🧬</div>
+    <div class="d-info">
+      <div class="d-name">Cell Division Notes</div>
+      <div class="d-meta">Standard · 10 questions · 1 gap</div>
+    </div>
+    <span class="dtag warn">1 gap</span>
+  </div>
+  <div class="deck-card">
+    <div class="d-emoji">🏛️</div>
+    <div class="d-info">
+      <div class="d-name">Roman History Lecture</div>
+      <div class="d-meta">Brutal · 15 questions · 0 gaps</div>
+    </div>
+    <span class="dtag ok">Solid</span>
+  </div>
+
+</div><!-- /examiner -->
+
+
+<!-- ═══ QUIZZES PAGE ══════════════════════════════════ -->
+<div class="page" id="pg-quiz">
+
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <span class="sec-label">Quizzes</span>
+    <span class="link-sm">+ New Quiz</span>
+  </div>
+
+  <div class="qz-card">
+    <div class="qz-top"><div class="qz-ttl">History of the Roman Empire</div><div class="qz-pct ok">78%</div></div>
+    <div class="pbar-track"><div class="pbar-fill ok" style="width:78%"></div></div>
+    <div class="qz-foot"><div class="qz-meta">20 questions · 14 Apr</div><button class="qz-retake">Retake</button></div>
+  </div>
+  <div class="qz-card">
+    <div class="qz-top"><div class="qz-ttl">Organic Chemistry Reactions</div><div class="qz-pct bad">51%</div></div>
+    <div class="pbar-track"><div class="pbar-fill bad" style="width:51%"></div></div>
+    <div class="qz-foot"><div class="qz-meta">25 questions · 13 Apr</div><button class="qz-retake">Retake</button></div>
+  </div>
+  <div class="qz-card">
+    <div class="qz-top"><div class="qz-ttl">Mitosis &amp; Cell Division</div><div class="qz-pct good">92%</div></div>
+    <div class="pbar-track"><div class="pbar-fill good" style="width:92%"></div></div>
+    <div class="qz-foot"><div class="qz-meta">15 questions · 12 Apr</div><button class="qz-retake">Retake</button></div>
+  </div>
+
+</div><!-- /quiz -->
+
+
+<!-- ═══ PROFILE PAGE ═════════════════════════════════ -->
+<div class="page" id="pg-profile">
+
+  <div class="av-block">
+    <div class="av">D</div>
+    <div class="av-name">Danny Allen</div>
+    <div class="av-email">danny.sam.allen@gmail.com</div>
+    <div class="tier-badge">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>
+      Premium
+    </div>
+  </div>
+
+  <div class="plan-row">
+    <div class="plan-icon">⚡</div>
+    <div class="plan-info">
+      <div class="plan-title">Premium Plan</div>
+      <div class="plan-sub">Renews 15 May 2026</div>
+    </div>
+    <button class="plan-btn">Manage</button>
+  </div>
+
+  <div class="sec-label">Account</div>
+
+  <div class="set-list">
+    <button class="set-row">
+      <div class="set-icon" style="background:var(--bdim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <span class="set-lbl">Edit Profile</span>
+      <div class="set-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </button>
+    <button class="set-row">
+      <div class="set-icon" style="background:rgba(168,85,247,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+      <span class="set-lbl">Change Password</span>
+      <div class="set-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </button>
+    <button class="set-row">
+      <div class="set-icon" style="background:rgba(245,158,11,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      <span class="set-lbl">Notifications</span>
+      <div class="set-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </button>
+    <button class="set-row">
+      <div class="set-icon" style="background:var(--s2)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
+      <span class="set-lbl">About &amp; Help</span>
+      <div class="set-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </button>
+    <button class="set-row danger">
+      <div class="set-icon" style="background:rgba(239,68,68,.12)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V7l3-4h10l3 4v12a2 2 0 0 1-2 2h-4"/><line x1="3" y1="7" x2="21" y2="7"/><polyline points="15 17 12 20 9 17"/><line x1="12" y1="12" x2="12" y2="20"/></svg></div>
+      <span class="set-lbl">Sign Out</span>
+      <div class="set-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </button>
+  </div>
+
+</div><!-- /profile -->
+
+
+<!-- ═══ BOTTOM NAV ════════════════════════════════════ -->
+<nav class="bottomnav">
+  <button class="navbtn on" id="nav-home" onclick="goPage('home',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="navbtn" id="nav-study" onclick="goPage('study',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
+    <span>Study</span>
+  </button>
+  <button class="navbtn" id="nav-examiner" onclick="goPage('examiner',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <span>Examiner</span>
+  </button>
+  <button class="navbtn" id="nav-quiz" onclick="goPage('quiz',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+    <span>Quizzes</span>
+  </button>
+  <button class="navbtn" id="nav-profile" onclick="goPage('profile',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Profile</span>
+  </button>
+</nav>
+
+
+<script>
+/* ── Page navigation ─── */
+function goPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('on'); p.scrollTop = 0; });
+  document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('on'));
+  document.getElementById('pg-' + id).classList.add('on');
+  btn.classList.add('on');
+  window.scrollTo(0, 0);
+}
+
+/* ── Tab switching (study page) ─── */
+function switchTab(id, btn) {
+  document.querySelectorAll('.tpanel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('on'));
+  document.getElementById('tp-' + id).classList.add('on');
+  btn.classList.add('on');
+}
+
+/* ── Build heatmap ─── */
+(function() {
+  const el = document.getElementById('heatmap');
+  if (!el) return;
+  const WEEKS = 16, DAYS = 7;
+  const seed = n => ((Math.sin(n * 9301 + 49297) * 233280) % 233280) / 233280;
+  const lvl = v => v > .82 ? 'l4' : v > .62 ? 'l3' : v > .42 ? 'l2' : v > .28 ? 'l1' : '';
+  for (let w = 0; w < WEEKS; w++) {
+    const col = document.createElement('div');
+    col.className = 'hm-col';
+    for (let d = 0; d < DAYS; d++) {
+      const cell = document.createElement('div');
+      const l = lvl(seed(w * DAYS + d));
+      cell.className = 'hm-cell' + (l ? ' ' + l : '');
+      col.appendChild(cell);
+    }
+    el.appendChild(col);
+  }
+})();
+</script>
+
+</body>
+</html>

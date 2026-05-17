@@ -4,12 +4,13 @@ import { auth, AuthRequest } from '../middleware/auth';
 import { generateFlashcards, generateQuiz, generateSummary } from '../services/aiService';
 import { awardXP } from '../services/gamification';
 import { featureGuard } from '../middleware/featureGuard';
+import { requireFeature } from '../middleware/tierGuard';
 import { logAiUsage } from '../lib/logAiUsage';
 
 const router = Router();
 router.use(auth);
 
-router.post('/generate', featureGuard('ai_flashcards'), async (req: AuthRequest, res) => {
+router.post('/generate', featureGuard('ai_flashcards'), requireFeature('ai_flashcard_gen_per_month'), async (req: AuthRequest, res) => {
   const { name, description = '', color = '#4F46E5', notes, language = 'en', examDate } = req.body || {};
   if (!name) { res.status(400).json({ error: 'Deck name is required' }); return; }
   if (!notes || notes.trim().length < 20) { res.status(400).json({ error: 'Please provide at least 20 characters of notes' }); return; }
@@ -30,7 +31,7 @@ router.post('/generate', featureGuard('ai_flashcards'), async (req: AuthRequest,
   }
 });
 
-router.post('/quiz-create', featureGuard('ai_quiz_gen'), async (req: AuthRequest, res) => {
+router.post('/quiz-create', featureGuard('ai_quiz_gen'), requireFeature('ai_quiz_gen_per_month'), async (req: AuthRequest, res) => {
   const { title, topic = '', notes, language = 'en' } = req.body || {};
   if (!title) { res.status(400).json({ error: 'Quiz title is required' }); return; }
   if (!notes || notes.trim().length < 20) { res.status(400).json({ error: 'Please provide at least 20 characters of notes' }); return; }
@@ -58,7 +59,7 @@ router.post('/quiz-create', featureGuard('ai_quiz_gen'), async (req: AuthRequest
   }
 });
 
-router.post('/summary-create', featureGuard('ai_summary'), async (req: AuthRequest, res) => {
+router.post('/summary-create', featureGuard('ai_summary'), requireFeature('ai_flashcard_gen_per_month'), async (req: AuthRequest, res) => {
   const { title, topic = '', notes, language = 'en' } = req.body || {};
   if (!title) { res.status(400).json({ error: 'Summary title is required' }); return; }
   if (!notes || notes.trim().length < 20) { res.status(400).json({ error: 'Please provide at least 20 characters of notes' }); return; }

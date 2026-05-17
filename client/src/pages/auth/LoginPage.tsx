@@ -24,14 +24,23 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const data = await apiFetch<{ token: string; user: User; emailVerified: boolean }>('/auth/login', {
+      const data = await apiFetch<{
+        token: string; user: User;
+        teacherStatus?: string; redirect?: string;
+      }>('/auth/login', {
         method: 'POST', body: JSON.stringify({ email, password })
       });
-      setSession(data.token, { ...data.user, emailVerified: data.emailVerified } as any);
-      if (data.emailVerified === false) {
-        navigate('/verify-email');
+      setSession(data.token, data.user);
+      toast.success('Welcome back!');
+
+      // Route teachers to the right place based on their approval status
+      if (data.redirect) {
+        navigate(data.redirect);
+      } else if (data.teacherStatus === 'pending') {
+        navigate('/teacher/onboarding');
+      } else if (data.teacherStatus === 'pending_approval' || data.teacherStatus === 'approved') {
+        navigate('/teacher');
       } else {
-        toast.success('Welcome back!');
         navigate('/dashboard');
       }
     } catch (err: unknown) {
@@ -42,11 +51,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0F172A] flex items-center justify-center px-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
-        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 p-8">
+        <div className="bg-white dark:bg-[#1E293B] rounded-[24px] shadow-[0_24px_80px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.4)] border border-slate-100 dark:border-white/5 p-8">
           <Link to="/" className="flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50">
               <Zap className="w-4 h-4 text-white fill-white" />
             </div>
             <span className="font-extrabold text-slate-900 dark:text-slate-100 text-lg">StudyBuild</span>

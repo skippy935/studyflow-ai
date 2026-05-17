@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>StudyBuild — Dashboard</title>
+  <style>
+    /* ── Design tokens ───────────────────────────────────────────── */
+    :root {
+      --bg:           #0f172a;
+      --bg-card:      #1e293b;
+      --bg-card-2:    #263548;
+      --border:       rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.13);
+
+      --text-primary:   #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted:     #64748b;
+
+      --indigo:   #6366f1;
+      --indigo-2: #4f46e5;
+      --violet:   #7c3aed;
+      --orange:   #f97316;
+      --red:      #ef4444;
+      --emerald:  #10b981;
+      --amber:    #f59e0b;
+
+      --radius-sm:  10px;
+      --radius-md:  14px;
+      --radius-lg:  20px;
+      --radius-xl:  28px;
+
+      /* 8pt grid */
+      --space-1: 8px;
+      --space-2: 16px;
+      --space-3: 24px;
+      --space-4: 32px;
+      --space-5: 40px;
+      --space-6: 48px;
+
+      /* Safe area */
+      --safe-top:    env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left:   env(safe-area-inset-left, 0px);
+      --safe-right:  env(safe-area-inset-right, 0px);
+
+      --nav-h: 64px;
+      --header-h: 60px;
+    }
+
+    /* ── Reset ───────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+
+    /* ── Typography (fluid) ──────────────────────────────────────── */
+    .t-hero   { font-size: clamp(20px, 5vw, 28px); font-weight: 800; line-height: 1.2; }
+    .t-title  { font-size: clamp(15px, 3.5vw, 18px); font-weight: 700; line-height: 1.3; }
+    .t-body   { font-size: clamp(13px, 3vw, 15px); font-weight: 400; line-height: 1.5; }
+    .t-label  { font-size: clamp(11px, 2.5vw, 13px); font-weight: 600; line-height: 1.4; }
+    .t-micro  { font-size: 11px; font-weight: 500; line-height: 1.4; }
+
+    /* ── Layout shell ────────────────────────────────────────────── */
+    .shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      padding-top: var(--safe-top);
+      padding-left: var(--safe-left);
+      padding-right: var(--safe-right);
+    }
+
+    /* ── Sticky header ───────────────────────────────────────────── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      height: var(--header-h);
+      background: rgba(15,23,42,0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-2);
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-logo-icon {
+      width: 32px; height: 32px;
+      background: var(--indigo-2);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+    }
+    .header-logo-icon svg { width: 16px; height: 16px; color: #fff; }
+    .header-logo-name { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+    .header-actions { display: flex; align-items: center; gap: var(--space-1); }
+    .header-btn {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 150ms ease;
+      flex-shrink: 0;
+    }
+    .header-btn:active { background: var(--bg-card-2); }
+    .header-btn svg { width: 18px; height: 18px; color: var(--text-secondary); }
+
+    /* ── Main scroll area ────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: var(--space-3) var(--space-2);
+      padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + var(--space-3));
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    /* ── Welcome row ─────────────────────────────────────────────── */
+    .welcome-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-2);
+    }
+    .welcome-name { color: var(--text-primary); }
+    .welcome-date { color: var(--text-secondary); margin-top: 4px; }
+    .create-btn {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      background: var(--indigo-2);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.4);
+      transition: transform 150ms ease, box-shadow 150ms ease;
+      min-height: 44px;
+    }
+    .create-btn:active { transform: scale(0.97); box-shadow: 0 2px 6px rgba(79,70,229,0.3); }
+    .create-btn svg { width: 16px; height: 16px; }
+
+    /* ── Stat cards — 2×2 grid ───────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color 150ms ease;
+      min-height: auto;
+    }
+    .stat-card:active { border-color: var(--border-hover); }
+    .stat-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .stat-icon svg { width: 18px; height: 18px; }
+    .stat-icon.orange { background: rgba(249,115,22,0.15); }
+    .stat-icon.orange svg { color: var(--orange); }
+    .stat-icon.indigo  { background: rgba(99,102,241,0.15); }
+    .stat-icon.indigo svg { color: var(--indigo); }
+    .stat-icon.red    { background: rgba(239,68,68,0.15); }
+    .stat-icon.red svg { color: var(--red); }
+    .stat-icon.emerald { background: rgba(16,185,129,0.15); }
+    .stat-icon.emerald svg { color: var(--emerald); }
+    .stat-value { font-size: clamp(20px, 5.5vw, 26px); font-weight: 800; color: var(--text-primary); line-height: 1; }
+    .stat-label { color: var(--text-secondary); }
+
+    /* ── Generic card ────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-2);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-2);
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .link-sm {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--indigo);
+    }
+
+    /* ── XP bar ──────────────────────────────────────────────────── */
+    .xp-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .xp-level {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .xp-level-num { font-size: 20px; font-weight: 800; color: var(--indigo); }
+    .xp-total { font-size: 13px; color: var(--text-secondary); }
+    .xp-next { font-size: 12px; color: var(--text-muted); }
+    .xp-track {
+      height: 8px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .xp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--indigo), var(--violet));
+      border-radius: 99px;
+      transition: width 700ms ease;
+    }
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: rgba(99,102,241,0.15);
+      color: #a5b4fc;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ── Heatmap (scrollable strip) ──────────────────────────────── */
+    .heatmap-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .heatmap-scroll::-webkit-scrollbar { display: none; }
+    .heatmap-inner {
+      display: flex;
+      gap: 4px;
+      width: max-content;
+      padding-bottom: 2px;
+    }
+    .heatmap-col { display: flex; flex-direction: column; gap: 4px; }
+    .heatmap-cell {
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.06);
+    }
+    .heatmap-cell.l1 { background: rgba(99,102,241,0.25); }
+    .heatmap-cell.l2 { background: rgba(99,102,241,0.50); }
+    .heatmap-cell.l3 { background: rgba(99,102,241,0.75); }
+    .heatmap-cell.l4 { background: rgba(99,102,241,1.00); }
+
+    /* ── Recent sessions ─────────────────────────────────────────── */
+    .sessions-scroll {
+      display: flex;
+      gap: var(--space-1);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .sessions-scroll::-webkit-scrollbar { display: none; }
+    .session-chip {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      min-width: 140px;
+    }
+    .session-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .session-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
+    .session-meta { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+    /* ── Tasks list ──────────────────────────────────────────────── */
+    .task-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .task-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .task-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .task-dot.overdue { background: var(--red); }
+    .task-dot.today   { background: var(--orange); }
+    .task-dot.upcoming { background: var(--indigo); }
+    .task-title { flex: 1; font-size: 14px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .task-due   { font-size: 12px; font-weight: 600; flex-shrink: 0; }
+    .task-due.overdue { color: var(--red); }
+    .task-due.today   { color: var(--orange); }
+    .task-due.upcoming { color: var(--text-muted); }
+
+    /* ── Tab bar ─────────────────────────────────────────────────── */
+    .tabs-wrap {
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-md);
+      padding: 4px;
+      display: flex;
+      gap: 2px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs-wrap::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex: 1;
+      min-width: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all 150ms ease;
+      white-space: nowrap;
+      min-height: 44px;
+    }
+    .tab-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .tab-btn.active {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    /* ── Deck cards ──────────────────────────────────────────────── */
+    .deck-grid {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+    .deck-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px var(--space-2);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      transition: border-color 150ms ease;
+      min-height: 68px;
+    }
+    .deck-card:active { border-color: var(--border-hover); }
+    .deck-color-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .deck-info { flex: 1; min-width: 0; }
+    .deck-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .deck-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .deck-actions { display: flex; align-items: center; gap: 4px; }
+    .deck-action-btn {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      transition: background 150ms ease;
+      flex-shrink: 0;
+    }
+    .deck-action-btn:active { background: rgba(255,255,255,0.1); }
+    .deck-action-btn svg { width: 14px; height: 14px; color: var(--text-secondary); }
+    .deck-action-btn.play svg { color: var(--indigo); }
+    .deck-action-btn.del svg  { color: var(--red); }
+
+    /* ── Empty state ─────────────────────────────────────────────── */
+    .empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 12px;
+      padding: var(--space-5) var(--space-2);
+    }
+    .empty-icon {
+      width: 56px; height: 56px;
+      border-radius: var(--radius-lg);
+      background: rgba(99,102,241,0.12);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .empty-icon svg { width: 26px; height: 26px; color: var(--indigo); }
+    .empty-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+    .empty-sub   { font-size: 13px; color: var(--text-secondary); max-width: 240px; }
+    .empty-btn {
+      margin-top: 4px;
+      padding: 11px 24px;
+      background: var(--indigo-2);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      min-height: 44px;
+    }
+
+    /* ── Bottom nav ──────────────────────────────────────────────── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 40;
+      height: calc(var(--nav-h) + var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
+      background: rgba(15,23,42,0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: stretch;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 0 4px;
+      transition: color 150ms ease;
+      color: var(--text-muted);
+      min-height: 44px;
+    }
+    .nav-item.active { color: var(--indigo); }
+    .nav-item svg { width: 22px; height: 22px; }
+    .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; }
+    .nav-item.active .nav-label { color: var(--indigo); }
+
+    /* ── Difficulty pill ─────────────────────────────────────────── */
+    .diff-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .diff-pill.standard { background: rgba(16,185,129,0.15); color: var(--emerald); }
+    .diff-pill.hard     { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .diff-pill.brutal   { background: rgba(239,68,68,0.15);  color: var(--red); }
+
+    /* ── Examiner session card ───────────────────────────────────── */
+    .exam-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px var(--space-2);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      min-height: 68px;
+    }
+    .exam-info { flex: 1; min-width: 0; }
+    .exam-name { font-size: 14px; font-weight: 700; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .exam-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+    .exam-status {
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 99px;
+    }
+    .exam-status.done { background: rgba(16,185,129,0.15); color: var(--emerald); }
+    .exam-status.live { background: rgba(99,102,241,0.15); color: var(--indigo); }
+
+    /* ── Subject group ───────────────────────────────────────────── */
+    .subject-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px var(--space-2);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 6px;
+      min-height: 48px;
+    }
+    .subject-icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      background: rgba(99,102,241,0.15);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .subject-icon svg { width: 14px; height: 14px; color: var(--indigo); }
+    .subject-name { flex: 1; font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .subject-count { font-size: 12px; color: var(--text-muted); }
+    .subject-chevron { width: 16px; height: 16px; color: var(--text-muted); transition: transform 200ms ease; }
+    .subject-chevron.open { transform: rotate(90deg); }
+
+    /* ── Small mobile (≤390px) ──────────────────────────────────── */
+    @media (max-width: 390px) {
+      .main {
+        padding: var(--space-2) 12px;
+        gap: var(--space-2);
+      }
+      .stats-grid { gap: 8px; }
+      .stat-card { padding: 12px; gap: 6px; }
+      .stat-icon { width: 30px; height: 30px; }
+      .stat-icon svg { width: 15px; height: 15px; }
+      .stat-value { font-size: clamp(18px, 5vw, 22px); }
+      .t-hero { font-size: clamp(17px, 4.5vw, 22px); }
+      .deck-card { padding: 12px var(--space-2); min-height: 58px; }
+      .session-chip { min-width: 120px; padding: 8px 12px; }
+    }
+
+    /* ── Tablet / Desktop enhancements ───────────────────────────── */
+    @media (min-width: 768px) {
+      .header { padding: 0 var(--space-4); }
+      .main { padding: var(--space-4); max-width: 760px; margin: 0 auto; width: 100%; padding-bottom: var(--space-4); }
+      .bottom-nav { display: none; }
+      .stats-grid { grid-template-columns: repeat(4, 1fr); }
+      .stat-card { min-height: 110px; }
+      .deck-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+    }
+    @media (min-width: 1024px) {
+      .main { max-width: 960px; padding: var(--space-5) var(--space-4); }
+    }
+
+    /* ── Utility ─────────────────────────────────────────────────── */
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .mt-1 { margin-top: 4px; }
+    .mt-2 { margin-top: 8px; }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── Header ─────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-logo">
+      <div class="header-logo-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+      </div>
+      <span class="header-logo-name">StudyBuild</span>
+    </div>
+    <div class="header-actions">
+      <button class="header-btn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </button>
+      <button class="header-btn" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Main scroll ─────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Welcome -->
+    <div class="welcome-row">
+      <div>
+        <h1 class="t-hero welcome-name">Hey, Danny! 👋</h1>
+        <p class="t-label welcome-date mt-1">Monday, 14 April</p>
+      </div>
+      <button class="create-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create
+      </button>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/><path d="M17.77 4.33l-1.41 1.42A7 7 0 0 1 19 12a7 7 0 0 1-2.64 5.41l1.41 1.41A9 9 0 0 0 21 12a9 9 0 0 0-3.23-7.67zM7.64 5.75L6.23 4.33A9 9 0 0 0 3 12a9 9 0 0 0 3.23 7.41l1.41-1.41A7 7 0 0 1 5 12a7 7 0 0 1 2.64-5.25z"/></svg>
+        </div>
+        <div>
+          <div class="stat-value">14</div>
+          <div class="t-label" style="color:var(--text-secondary);margin-top:2px;">Day streak</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon indigo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        </div>
+        <div>
+          <div class="stat-value">482</div>
+          <div class="t-label" style="color:var(--text-secondary);margin-top:2px;">Cards learned</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div>
+          <div class="stat-value">23</div>
+          <div class="t-label" style="color:var(--text-secondary);margin-top:2px;">Weak cards</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon emerald">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="stat-value">37</div>
+          <div class="t-label" style="color:var(--text-secondary);margin-top:2px;">Due today</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- XP Bar -->
+    <div class="card">
+      <div class="xp-row">
+        <div class="xp-level">
+          <span class="xp-level-num">Lv.12</span>
+          <span class="xp-total">2,840 XP total</span>
+        </div>
+        <span class="xp-next">360 / 500 XP to next</span>
+      </div>
+      <div class="xp-track">
+        <div class="xp-fill" style="width:72%"></div>
+      </div>
+      <div class="badges">
+        <span class="badge">🔥 On Fire</span>
+        <span class="badge">🧠 Deep Thinker</span>
+        <span class="badge">⚡ Speed Runner</span>
+        <span class="badge">📚 Book Worm</span>
+      </div>
+    </div>
+
+    <!-- Study Activity Heatmap -->
+    <div class="card">
+      <div class="card-header">
+        <span class="section-label">Study Activity</span>
+        <span class="t-micro" style="color:var(--text-muted)">Last 12 weeks</span>
+      </div>
+      <div class="heatmap-scroll">
+        <div class="heatmap-inner" id="heatmap"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:10px;">
+        <span class="t-micro" style="color:var(--text-muted)">Less</span>
+        <div class="heatmap-cell" style="width:10px;height:10px;"></div>
+        <div class="heatmap-cell l1" style="width:10px;height:10px;"></div>
+        <div class="heatmap-cell l2" style="width:10px;height:10px;"></div>
+        <div class="heatmap-cell l3" style="width:10px;height:10px;"></div>
+        <div class="heatmap-cell l4" style="width:10px;height:10px;"></div>
+        <span class="t-micro" style="color:var(--text-muted)">More</span>
+      </div>
+    </div>
+
+    <!-- Recent Sessions -->
+    <div class="card">
+      <div class="card-header">
+        <span class="section-label">Recent Activity</span>
+      </div>
+      <div class="sessions-scroll">
+        <div class="session-chip">
+          <div class="session-dot" style="background:#6366f1"></div>
+          <div>
+            <div class="session-name">Biology</div>
+            <div class="session-meta">24 cards · Today</div>
+          </div>
+        </div>
+        <div class="session-chip">
+          <div class="session-dot" style="background:#f97316"></div>
+          <div>
+            <div class="session-name">Maths Calculus</div>
+            <div class="session-meta">18 cards · Yesterday</div>
+          </div>
+        </div>
+        <div class="session-chip">
+          <div class="session-dot" style="background:#10b981"></div>
+          <div>
+            <div class="session-name">History WW2</div>
+            <div class="session-meta">31 cards · 2 days ago</div>
+          </div>
+        </div>
+        <div class="session-chip">
+          <div class="session-dot" style="background:#a855f7"></div>
+          <div>
+            <div class="session-name">Chemistry</div>
+            <div class="session-meta">12 cards · 3 days ago</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming Tasks -->
+    <div class="card">
+      <div class="card-header">
+        <span class="section-label">Upcoming Tasks</span>
+        <a class="link-sm" href="#">View all →</a>
+      </div>
+      <div>
+        <div class="task-row">
+          <div class="task-dot overdue"></div>
+          <div class="task-title">Write essay introduction</div>
+          <div class="task-due overdue">2d overdue</div>
+        </div>
+        <div class="task-row">
+          <div class="task-dot today"></div>
+          <div class="task-title">Revise Chapter 5 notes</div>
+          <div class="task-due today">Today</div>
+        </div>
+        <div class="task-row">
+          <div class="task-dot upcoming"></div>
+          <div class="task-title">Mock exam practice</div>
+          <div class="task-due upcoming">2d</div>
+        </div>
+        <div class="task-row">
+          <div class="task-dot upcoming"></div>
+          <div class="task-title">Complete problem set 4</div>
+          <div class="task-due upcoming">5d</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="tabs-wrap" role="tablist">
+      <button class="tab-btn active" role="tab" onclick="switchTab('decks',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Decks
+      </button>
+      <button class="tab-btn" role="tab" onclick="switchTab('quizzes',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Quizzes
+      </button>
+      <button class="tab-btn" role="tab" onclick="switchTab('summaries',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Summaries
+      </button>
+      <button class="tab-btn" role="tab" onclick="switchTab('examiner',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        Examiner
+      </button>
+    </div>
+
+    <!-- Tab panels -->
+    <div id="panel-decks">
+      <!-- Subject group -->
+      <div style="margin-bottom:8px;">
+        <div class="subject-header" onclick="toggleSubject(this)">
+          <div class="subject-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <span class="subject-name">Sciences</span>
+          <span class="subject-count">3 decks</span>
+          <svg class="subject-chevron open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="deck-grid" style="padding-left:12px;margin-bottom:8px;">
+          <div class="deck-card">
+            <div class="deck-color-dot" style="background:#6366f1"></div>
+            <div class="deck-info">
+              <div class="deck-name">Biology</div>
+              <div class="deck-meta">84 cards · 12 due</div>
+            </div>
+            <div class="deck-actions">
+              <button class="deck-action-btn play" aria-label="Study"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+            </div>
+          </div>
+          <div class="deck-card">
+            <div class="deck-color-dot" style="background:#10b981"></div>
+            <div class="deck-info">
+              <div class="deck-name">Chemistry</div>
+              <div class="deck-meta">56 cards · 8 due</div>
+            </div>
+            <div class="deck-actions">
+              <button class="deck-action-btn play" aria-label="Study"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ungrouped decks -->
+      <div class="deck-grid">
+        <div class="deck-card">
+          <div class="deck-color-dot" style="background:#f97316"></div>
+          <div class="deck-info">
+            <div class="deck-name">Maths Calculus</div>
+            <div class="deck-meta">120 cards · 17 due</div>
+          </div>
+          <div class="deck-actions">
+            <button class="deck-action-btn play" aria-label="Study"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+          </div>
+        </div>
+        <div class="deck-card">
+          <div class="deck-color-dot" style="background:#a855f7"></div>
+          <div class="deck-info">
+            <div class="deck-name">History WW2</div>
+            <div class="deck-meta">67 cards · 0 due</div>
+          </div>
+          <div class="deck-actions">
+            <button class="deck-action-btn play" aria-label="Study"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+          </div>
+        </div>
+        <div class="deck-card">
+          <div class="deck-color-dot" style="background:#ec4899"></div>
+          <div class="deck-info">
+            <div class="deck-name">French Vocab</div>
+            <div class="deck-meta">203 cards · 5 due</div>
+          </div>
+          <div class="deck-actions">
+            <button class="deck-action-btn play" aria-label="Study"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-quizzes" style="display:none;">
+      <div class="deck-grid">
+        <div class="deck-card">
+          <div class="deck-color-dot" style="background:#6366f1"></div>
+          <div class="deck-info">
+            <div class="deck-name">Biology Quiz 3</div>
+            <div class="deck-meta">10 questions</div>
+          </div>
+          <div class="deck-actions">
+            <button class="deck-action-btn play" aria-label="Start"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+          </div>
+        </div>
+        <div class="deck-card">
+          <div class="deck-color-dot" style="background:#f97316"></div>
+          <div class="deck-info">
+            <div class="deck-name">Calculus Limits</div>
+            <div class="deck-meta">15 questions</div>
+          </div>
+          <div class="deck-actions">
+            <button class="deck-action-btn play" aria-label="Start"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-summaries" style="display:none;">
+      <div class="deck-grid">
+        <div class="deck-card">
+          <div class="deck-color-dot" style="background:#10b981"></div>
+          <div class="deck-info">
+            <div class="deck-name">Cell Division</div>
+            <div class="deck-meta">4 min read · Biology</div>
+          </div>
+          <div class="deck-actions">
+            <button class="deck-action-btn" aria-label="Open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></button>
+          </div>
+        </div>
+        <div class="deck-card">
+          <div class="deck-color-dot" style="background:#a855f7"></div>
+          <div class="deck-info">
+            <div class="deck-name">WW2 Causes</div>
+            <div class="deck-meta">6 min read · History</div>
+          </div>
+          <div class="deck-actions">
+            <button class="deck-action-btn" aria-label="Open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-examiner" style="display:none;">
+      <div class="deck-grid">
+        <div class="exam-card">
+          <div class="exam-info">
+            <div class="exam-name">Biology Mock Exam</div>
+            <div class="exam-meta">Hard · 10 Q · 8 exchanges</div>
+          </div>
+          <span class="exam-status done">Complete</span>
+        </div>
+        <div class="exam-card">
+          <div class="exam-info">
+            <div class="exam-name">History Deep Dive</div>
+            <div class="exam-meta">Standard · 5 Q · 3 exchanges</div>
+          </div>
+          <span class="exam-status live">In progress</span>
+        </div>
+        <div class="exam-card">
+          <div class="exam-info">
+            <div class="exam-name">Calculus Brutal</div>
+            <div class="exam-meta">Brutal · 15 Q · 15 exchanges</div>
+          </div>
+          <span class="exam-status done">Complete</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── Bottom nav ──────────────────────────────────────────────── -->
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <button class="nav-item active" aria-label="Dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span class="nav-label">Home</span>
+    </button>
+    <button class="nav-item" aria-label="Create">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span class="nav-label">Create</span>
+    </button>
+    <button class="nav-item" aria-label="Examiner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+      <span class="nav-label">Exam</span>
+    </button>
+    <button class="nav-item" aria-label="Leaderboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>
+      <span class="nav-label">Ranks</span>
+    </button>
+    <button class="nav-item" aria-label="Profile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="nav-label">Profile</span>
+    </button>
+  </nav>
+
+</div>
+
+<script>
+  // ── Heatmap generator ──────────────────────────────────────────
+  (function() {
+    const el = document.getElementById('heatmap');
+    const levels = [0,0,0,1,0,2,1,0,3,2,1,0,4,3,2,1,0,1,2,3,4,3,2,1,0,0,1,2,3,4,3,2,1,0,1,2,0,0,1,3,4,2,1,0,0,1,2,3,4,3,2,1,0,0,0,1,2,3,4,4,3,2,1,0,1,2,3,2,1,0,0,1,2,3,0,0,1,2,3,4,3,2,1,0];
+    const weeks = 12;
+    for (let w = 0; w < weeks; w++) {
+      const col = document.createElement('div');
+      col.className = 'heatmap-col';
+      for (let d = 0; d < 7; d++) {
+        const cell = document.createElement('div');
+        const lvl = levels[(w * 7 + d) % levels.length];
+        cell.className = 'heatmap-cell' + (lvl ? ' l' + lvl : '');
+        col.appendChild(cell);
+      }
+      el.appendChild(col);
+    }
+  })();
+
+  // ── Tab switching ──────────────────────────────────────────────
+  function switchTab(name, btn) {
+    ['decks','quizzes','summaries','examiner'].forEach(t => {
+      document.getElementById('panel-' + t).style.display = t === name ? '' : 'none';
+    });
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // ── Subject collapse ───────────────────────────────────────────
+  function toggleSubject(header) {
+    const chevron = header.querySelector('.subject-chevron');
+    const grid = header.nextElementSibling;
+    const open = chevron.classList.toggle('open');
+    grid.style.display = open ? '' : 'none';
+  }
+
+  // ── Bottom nav active state ────────────────────────────────────
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

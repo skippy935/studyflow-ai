@@ -78,6 +78,10 @@ model User {
   aiTokenBudget     AiTokenBudget?
   promoCodeUses     PromoCodeUse[]
   userAchievements  UserAchievement[]
+  stripeCustomer    StripeCustomer?
+  subscription      StripeSubscription?
+  payments          StripePayment[]
+  invoices          StripeInvoice[]
 }
 
 model StudyGroup {
@@ -133,10 +137,46 @@ model TeacherProfile {
   userId             Int      @unique
   user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   schoolName         String   @default("")
-  verificationStatus String   @default("pending")
+  bundesland         String   @default("")
+  verificationStatus String   @default("pending")   // pending | pending_approval | approved | rejected
   subjects           String   @default("[]")
+  rejectionReason    String   @default("")
+  approvedAt         DateTime?
+  approvedById       Int?     // Admin ID who approved
   classes            Class[]
+  materials          Material[]
+  announcements      Announcement[]
   createdAt          DateTime @default(now())
+}
+
+model Material {
+  id          Int            @id @default(autoincrement())
+  teacherId   Int
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  title       String
+  description String         @default("")
+  content     String         @default("")
+  fileUrl     String?
+  fileType    String         @default("text") // text | pdf | docx | image | link
+  subject     String         @default("")
+  topic       String         @default("")
+  isDraft     Boolean        @default(false)
+  tags        String         @default("[]") // JSON array
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model Announcement {
+  id          Int            @id @default(autoincrement())
+  teacherId   Int
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  classId     Int?
+  class       Class?         @relation(fields: [classId], references: [id], onDelete: SetNull)
+  title       String
+  body        String
+  pinned      Boolean        @default(false)
+  readByIds   String         @default("[]") // JSON array of user IDs
+  createdAt   DateTime       @default(now())
 }
 
 model Class {
@@ -149,8 +189,9 @@ model Class {
   joinCode    String         @unique
   isArchived  Boolean        @default(false)
   createdAt   DateTime       @default(now())
-  members     ClassMember[]
-  assignments Assignment[]
+  members       ClassMember[]
+  assignments   Assignment[]
+  announcements Announcement[]
 }
 
 model ClassMember {
@@ -646,6 +687,116 @@ model BulkAction {
   undoneAt         DateTime?
   undoneBy         Int?
   createdAt        DateTime  @default(now())
+}
+
+// ─── FEATURE GATING / USAGE ───────────────────────────────────────────────────
+
+model FeatureUsage {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  feature     String
+  periodType  String   // 'daily' | 'monthly'
+  periodKey   String   // '2024-01-15' or '2024-01'
+  count       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, feature, periodType, periodKey])
+  @@index([userId, feature, periodType, periodKey])
+}
+
+model FeatureOverride {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  feature      String
+  overrideType String    // 'grant' | 'revoke'
+  grantedBy    Int?      // Admin ID
+  reason       String    @default("")
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@unique([userId, feature])
+  @@index([userId])
+}
+
+model UsageReset {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  resetBy   Int?     // Admin ID
+  features  String   @default("[]") // JSON array or empty = all
+  reason    String   @default("")
+  createdAt DateTime @default(now())
+}
+
+// ─── STRIPE / PAYMENTS ────────────────────────────────────────────────────────
+
+model StripeCustomer {
+  id               Int      @id @default(autoincrement())
+  userId           Int      @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeCustomerId String   @unique
+  createdAt        DateTime @default(now())
+}
+
+model StripeSubscription {
+  id                   Int       @id @default(autoincrement())
+  userId               Int       @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String    @unique
+  stripePriceId        String
+  status               String    // active, canceled, past_due, trialing, incomplete, unpaid
+  tier                 String    // premium, school
+  interval             String    // month, year
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean   @default(false)
+  canceledAt           DateTime?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model StripePayment {
+  id                 Int       @id @default(autoincrement())
+  userId             Int
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripePaymentId    String    @unique
+  amount             Decimal   @db.Decimal(10, 2)
+  amountNet          Decimal   @db.Decimal(10, 2)
+  tax                Decimal   @db.Decimal(10, 2)
+  currency           String    @default("eur")
+  status             String    // succeeded, failed, refunded
+  description        String    @default("")
+  invoiceId          Int?
+  createdAt          DateTime  @default(now())
+}
+
+model StripeInvoice {
+  id               Int       @id @default(autoincrement())
+  userId           Int
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeInvoiceId  String    @unique
+  invoiceNumber    String    @default("")
+  amount           Decimal   @db.Decimal(10, 2)
+  amountNet        Decimal   @db.Decimal(10, 2)
+  tax              Decimal   @db.Decimal(10, 2)
+  currency         String    @default("eur")
+  status           String    // draft, open, paid, void, uncollectible
+  pdfUrl           String?
+  hostedUrl        String?
+  periodStart      DateTime?
+  periodEnd        DateTime?
+  createdAt        DateTime  @default(now())
+}
+
+model StripeWebhookEvent {
+  id         Int      @id @default(autoincrement())
+  eventId    String   @unique
+  type       String
+  processed  Boolean  @default(false)
+  error      String?
+  createdAt  DateTime @default(now())
 }
 
 // ─── MAINTENANCE MODE ─────────────────────────────────────────────────────────

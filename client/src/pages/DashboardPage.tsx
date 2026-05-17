@@ -175,23 +175,27 @@ export default function DashboardPage() {
 
       {/* Stats bar */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <StatCard icon={<Flame className="w-5 h-5 text-orange-500" />} value={stats.streak} label={t.stats.streak} bg="bg-orange-50 dark:bg-orange-950" />
-          <StatCard icon={<Brain className="w-5 h-5 text-indigo-500" />} value={stats.totalCardsLearned} label={t.stats.cards} bg="bg-indigo-50 dark:bg-indigo-950" />
-          <StatCard icon={<AlertTriangle className="w-5 h-5 text-red-500" />} value={stats.weakCards} label={t.stats.weak} bg="bg-red-50 dark:bg-red-950" />
-          <StatCard icon={<Calendar className="w-5 h-5 text-emerald-500" />} value={stats.dueToday} label={t.stats.due} bg="bg-emerald-50 dark:bg-emerald-950" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+          <StatCard icon={<Flame className="w-5 h-5 text-orange-500" />} value={stats.streak} label={t.stats.streak} bg="bg-orange-50 dark:bg-orange-950/60" />
+          <StatCard icon={<Brain className="w-5 h-5 text-indigo-500" />} value={stats.totalCardsLearned} label={t.stats.cards} bg="bg-indigo-50 dark:bg-indigo-950/60" />
+          <StatCard icon={<AlertTriangle className="w-5 h-5 text-red-500" />} value={stats.weakCards} label={t.stats.weak} bg="bg-red-50 dark:bg-red-950/60" />
+          <StatCard icon={<Calendar className="w-5 h-5 text-emerald-500" />} value={stats.dueToday} label={t.stats.due} bg="bg-emerald-50 dark:bg-emerald-950/60" />
         </div>
       )}
 
       {/* XP / Level bar */}
       {stats && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 mb-6">
+        <div className="card p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-lg font-extrabold text-indigo-600 dark:text-indigo-400">Lv.{stats.level}</span>
-              <span className="text-sm text-slate-500 dark:text-slate-400">{stats.xp} XP total</span>
+              <span className="text-sm font-extrabold gradient-text">
+                {(stats as any).levelName ?? `Lv.${stats.level}`}
+              </span>
+              <span className="text-xs text-slate-400 font-medium">{stats.xp} XP total</span>
             </div>
-            <span className="text-xs text-slate-400">{stats.xpProgress.current} / {stats.xpProgress.needed} XP to next level</span>
+            <span className="text-xs text-slate-400">
+              {stats.xpProgress.current} / {stats.xpProgress.needed} XP to next level
+            </span>
           </div>
           <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
             <div
@@ -200,9 +204,9 @@ export default function DashboardPage() {
             />
           </div>
           {stats.badges.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {stats.badges.map((b: Badge) => (
-                <span key={b.key} title={b.desc} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
+                <span key={b.key} title={b.desc} className="pill-indigo">
                   {b.emoji} {b.label}
                 </span>
               ))}
@@ -211,12 +215,36 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Daily Quests */}
+      {stats && (stats as any).dailyQuests?.length > 0 && (
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 rounded-2xl border border-amber-200/60 dark:border-amber-800/40 p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-bold text-amber-800 dark:text-amber-300 text-sm flex items-center gap-1.5">
+              🎯 Tägliche Quests
+            </p>
+            <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">Täglich zurückgesetzt</span>
+          </div>
+          <div className="space-y-2">
+            {(stats as any).dailyQuests.map((q: { id: string; label: string; xp: number; icon: string }) => (
+              <div key={q.id} className="flex items-center justify-between bg-white/60 dark:bg-slate-900/60 rounded-xl px-3 py-2">
+                <span className="text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                  <span>{q.icon}</span> {q.label}
+                </span>
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900 px-2 py-0.5 rounded-full">
+                  +{q.xp} XP
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Streak calendar */}
       {stats && <StreakCalendar streak={stats.streak} />}
 
       {/* Recent activity */}
       {stats && stats.recentSessions.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 mb-6">
+        <div className="card p-4 mb-6">
           <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">{t.stats.recentActivity}</h2>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {stats.recentSessions.map(s => (
@@ -234,7 +262,7 @@ export default function DashboardPage() {
 
       {/* Upcoming tasks widget */}
       {upcomingTasks.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 mb-6">
+        <div className="card p-4 mb-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Upcoming Tasks</h2>
             <Link to="/planner" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">View all →</Link>
@@ -262,11 +290,15 @@ export default function DashboardPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl mb-6 w-fit">
+      <div className="flex gap-1 bg-slate-100 dark:bg-[#1E293B] p-1 rounded-2xl mb-6 overflow-x-auto">
         {tabs.map(({ key, label, icon: Icon }) => (
           <button key={key} onClick={() => setTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${tab === key ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
-            <Icon className="w-4 h-4" /> {label}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap flex-shrink-0 ${
+              tab === key
+                ? 'bg-white dark:bg-[#0F172A] text-slate-900 dark:text-slate-100 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+            }`}>
+            <Icon className="w-4 h-4 flex-shrink-0" /> {label}
           </button>
         ))}
       </div>
@@ -407,7 +439,7 @@ export default function DashboardPage() {
                 <EmptyState message={t.dashboard.noQuizzes} onCreate={() => navigate('/create')} label={t.dashboard.createFirst} />
               ) : quizzes.map((quiz, i) => (
                 <motion.div key={quiz.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-md transition-shadow">
+                  className="card card-hover p-5">
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-950 flex items-center justify-center">
                       <HelpCircle className="w-5 h-5 text-purple-600" />
@@ -433,7 +465,7 @@ export default function DashboardPage() {
                 <EmptyState message={t.dashboard.noSummaries} onCreate={() => navigate('/create')} label={t.dashboard.createFirst} />
               ) : summaries.map((s, i) => (
                 <motion.div key={s.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-md transition-shadow cursor-pointer"
+                  className="card card-hover p-5 cursor-pointer"
                   onClick={() => navigate(`/summary/${s.id}`)}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">
@@ -474,7 +506,7 @@ export default function DashboardPage() {
                     const DIFF_LABELS: Record<string, string> = { standard: 'Standard', hard: 'Hard', brutal: 'Brutal' };
                     return (
                       <motion.div key={s.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                        className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-md transition-shadow cursor-pointer"
+                        className="card card-hover p-5 cursor-pointer"
                         onClick={() => navigate(`/examiner/${s.id}`)}>
                         <div className="flex items-start justify-between mb-3">
                           <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center">
@@ -520,7 +552,7 @@ function DeckCard({ deck, i, subjects, movingDeckId, moveMenuRef, onDelete, onNa
   const isMenuOpen = movingDeckId === deck.id;
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-      className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-md transition-shadow">
+      className="card card-hover p-5 cursor-default">
       <div className="flex items-start justify-between mb-4">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0" style={{ background: deck.color }}>
           {deck.name.charAt(0).toUpperCase()}
@@ -582,11 +614,13 @@ function DeckCard({ deck, i, subjects, movingDeckId, moveMenuRef, onDelete, onNa
 
 function StatCard({ icon, value, label, bg }: { icon: ReactNode; value: number; label: string; bg: string }) {
   return (
-    <div className={`${bg} rounded-2xl p-4 flex items-center gap-3`}>
-      {icon}
+    <div className="card p-4 flex items-center gap-3 card-hover">
+      <div className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+        {icon}
+      </div>
       <div>
-        <div className="text-xl font-black text-slate-900 dark:text-slate-100">{value}</div>
-        <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
+        <div className="text-2xl font-black text-slate-900 dark:text-slate-50 tabular-nums">{value}</div>
+        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{label}</div>
       </div>
     </div>
   );

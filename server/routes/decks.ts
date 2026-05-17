@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
+import { getLimits } from '../lib/tierLimits';
 
 const router = Router();
 router.use(auth);
@@ -35,6 +36,29 @@ router.patch('/:id/subject', async (req: AuthRequest, res) => {
 router.post('/', async (req: AuthRequest, res) => {
   const { name, description = '', color = '#4F46E5' } = req.body || {};
   if (!name) { res.status(400).json({ error: 'Deck name is required' }); return; }
+
+  // Tier limit: max active flashcard decks
+  try {
+    const p = require('../lib/prisma').default as any;
+    const user = await p.user.findUnique({ where: { id: req.userId! }, select: { subscriptionTier: true } });
+    const limits = getLimits(user?.subscriptionTier);
+    if (limits.max_active_flashcard_decks !== -1) {
+      const count = await prisma.deck.count({ where: { userId: req.userId! } });
+      if (count >= limits.max_active_flashcard_decks) {
+        res.status(402).json({
+          error: 'UPGRADE_REQUIRED',
+          message: `Du hast das Maximum von ${limits.max_active_flashcard_decks} Karteikarten-Stapeln erreicht. Upgrade auf Premium für unbegrenzte Stapel!`,
+          feature: 'max_active_flashcard_decks',
+          limit: limits.max_active_flashcard_decks,
+          used: count,
+          upgradeRequired: true,
+          upgradeUrl: '/pricing',
+        });
+        return;
+      }
+    }
+  } catch { /* fail open */ }
+
   const deck = await prisma.deck.create({ data: { userId: req.userId!, name: name.trim(), description: description.trim(), color } });
   res.status(201).json({ deck });
 });

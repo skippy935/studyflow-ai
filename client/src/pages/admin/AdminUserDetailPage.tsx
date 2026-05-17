@@ -53,6 +53,7 @@ export default function AdminUserDetailPage() {
     setSaving(true);
     try {
       await adminFetch(`/users/${id}/${endpoint}`, { method: 'POST', body: JSON.stringify(body) });
+
       const updated = await adminFetch(`/users/${id}`);
       setUser(updated);
       toast.success('Done');
@@ -85,7 +86,7 @@ export default function AdminUserDetailPage() {
 
   const totalStudySessions = user.studySessions?.length ?? 0;
   const totalCardsStudied = user.studySessions?.reduce((s: number, ss: any) => s + ss.cardsStudied, 0) ?? 0;
-  const totalAiCost = user.aiUsageLogs?.reduce((s: number, l: any) => s + (l.costUsd ?? 0), 0) ?? 0;
+  const totalAiCost = user.aiUsageLogs?.reduce((s: number, l: any) => s + Number(l.costUsd ?? 0), 0) ?? 0;
   const completedExams = user.examinerSessions?.filter((s: any) => s.completed).length ?? 0;
 
   const tabs: { key: Tab; label: string; icon: any; count?: number }[] = [
@@ -176,12 +177,14 @@ export default function AdminUserDetailPage() {
                 <Brain className="w-3.5 h-3.5" />
                 {user.aiAccessDisabled ? 'Enable AI' : 'Disable AI'}
               </button>
-              <button
-                onClick={() => { setDeleteModal(true); setDeleteConfirmText(''); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
-                style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--danger)', border: '1px solid rgba(239,68,68,0.4)' }}>
-                <Trash2 className="w-3.5 h-3.5" /> Delete Account
-              </button>
+              {user.isBanned && (
+                <button
+                  onClick={() => { setDeleteModal(true); setDeleteConfirmText(''); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                  style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--danger)', border: '1px solid rgba(239,68,68,0.4)' }}>
+                  <Trash2 className="w-3.5 h-3.5" /> Delete Account
+                </button>
+              )}
             </div>
           </div>
 
@@ -434,7 +437,7 @@ export default function AdminUserDetailPage() {
                         <td className="px-4 py-2 text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>{log.model?.split('-').slice(-2).join('-')}</td>
                         <td className="px-4 py-2 text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>{(log.inputTokens ?? 0).toLocaleString()}</td>
                         <td className="px-4 py-2 text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>{(log.outputTokens ?? 0).toLocaleString()}</td>
-                        <td className="px-4 py-2 text-xs font-mono" style={{ color: 'var(--accent-cyan)' }}>${(log.costUsd ?? 0).toFixed(5)}</td>
+                        <td className="px-4 py-2 text-xs font-mono" style={{ color: 'var(--accent-cyan)' }}>${Number(log.costUsd ?? 0).toFixed(5)}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Shield, Zap, School, Tag, BarChart2,
-  Flag, LogOut, Menu, X, AlertTriangle, ChevronRight,
+  Flag, LogOut, Menu, X, AlertTriangle, ChevronRight, GraduationCap,
 } from 'lucide-react';
 import { clearAdminToken } from '../../lib/adminApi';
 
 const NAV = [
   { label: 'Overview', path: '/admin', icon: LayoutDashboard },
   { label: 'Users', path: '/admin/users', icon: Users },
+  { label: 'Lehrer-Freigabe', path: '/admin/teachers', icon: GraduationCap },
   { label: 'GDPR / DSGVO', path: '/admin/gdpr', icon: Shield },
   { label: 'Kill Switches', path: '/admin/feature-flags', icon: AlertTriangle },
   { label: 'AI Costs', path: '/admin/ai-costs', icon: Zap },

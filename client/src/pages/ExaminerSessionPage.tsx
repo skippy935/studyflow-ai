@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Send, StopCircle, RotateCcw, Download, FileText } from 'lucide-react';
+import { ArrowLeft, Send, StopCircle, RotateCcw, Download, FileText, Sparkles } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
@@ -23,6 +23,7 @@ interface Session {
   exchange_count: number;
   completed: number;
   gap_analysis: GapAnalysis | null;
+  material?: { extractedText: string } | null;
 }
 
 const DIFF_COLORS = { standard: '#3B82F6', hard: '#F59E0B', brutal: '#EF4444' };
@@ -455,6 +456,19 @@ export default function ExaminerSessionPage() {
                   <FileText className="w-4 h-4" /> Download Markdown
                 </Button>
               </div>
+              {session?.material?.extractedText && (gap.shaky.length + gap.gaps.length) > 0 && (
+                <Button className="justify-center bg-violet-600 hover:bg-violet-700 w-full" onClick={() => {
+                  navigate('/sage', {
+                    state: {
+                      extractedText: session.material!.extractedText,
+                      materialName: session.material_name,
+                      examinerGaps: { shaky: gap.shaky, gaps: gap.gaps },
+                    },
+                  });
+                }}>
+                  <Sparkles className="w-4 h-4" /> Study weak areas with Sage
+                </Button>
+              )}
             </div>
           </div>
         )}

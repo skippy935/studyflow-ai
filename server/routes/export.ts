@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
+import { requireTierFeature } from '../middleware/tierGuard';
 
 const router = Router();
 router.use(auth);
 const p = prisma as any;
 
 // GET /api/export/deck/:id/csv — export deck as CSV
-router.get('/deck/:id/csv', async (req: AuthRequest, res) => {
+router.get('/deck/:id/csv', requireTierFeature('export_csv'), async (req: AuthRequest, res) => {
   const deckId = parseInt(req.params.id);
   try {
     const deck = await p.deck.findFirst({
@@ -32,7 +33,7 @@ router.get('/deck/:id/csv', async (req: AuthRequest, res) => {
 });
 
 // GET /api/export/deck/:id/anki — export as Anki-compatible TSV
-router.get('/deck/:id/anki', async (req: AuthRequest, res) => {
+router.get('/deck/:id/anki', requireTierFeature('export_csv'), async (req: AuthRequest, res) => {
   const deckId = parseInt(req.params.id);
   try {
     const deck = await p.deck.findFirst({

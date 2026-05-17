@@ -68,6 +68,7 @@ router.get('/sessions/:id', auth, async (req: AuthRequest, res) => {
   try {
     const session = await prisma.examinerSession.findFirst({
       where: { id: parseInt(req.params.id), userId: req.userId! },
+      include: { material: true },
     });
     if (!session) { res.status(404).json({ error: 'Session not found' }); return; }
     res.json({ session });

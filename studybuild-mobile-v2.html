@@ -1,0 +1,2205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>StudyBuild — Dashboard</title>
+<style>
+/* ============================================================
+   CSS CUSTOM PROPERTIES — Dark Theme Tokens
+   ============================================================ */
+:root {
+  /* Core palette */
+  --bg-base:        #0f172a;
+  --bg-surface:     #1e293b;
+  --bg-elevated:    #273548;
+  --bg-hover:       #2d3f57;
+  --border:         rgba(148,163,184,0.10);
+  --border-strong:  rgba(148,163,184,0.18);
+
+  /* Text */
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted:     #64748b;
+
+  /* Brand */
+  --brand:          #6366f1;
+  --brand-dim:      rgba(99,102,241,0.15);
+  --brand-glow:     rgba(99,102,241,0.30);
+
+  /* Accent cards */
+  --orange:         #f97316;
+  --orange-dim:     rgba(249,115,22,0.12);
+  --purple:         #a855f7;
+  --purple-dim:     rgba(168,85,247,0.12);
+  --red:            #ef4444;
+  --red-dim:        rgba(239,68,68,0.12);
+  --green:          #22c55e;
+  --green-dim:      rgba(34,197,94,0.12);
+  --amber:          #f59e0b;
+  --amber-dim:      rgba(245,158,11,0.12);
+
+  /* Spacing — strict 8pt grid */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s8: 32px;
+  --s10: 40px;
+  --s12: 48px;
+
+  /* Safe area */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+
+  /* Nav */
+  --nav-h: 64px;
+  --header-h: 60px;
+
+  /* Radius */
+  --r-sm:   8px;
+  --r-md:   12px;
+  --r-lg:   16px;
+  --r-xl:   20px;
+  --r-full: 9999px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-elevated: 0 4px 16px rgba(0,0,0,0.5);
+
+  /* Transitions */
+  --ease: 150ms ease-in-out;
+}
+
+/* ============================================================
+   RESET + BASE
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+/* ============================================================
+   TYPOGRAPHY — fluid scale with clamp()
+   ============================================================ */
+.t-xs  { font-size: clamp(10px, 2.4vw, 11px); line-height: 1.4; }
+.t-sm  { font-size: clamp(11px, 2.8vw, 12px); line-height: 1.4; }
+.t-base{ font-size: clamp(13px, 3.4vw, 14px); line-height: 1.5; }
+.t-md  { font-size: clamp(14px, 3.6vw, 15px); line-height: 1.5; }
+.t-lg  { font-size: clamp(16px, 4vw, 18px);   line-height: 1.4; }
+.t-xl  { font-size: clamp(20px, 5vw, 24px);   line-height: 1.3; }
+.t-2xl { font-size: clamp(24px, 6vw, 30px);   line-height: 1.2; }
+
+.fw-400 { font-weight: 400; }
+.fw-500 { font-weight: 500; }
+.fw-600 { font-weight: 600; }
+.fw-700 { font-weight: 700; }
+.fw-800 { font-weight: 800; }
+
+.text-primary   { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted     { color: var(--text-muted); }
+
+/* ============================================================
+   LAYOUT SKELETON
+   ============================================================ */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding-top: calc(var(--header-h) + var(--sat));
+  padding-bottom: calc(var(--nav-h) + var(--sab));
+  padding-left: var(--sal);
+  padding-right: var(--sar);
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--s4) var(--s4) var(--s6);
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: calc(var(--header-h) + var(--sat));
+  padding-top: var(--sat);
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding-left: calc(var(--s4) + var(--sal));
+  padding-right: calc(var(--s4) + var(--sar));
+  gap: var(--s3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex: 1;
+  min-width: 0;
+}
+
+.logo-mark {
+  width: 34px;
+  height: 34px;
+  background: var(--brand);
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px var(--brand-glow);
+}
+
+.logo-mark svg { width: 18px; height: 18px; }
+
+.logo-text {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: background var(--ease), color var(--ease);
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.icon-btn:active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* XP pill in header */
+.xp-pill {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  background: var(--brand-dim);
+  border: 1px solid var(--brand-glow);
+  border-radius: var(--r-full);
+  padding: 5px 10px;
+  min-height: 44px;
+}
+
+.xp-pill span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   BOTTOM NAVIGATION
+   ============================================================ */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: calc(var(--nav-h) + var(--sab));
+  padding-bottom: var(--sab);
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  padding-top: 6px;
+}
+
+.nav-items {
+  display: flex;
+  width: 100%;
+  padding-left: var(--sal);
+  padding-right: var(--sar);
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: var(--s2) var(--s1);
+  min-height: 44px;
+  border-radius: var(--r-md);
+  transition: color var(--ease);
+  color: var(--text-muted);
+  position: relative;
+}
+
+.nav-item.active { color: var(--brand); }
+
+.nav-item svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.8;
+}
+
+.nav-item span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.nav-dot {
+  position: absolute;
+  top: 6px;
+  right: calc(50% - 14px);
+  width: 6px;
+  height: 6px;
+  background: var(--red);
+  border-radius: 50%;
+  border: 1.5px solid var(--bg-surface);
+}
+
+/* ============================================================
+   SECTION HEADERS
+   ============================================================ */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--s4);
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.section-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+/* ============================================================
+   GREETING BANNER
+   ============================================================ */
+.greeting-banner {
+  background: linear-gradient(135deg, var(--bg-surface) 0%, #1a2744 100%);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-xl);
+  padding: var(--s5) var(--s5);
+  margin-bottom: var(--s4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  overflow: hidden;
+  position: relative;
+}
+
+.greeting-banner::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, var(--brand-glow) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.greeting-text { flex: 1; min-width: 0; }
+
+.greeting-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: var(--s1);
+}
+
+.greeting-name {
+  font-size: clamp(18px, 4.5vw, 22px);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.greeting-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: var(--s1);
+}
+
+.study-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand);
+  color: #fff;
+  border-radius: var(--r-lg);
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  gap: var(--s1);
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  box-shadow: 0 4px 12px var(--brand-glow);
+  transition: opacity var(--ease), transform var(--ease);
+  white-space: nowrap;
+}
+
+.study-cta:active {
+  opacity: 0.85;
+  transform: scale(0.97);
+}
+
+/* ============================================================
+   XP PROGRESS BAR
+   ============================================================ */
+.xp-bar-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: var(--s4) var(--s5);
+  margin-bottom: var(--s4);
+}
+
+.xp-bar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--s3);
+}
+
+.xp-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.xp-badge {
+  display: inline-flex;
+  align-items: center;
+  background: var(--brand-dim);
+  border: 1px solid var(--brand-glow);
+  border-radius: var(--r-full);
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.xp-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.xp-track {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-elevated);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand) 0%, #818cf8 100%);
+  border-radius: var(--r-full);
+  width: 68%;
+  transition: width 600ms cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ============================================================
+   STAT CARDS — 2×2 GRID
+   ============================================================ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s3);
+  margin-bottom: var(--s4);
+}
+
+.stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: var(--s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  transition: transform var(--ease), border-color var(--ease);
+  min-height: 96px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+}
+
+.stat-card:active { transform: scale(0.97); }
+
+.stat-card.orange { --c: var(--orange); --c-dim: var(--orange-dim); }
+.stat-card.purple { --c: var(--purple); --c-dim: var(--purple-dim); }
+.stat-card.red    { --c: var(--red);    --c-dim: var(--red-dim);    }
+.stat-card.green  { --c: var(--green);  --c-dim: var(--green-dim);  }
+
+.stat-card.orange::after { background: var(--orange); }
+.stat-card.purple::after { background: var(--purple); }
+.stat-card.red::after    { background: var(--red);    }
+.stat-card.green::after  { background: var(--green);  }
+
+.stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-dim);
+  flex-shrink: 0;
+}
+
+.stat-icon svg {
+  width: 16px;
+  height: 16px;
+  color: var(--c);
+}
+
+.stat-number {
+  font-size: clamp(22px, 5.5vw, 28px);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.stat-delta {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--c);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: auto;
+}
+
+/* ============================================================
+   TAB BAR
+   ============================================================ */
+.tab-section {
+  margin-bottom: var(--s4);
+}
+
+.tab-bar-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: var(--s4);
+}
+
+.tab-bar-scroll::-webkit-scrollbar { display: none; }
+
+.tab-bar {
+  display: flex;
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s1);
+  gap: 2px;
+}
+
+.tab-btn {
+  flex: 1;
+  white-space: nowrap;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: background var(--ease), color var(--ease);
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s1);
+}
+
+.tab-btn.active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.tab-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+/* Tab panels */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ============================================================
+   DECK CARDS
+   ============================================================ */
+.deck-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.deck-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: var(--s4);
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  transition: border-color var(--ease), background var(--ease);
+  min-height: 72px;
+}
+
+.deck-card:active {
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+}
+
+.deck-emoji {
+  font-size: 24px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  border-radius: var(--r-lg);
+  flex-shrink: 0;
+}
+
+.deck-info { flex: 1; min-width: 0; }
+
+.deck-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+
+.deck-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.deck-meta .dot {
+  width: 3px;
+  height: 3px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.deck-action {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  background: var(--brand-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.deck-action svg {
+  width: 16px;
+  height: 16px;
+  color: var(--brand);
+}
+
+.due-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--green-dim);
+  color: var(--green);
+  border-radius: var(--r-full);
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.due-badge.warn {
+  background: var(--red-dim);
+  color: var(--red);
+}
+
+/* ============================================================
+   QUIZ CARDS
+   ============================================================ */
+.quiz-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.quiz-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: var(--s4) var(--s5);
+  transition: border-color var(--ease);
+}
+
+.quiz-card:active {
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
+}
+
+.quiz-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+}
+
+.quiz-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+  flex: 1;
+}
+
+.quiz-score {
+  font-size: 16px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.quiz-score.good  { color: var(--green); }
+.quiz-score.okay  { color: var(--amber); }
+.quiz-score.poor  { color: var(--red);   }
+
+.quiz-progress-track {
+  width: 100%;
+  height: 5px;
+  background: var(--bg-elevated);
+  border-radius: var(--r-full);
+  overflow: hidden;
+  margin-bottom: var(--s3);
+}
+
+.quiz-progress-fill {
+  height: 100%;
+  border-radius: var(--r-full);
+}
+
+.quiz-progress-fill.good  { background: var(--green); }
+.quiz-progress-fill.okay  { background: var(--amber); }
+.quiz-progress-fill.poor  { background: var(--red);   }
+
+.quiz-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quiz-meta-text {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.quiz-retake-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-full);
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  transition: background var(--ease), color var(--ease);
+}
+
+.quiz-retake-btn:active {
+  background: var(--brand-dim);
+  color: var(--brand);
+  border-color: var(--brand-glow);
+}
+
+/* ============================================================
+   HEATMAP — horizontally scrollable on mobile
+   ============================================================ */
+.heatmap-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: var(--s4) var(--s4) var(--s5);
+  margin-bottom: var(--s4);
+}
+
+.heatmap-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  margin-top: var(--s4);
+  padding-bottom: var(--s2);
+}
+
+.heatmap-scroll::-webkit-scrollbar { display: none; }
+
+.heatmap-inner {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: max-content;
+}
+
+.heatmap-months {
+  display: flex;
+  gap: 3px;
+  margin-bottom: var(--s2);
+}
+
+.heatmap-month-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: 28px;
+  text-align: center;
+}
+
+.heatmap-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.heatmap-day-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.heatmap-cell {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  background: var(--bg-elevated);
+  transition: opacity var(--ease);
+  cursor: pointer;
+}
+
+.heatmap-cell.l1 { background: rgba(99,102,241,0.20); }
+.heatmap-cell.l2 { background: rgba(99,102,241,0.40); }
+.heatmap-cell.l3 { background: rgba(99,102,241,0.65); }
+.heatmap-cell.l4 { background: rgba(99,102,241,0.90); }
+
+.heatmap-cell:active { opacity: 0.7; }
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  margin-top: var(--s3);
+  justify-content: flex-end;
+}
+
+.heatmap-legend span {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.legend-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* ============================================================
+   EXAMINER PANEL
+   ============================================================ */
+.examiner-panel {
+  background: linear-gradient(135deg, #1a1a3e 0%, #1e1b4b 100%);
+  border: 1px solid rgba(99,102,241,0.25);
+  border-radius: var(--r-xl);
+  padding: var(--s5);
+  position: relative;
+  overflow: hidden;
+}
+
+.examiner-panel::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%);
+}
+
+.examiner-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  background: var(--brand-dim);
+  border: 1px solid var(--brand-glow);
+  border-radius: var(--r-full);
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: var(--s3);
+}
+
+.examiner-headline {
+  font-size: clamp(16px, 4.2vw, 20px);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  margin-bottom: var(--s2);
+}
+
+.examiner-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: var(--s5);
+}
+
+.examiner-stats-row {
+  display: flex;
+  gap: var(--s3);
+  margin-bottom: var(--s5);
+}
+
+.examiner-stat {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--r-lg);
+  padding: var(--s3);
+  text-align: center;
+}
+
+.examiner-stat-n {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.examiner-stat-l {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.examiner-cta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  background: var(--brand);
+  color: #fff;
+  border-radius: var(--r-lg);
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 48px;
+  box-shadow: 0 4px 16px var(--brand-glow);
+  transition: opacity var(--ease), transform var(--ease);
+}
+
+.examiner-cta:active {
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+
+/* ============================================================
+   SUMMARIES LIST
+   ============================================================ */
+.summaries-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.summary-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: var(--s4) var(--s5);
+  display: flex;
+  gap: var(--s4);
+  align-items: center;
+  transition: border-color var(--ease);
+}
+
+.summary-card:active { border-color: var(--border-strong); }
+
+.summary-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+}
+
+.summary-info { flex: 1; min-width: 0; }
+
+.summary-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+
+.summary-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.summary-arrow {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty-state {
+  text-align: center;
+  padding: var(--s12) var(--s6);
+  color: var(--text-muted);
+}
+
+.empty-state svg {
+  width: 40px;
+  height: 40px;
+  margin-bottom: var(--s3);
+  opacity: 0.4;
+}
+
+.empty-state p { font-size: 13px; }
+
+/* ============================================================
+   PLAN SECTION (profile page stand-in)
+   ============================================================ */
+.plan-banner {
+  background: linear-gradient(135deg, var(--amber-dim), rgba(245,158,11,0.05));
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: var(--r-xl);
+  padding: var(--s4) var(--s5);
+  margin-bottom: var(--s4);
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+}
+
+.plan-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.plan-info { flex: 1; min-width: 0; }
+
+.plan-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.plan-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.plan-btn {
+  background: var(--amber);
+  color: #0f172a;
+  border-radius: var(--r-full);
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: opacity var(--ease);
+}
+
+.plan-btn:active { opacity: 0.8; }
+
+/* ============================================================
+   RECENT ACTIVITY
+   ============================================================ */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  transition: border-color var(--ease);
+}
+
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.activity-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   PROFILE PAGE
+   ============================================================ */
+.profile-section { padding-bottom: var(--s4); }
+
+.avatar-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--s8) var(--s4) var(--s6);
+  text-align: center;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: var(--s4);
+  box-shadow: 0 0 0 4px var(--bg-surface), 0 0 0 6px var(--brand-glow);
+}
+
+.avatar-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: var(--s1);
+}
+
+.avatar-email {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: var(--s3);
+}
+
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  background: linear-gradient(135deg, var(--brand), #818cf8);
+  border-radius: var(--r-full);
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding: 14px var(--s4);
+  background: var(--bg-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  min-height: 52px;
+  transition: background var(--ease);
+}
+
+.settings-item:active { background: var(--bg-elevated); }
+
+.settings-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.settings-label {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.settings-arrow {
+  color: var(--text-muted);
+}
+
+.danger-item .settings-label { color: var(--red); }
+.danger-item .settings-icon { background: var(--red-dim); }
+
+/* ============================================================
+   PAGE PANELS (simulate navigation)
+   ============================================================ */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ============================================================
+   SCROLL UTILITY
+   ============================================================ */
+.main::-webkit-scrollbar { display: none; }
+.main { scrollbar-width: none; }
+
+/* ============================================================
+   SMALL MOBILE (≤430px — phones in portrait)
+   ============================================================ */
+@media (max-width: 430px) {
+  .main {
+    padding: var(--s3) var(--s3) var(--s6);
+  }
+
+  .greeting-banner {
+    padding: var(--s4);
+    margin-bottom: var(--s3);
+  }
+
+  .greeting-name {
+    font-size: clamp(16px, 4.2vw, 20px);
+  }
+
+  .xp-bar-section {
+    padding: var(--s3) var(--s4);
+    margin-bottom: var(--s3);
+  }
+
+  .stats-grid {
+    gap: var(--s2);
+    margin-bottom: var(--s3);
+  }
+
+  .stat-card {
+    padding: var(--s3);
+    gap: var(--s1);
+    min-height: auto;
+  }
+
+  .stat-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .stat-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .stat-number {
+    font-size: clamp(20px, 5.2vw, 24px);
+  }
+
+  .section-header {
+    margin-bottom: var(--s3);
+  }
+
+  .heatmap-section {
+    padding: var(--s3) var(--s3) var(--s4);
+    margin-bottom: var(--s3);
+  }
+
+  .activity-list {
+    margin-bottom: var(--s3) !important;
+  }
+
+  .deck-card {
+    padding: var(--s3);
+    gap: var(--s2);
+    min-height: 60px;
+  }
+
+  .deck-emoji {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
+
+  .quiz-card {
+    padding: var(--s3) var(--s4);
+  }
+
+  .examiner-panel {
+    padding: var(--s4);
+  }
+
+  .examiner-stats-row {
+    gap: var(--s2);
+    margin-bottom: var(--s4);
+  }
+
+  .plan-banner {
+    padding: var(--s3) var(--s4);
+    margin-bottom: var(--s4) !important;
+  }
+
+  .tab-btn {
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+}
+
+/* ============================================================
+   DESKTOP ENHANCEMENT (768px+)
+   ============================================================ */
+@media (min-width: 768px) {
+  :root {
+    --header-h: 68px;
+    --nav-h: 0px;
+  }
+
+  body {
+    display: flex;
+  }
+
+  /* Show sidebar on tablet+ */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 220px;
+    min-height: 100dvh;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow-y: auto;
+    padding: var(--s6) var(--s3);
+    gap: var(--s2);
+    flex-shrink: 0;
+  }
+
+  .app {
+    flex: 1;
+    padding-bottom: var(--s4);
+  }
+
+  .bottom-nav { display: none; }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: var(--s6) var(--s6);
+  }
+}
+
+/* Sidebar styles (tablet+) */
+.sidebar {
+  display: none;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s3) var(--s3) var(--s5);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--s3);
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: 10px var(--s3);
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: background var(--ease), color var(--ease);
+  min-height: 44px;
+}
+
+.sidebar-nav-item.active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.sidebar-nav-item:active {
+  background: var(--brand-dim);
+  color: var(--brand);
+}
+
+.sidebar-nav-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse { animation: pulse 2s ease-in-out infinite; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page.active, .tab-panel.active {
+  animation: fadeIn 180ms ease-out;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR (tablet+)
+     ============================================================ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    </div>
+    <span class="logo-text">StudyBuild</span>
+  </div>
+
+  <button class="sidebar-nav-item active" onclick="switchPage('dashboard', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </button>
+
+  <button class="sidebar-nav-item" onclick="switchPage('study', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
+    Flashcards
+  </button>
+
+  <button class="sidebar-nav-item" onclick="switchPage('quiz', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+    Quizzes
+  </button>
+
+  <button class="sidebar-nav-item" onclick="switchPage('examiner', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Examiner
+  </button>
+
+  <button class="sidebar-nav-item" onclick="switchPage('profile', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </button>
+</nav>
+
+<!-- ============================================================
+     APP SHELL
+     ============================================================ -->
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <span class="logo-text">StudyBuild</span>
+    </div>
+
+    <div class="header-actions">
+      <div class="xp-pill">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span>2,340 XP</span>
+      </div>
+
+      <button class="icon-btn" aria-label="Notifications">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="main" id="main-scroll">
+
+    <!-- ======================================================
+         PAGE: DASHBOARD
+         ====================================================== -->
+    <div class="page active" id="page-dashboard">
+
+      <!-- Greeting -->
+      <div class="greeting-banner">
+        <div class="greeting-text">
+          <div class="greeting-sub">Good morning ☀️</div>
+          <div class="greeting-name">Alex Johnson</div>
+          <div class="greeting-meta">Day 14 streak · 3 sessions today</div>
+        </div>
+        <button class="study-cta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Study
+        </button>
+      </div>
+
+      <!-- XP Bar -->
+      <div class="xp-bar-section">
+        <div class="xp-bar-header">
+          <div class="xp-label">
+            <span class="xp-badge">Lv 12</span>
+            XP Progress
+          </div>
+          <div class="xp-value">2,340 / 3,000</div>
+        </div>
+        <div class="xp-track">
+          <div class="xp-fill"></div>
+        </div>
+      </div>
+
+      <!-- Stats 2×2 -->
+      <div class="section-header">
+        <span class="section-title">Today's Stats</span>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card orange">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/></svg>
+          </div>
+          <div class="stat-number">14</div>
+          <div class="stat-label">Day Streak</div>
+          <div class="stat-delta">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+            Best: 21
+          </div>
+        </div>
+
+        <div class="stat-card purple">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
+          </div>
+          <div class="stat-number">248</div>
+          <div class="stat-label">Cards Learned</div>
+          <div class="stat-delta">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+            +12 today
+          </div>
+        </div>
+
+        <div class="stat-card red">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="stat-number">18</div>
+          <div class="stat-label">Weak Cards</div>
+          <div class="stat-delta" style="color:var(--red)">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+            Needs review
+          </div>
+        </div>
+
+        <div class="stat-card green">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+          <div class="stat-number">32</div>
+          <div class="stat-label">Due Today</div>
+          <div class="stat-delta">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+            On track
+          </div>
+        </div>
+      </div>
+
+      <!-- Heatmap -->
+      <div class="section-header">
+        <span class="section-title">Study Activity</span>
+        <span class="section-link">12 weeks</span>
+      </div>
+
+      <div class="heatmap-section">
+        <div id="heatmap-container"></div>
+        <div class="heatmap-legend">
+          <span>Less</span>
+          <div class="legend-cell" style="background:var(--bg-elevated)"></div>
+          <div class="legend-cell" style="background:rgba(99,102,241,0.20)"></div>
+          <div class="legend-cell" style="background:rgba(99,102,241,0.50)"></div>
+          <div class="legend-cell" style="background:rgba(99,102,241,0.80)"></div>
+          <span>More</span>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="section-header">
+        <span class="section-title">Recent Activity</span>
+      </div>
+
+      <div class="activity-list" style="margin-bottom: var(--s4);">
+        <div class="activity-item">
+          <div class="activity-dot" style="background:var(--green)"></div>
+          <div class="activity-text">
+            <div class="activity-title">Completed "Mitosis & Cell Division" deck</div>
+          </div>
+          <div class="activity-time">2m ago</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-dot" style="background:var(--purple)"></div>
+          <div class="activity-text">
+            <div class="activity-title">Quiz: History of the Roman Empire — 78%</div>
+          </div>
+          <div class="activity-time">1h ago</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-dot" style="background:var(--brand)"></div>
+          <div class="activity-text">
+            <div class="activity-title">Examiner session: Chemistry Bonding</div>
+          </div>
+          <div class="activity-time">3h ago</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-dot" style="background:var(--orange)"></div>
+          <div class="activity-text">
+            <div class="activity-title">Streak extended — Day 14! 🔥</div>
+          </div>
+          <div class="activity-time">6h ago</div>
+        </div>
+      </div>
+
+    </div><!-- /page-dashboard -->
+
+    <!-- ======================================================
+         PAGE: STUDY (Flashcards + Tabs)
+         ====================================================== -->
+    <div class="page" id="page-study">
+
+      <div class="tab-section">
+        <div class="tab-bar-scroll">
+          <div class="tab-bar">
+            <button class="tab-btn active" id="tab-decks" onclick="switchTab('decks', this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
+              Decks
+            </button>
+            <button class="tab-btn" id="tab-quizzes" onclick="switchTab('quizzes', this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+              Quizzes
+            </button>
+            <button class="tab-btn" id="tab-summaries" onclick="switchTab('summaries', this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              Summaries
+            </button>
+          </div>
+        </div>
+
+        <!-- Decks panel -->
+        <div class="tab-panel active" id="panel-decks">
+          <div class="deck-list">
+            <div class="deck-card">
+              <div class="deck-emoji">🧬</div>
+              <div class="deck-info">
+                <div class="deck-name">Mitosis &amp; Cell Division</div>
+                <div class="deck-meta">
+                  42 cards <span class="dot"></span> Biology
+                  <span class="due-badge">8 due</span>
+                </div>
+              </div>
+              <div class="deck-action">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+
+            <div class="deck-card">
+              <div class="deck-emoji">⚗️</div>
+              <div class="deck-info">
+                <div class="deck-name">Organic Chemistry Reactions</div>
+                <div class="deck-meta">
+                  67 cards <span class="dot"></span> Chemistry
+                  <span class="due-badge warn">18 due</span>
+                </div>
+              </div>
+              <div class="deck-action">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+
+            <div class="deck-card">
+              <div class="deck-emoji">🏛️</div>
+              <div class="deck-info">
+                <div class="deck-name">History of the Roman Empire</div>
+                <div class="deck-meta">
+                  55 cards <span class="dot"></span> History
+                  <span class="due-badge">6 due</span>
+                </div>
+              </div>
+              <div class="deck-action">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+
+            <div class="deck-card">
+              <div class="deck-emoji">📐</div>
+              <div class="deck-info">
+                <div class="deck-name">Calculus Fundamentals</div>
+                <div class="deck-meta">
+                  38 cards <span class="dot"></span> Maths
+                  <span class="due-badge">0 due</span>
+                </div>
+              </div>
+              <div class="deck-action">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+
+            <div class="deck-card">
+              <div class="deck-emoji">🌍</div>
+              <div class="deck-info">
+                <div class="deck-name">World Geography</div>
+                <div class="deck-meta">
+                  90 cards <span class="dot"></span> Geography
+                  <span class="due-badge warn">12 due</span>
+                </div>
+              </div>
+              <div class="deck-action">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quizzes panel -->
+        <div class="tab-panel" id="panel-quizzes">
+          <div class="quiz-list">
+            <div class="quiz-card">
+              <div class="quiz-header">
+                <div class="quiz-title">History of the Roman Empire</div>
+                <div class="quiz-score okay">78%</div>
+              </div>
+              <div class="quiz-progress-track">
+                <div class="quiz-progress-fill okay" style="width:78%"></div>
+              </div>
+              <div class="quiz-footer">
+                <div class="quiz-meta-text">20 questions · 14 Apr</div>
+                <button class="quiz-retake-btn">Retake</button>
+              </div>
+            </div>
+
+            <div class="quiz-card">
+              <div class="quiz-header">
+                <div class="quiz-title">Organic Chemistry Reactions</div>
+                <div class="quiz-score poor">51%</div>
+              </div>
+              <div class="quiz-progress-track">
+                <div class="quiz-progress-fill poor" style="width:51%"></div>
+              </div>
+              <div class="quiz-footer">
+                <div class="quiz-meta-text">25 questions · 13 Apr</div>
+                <button class="quiz-retake-btn">Retake</button>
+              </div>
+            </div>
+
+            <div class="quiz-card">
+              <div class="quiz-header">
+                <div class="quiz-title">Mitosis &amp; Cell Division</div>
+                <div class="quiz-score good">92%</div>
+              </div>
+              <div class="quiz-progress-track">
+                <div class="quiz-progress-fill good" style="width:92%"></div>
+              </div>
+              <div class="quiz-footer">
+                <div class="quiz-meta-text">15 questions · 12 Apr</div>
+                <button class="quiz-retake-btn">Retake</button>
+              </div>
+            </div>
+
+            <div class="quiz-card">
+              <div class="quiz-header">
+                <div class="quiz-title">Calculus Fundamentals</div>
+                <div class="quiz-score good">88%</div>
+              </div>
+              <div class="quiz-progress-track">
+                <div class="quiz-progress-fill good" style="width:88%"></div>
+              </div>
+              <div class="quiz-footer">
+                <div class="quiz-meta-text">12 questions · 10 Apr</div>
+                <button class="quiz-retake-btn">Retake</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summaries panel -->
+        <div class="tab-panel" id="panel-summaries">
+          <div class="summaries-list">
+            <div class="summary-card">
+              <div class="summary-icon" style="background:var(--purple-dim)">🧬</div>
+              <div class="summary-info">
+                <div class="summary-title">Cell Biology Overview</div>
+                <div class="summary-meta">4 min read · 2,300 words · 13 Apr</div>
+              </div>
+              <svg class="summary-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-icon" style="background:var(--orange-dim)">🏛️</div>
+              <div class="summary-info">
+                <div class="summary-title">Rise &amp; Fall of Rome</div>
+                <div class="summary-meta">6 min read · 3,800 words · 11 Apr</div>
+              </div>
+              <svg class="summary-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-icon" style="background:var(--brand-dim)">⚗️</div>
+              <div class="summary-info">
+                <div class="summary-title">Organic Chem: Key Reactions</div>
+                <div class="summary-meta">5 min read · 3,100 words · 9 Apr</div>
+              </div>
+              <svg class="summary-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </div>
+        </div>
+      </div><!-- /tab-section -->
+
+    </div><!-- /page-study -->
+
+    <!-- ======================================================
+         PAGE: EXAMINER
+         ====================================================== -->
+    <div class="page" id="page-examiner">
+
+      <div class="examiner-panel" style="margin-bottom:var(--s4)">
+        <div class="examiner-label">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          The Examiner
+        </div>
+        <div class="examiner-headline">Test yourself on what you actually studied</div>
+        <div class="examiner-sub">Upload your notes, slides, or PDFs. The Examiner asks questions exclusively from your material — no generic questions, no hints.</div>
+
+        <div class="examiner-stats-row">
+          <div class="examiner-stat">
+            <div class="examiner-stat-n">7</div>
+            <div class="examiner-stat-l">Sessions</div>
+          </div>
+          <div class="examiner-stat">
+            <div class="examiner-stat-n">3</div>
+            <div class="examiner-stat-l">Gaps found</div>
+          </div>
+          <div class="examiner-stat">
+            <div class="examiner-stat-n">84%</div>
+            <div class="examiner-stat-l">Solid avg</div>
+          </div>
+        </div>
+
+        <button class="examiner-cta">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload Notes &amp; Start Exam
+        </button>
+      </div>
+
+      <!-- Past sessions -->
+      <div class="section-header">
+        <span class="section-title">Past Sessions</span>
+      </div>
+
+      <div class="deck-list">
+        <div class="deck-card">
+          <div class="deck-emoji">⚗️</div>
+          <div class="deck-info">
+            <div class="deck-name">Chemistry Bonding</div>
+            <div class="deck-meta">
+              Hard <span class="dot"></span> 10 questions <span class="dot"></span> 2 gaps
+            </div>
+          </div>
+          <span class="due-badge warn" style="flex-shrink:0">2 gaps</span>
+        </div>
+
+        <div class="deck-card">
+          <div class="deck-emoji">🧬</div>
+          <div class="deck-info">
+            <div class="deck-name">Cell Division Notes</div>
+            <div class="deck-meta">
+              Standard <span class="dot"></span> 10 questions <span class="dot"></span> 1 gap
+            </div>
+          </div>
+          <span class="due-badge warn" style="flex-shrink:0">1 gap</span>
+        </div>
+
+        <div class="deck-card">
+          <div class="deck-emoji">🏛️</div>
+          <div class="deck-info">
+            <div class="deck-name">Roman History Lecture</div>
+            <div class="deck-meta">
+              Brutal <span class="dot"></span> 15 questions <span class="dot"></span> 0 gaps
+            </div>
+          </div>
+          <span class="due-badge" style="flex-shrink:0">Solid</span>
+        </div>
+      </div>
+
+    </div><!-- /page-examiner -->
+
+    <!-- ======================================================
+         PAGE: QUIZ (standalone from nav)
+         ====================================================== -->
+    <div class="page" id="page-quiz">
+      <div class="section-header">
+        <span class="section-title">Quizzes</span>
+        <span class="section-link">+ New Quiz</span>
+      </div>
+      <!-- reuse same quiz list for demo -->
+      <div class="quiz-list">
+        <div class="quiz-card">
+          <div class="quiz-header"><div class="quiz-title">History of the Roman Empire</div><div class="quiz-score okay">78%</div></div>
+          <div class="quiz-progress-track"><div class="quiz-progress-fill okay" style="width:78%"></div></div>
+          <div class="quiz-footer"><div class="quiz-meta-text">20 questions · 14 Apr</div><button class="quiz-retake-btn">Retake</button></div>
+        </div>
+        <div class="quiz-card">
+          <div class="quiz-header"><div class="quiz-title">Organic Chemistry Reactions</div><div class="quiz-score poor">51%</div></div>
+          <div class="quiz-progress-track"><div class="quiz-progress-fill poor" style="width:51%"></div></div>
+          <div class="quiz-footer"><div class="quiz-meta-text">25 questions · 13 Apr</div><button class="quiz-retake-btn">Retake</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         PAGE: PROFILE
+         ====================================================== -->
+    <div class="page" id="page-profile">
+      <div class="profile-section">
+        <div class="avatar-block">
+          <div class="avatar">A</div>
+          <div class="avatar-name">Alex Johnson</div>
+          <div class="avatar-email">alex@example.com</div>
+          <div class="tier-badge">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Premium
+          </div>
+        </div>
+
+        <div class="plan-banner" style="margin-bottom:var(--s6)">
+          <div class="plan-icon">⚡</div>
+          <div class="plan-info">
+            <div class="plan-title">Premium Plan</div>
+            <div class="plan-sub">Renews 15 May 2026</div>
+          </div>
+          <button class="plan-btn">Manage</button>
+        </div>
+
+        <div class="section-header"><span class="section-title">Account</span></div>
+        <div class="settings-list" style="margin-bottom:var(--s6)">
+          <button class="settings-item">
+            <div class="settings-icon" style="background:var(--brand-dim)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <span class="settings-label">Edit Profile</span>
+            <svg class="settings-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button class="settings-item">
+            <div class="settings-icon" style="background:var(--purple-dim)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <span class="settings-label">Change Password</span>
+            <svg class="settings-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button class="settings-item">
+            <div class="settings-icon" style="background:var(--amber-dim)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            </div>
+            <span class="settings-label">Notifications</span>
+            <svg class="settings-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button class="settings-item">
+            <div class="settings-icon" style="background:var(--bg-elevated)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </div>
+            <span class="settings-label">About &amp; Help</span>
+            <svg class="settings-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button class="settings-item danger-item">
+            <div class="settings-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V7l3-4h10l3 4v12a2 2 0 0 1-2 2h-4"/><line x1="3" y1="7" x2="21" y2="7"/><polyline points="15 17 12 20 9 17"/><line x1="12" y1="12" x2="12" y2="20"/></svg>
+            </div>
+            <span class="settings-label">Sign Out</span>
+            <svg class="settings-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
+      </div>
+    </div><!-- /page-profile -->
+
+  </main><!-- /main -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="nav-items">
+      <button class="nav-item active" id="nav-dashboard" onclick="switchPage('dashboard', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-item" id="nav-study" onclick="switchPage('study', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
+        <span>Study</span>
+      </button>
+      <button class="nav-item" id="nav-examiner" onclick="switchPage('examiner', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span>Examiner</span>
+        <div class="nav-dot"></div>
+      </button>
+      <button class="nav-item" id="nav-quiz" onclick="switchPage('quiz', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+        <span>Quizzes</span>
+      </button>
+      <button class="nav-item" id="nav-profile" onclick="switchPage('profile', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Profile</span>
+      </button>
+    </div>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+/* ---- Page navigation ---- */
+function switchPage(pageId, btn) {
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + pageId)?.classList.add('active');
+
+  // Update bottom nav
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav-' + pageId)?.classList.add('active');
+
+  // Update sidebar nav
+  document.querySelectorAll('.sidebar-nav-item').forEach(n => n.classList.remove('active'));
+  if (btn?.classList.contains('sidebar-nav-item')) btn.classList.add('active');
+
+  // Scroll to top
+  document.getElementById('main-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---- Tab switching (within study page) ---- */
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tabId)?.classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ---- Build heatmap ---- */
+(function buildHeatmap() {
+  const container = document.getElementById('heatmap-container');
+  if (!container) return;
+
+  const WEEKS = 16;
+  const DAYS = 7;
+  const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+
+  // Generate pseudo-random activity data
+  const seed = (n) => ((Math.sin(n * 9301 + 49297) * 233280) % 233280) / 233280;
+  const cells = Array.from({ length: WEEKS * DAYS }, (_, i) => {
+    const v = seed(i);
+    if (v > 0.82) return 'l4';
+    if (v > 0.62) return 'l3';
+    if (v > 0.42) return 'l2';
+    if (v > 0.28) return 'l1';
+    return '';
+  });
+
+  // Month labels row
+  const months = ['Jan','Feb','Mar','Apr'];
+  const monthRow = document.createElement('div');
+  monthRow.className = 'heatmap-months';
+  monthRow.style.cssText = 'padding-left:24px;';
+  const frag = document.createDocumentFragment();
+  const labelsPerGroup = Math.floor(WEEKS / months.length);
+  months.forEach((m, i) => {
+    const el = document.createElement('div');
+    el.className = 'heatmap-month-label';
+    el.style.cssText = `min-width:${labelsPerGroup * 14}px;`;
+    el.textContent = m;
+    frag.appendChild(el);
+  });
+  monthRow.appendChild(frag);
+
+  const scroll = document.createElement('div');
+  scroll.className = 'heatmap-scroll';
+  const inner = document.createElement('div');
+  inner.className = 'heatmap-inner';
+
+  inner.appendChild(monthRow);
+
+  // Day rows
+  for (let d = 0; d < DAYS; d++) {
+    const row = document.createElement('div');
+    row.className = 'heatmap-row';
+
+    const dayLabel = document.createElement('div');
+    dayLabel.className = 'heatmap-day-label';
+    dayLabel.textContent = dayLabels[d];
+    row.appendChild(dayLabel);
+
+    for (let w = 0; w < WEEKS; w++) {
+      const cell = document.createElement('div');
+      cell.className = 'heatmap-cell' + (cells[w * DAYS + d] ? ' ' + cells[w * DAYS + d] : '');
+      row.appendChild(cell);
+    }
+
+    inner.appendChild(row);
+  }
+
+  scroll.appendChild(inner);
+  container.appendChild(scroll);
+})();
+</script>
+
+</body>
+</html>

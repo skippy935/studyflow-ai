@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Layers, HelpCircle, FileText, Upload, Zap, Link, CheckCircle, AlertCircle, PenLine } from 'lucide-react';
+import { Layers, HelpCircle, FileText, Upload, Zap, Link, CheckCircle, AlertCircle, PenLine, Terminal } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/layout/AppLayout';
 import Button    from '../components/ui/Button';
@@ -31,7 +31,27 @@ export default function CreatePage() {
   const [examDate, setExamDate] = useState('');
   const [error, setError]       = useState('');
   const [preview, setPreview]   = useState<{ label: string; id: number; type: Mode } | null>(null);
+  const [cmdInput, setCmdInput] = useState('');
+  const [cmdOpen, setCmdOpen]   = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const cmdRef  = useRef<HTMLInputElement>(null);
+
+  const COMMANDS = [
+    { cmd: '/guide',   label: 'Study Guide',      desc: 'Vollständige Zusammenfassung', icon: FileText,   action: () => { setMode('summary'); setCmdOpen(false); setCmdInput(''); } },
+    { cmd: '/quiz',    label: 'Quiz generieren',   desc: 'Wissenstest erstellen',        icon: HelpCircle, action: () => { setMode('quiz');    setCmdOpen(false); setCmdInput(''); } },
+    { cmd: '/flash',   label: 'Flashcards',        desc: 'Anki-kompatible Karten',       icon: Layers,     action: () => { setMode('flashcards'); setCmdOpen(false); setCmdInput(''); } },
+    { cmd: '/kit',     label: 'Lern-Kits',         desc: '100+ fertige Lernpakete',      icon: Zap,        action: () => { navigate('/kits'); setCmdOpen(false); setCmdInput(''); } },
+    { cmd: '/plan',    label: 'Lernplan erstellen',desc: 'Zu Planner wechseln',          icon: CheckCircle,action: () => { navigate('/planner'); setCmdOpen(false); setCmdInput(''); } },
+    { cmd: '/exam',    label: 'Prüfungssimulator', desc: 'The Examiner starten',         icon: PenLine,    action: () => { navigate('/examiner'); setCmdOpen(false); setCmdInput(''); } },
+  ] as const;
+
+  const filteredCmds = cmdInput.startsWith('/')
+    ? COMMANDS.filter(c => c.cmd.startsWith(cmdInput.toLowerCase()) || c.label.toLowerCase().includes(cmdInput.slice(1).toLowerCase()))
+    : COMMANDS;
+
+  useEffect(() => {
+    if (cmdOpen) cmdRef.current?.focus();
+  }, [cmdOpen]);
 
   const modes: { key: Mode; icon: typeof Layers; label: string }[] = [
     { key: 'flashcards', icon: Layers,     label: t.create.mode.flashcards },
@@ -259,6 +279,70 @@ export default function CreatePage() {
           {mode === 'flashcards' && (
             <Input label={t.create.examDate} type="date" value={examDate} onChange={e => setExamDate(e.target.value)} />
           )}
+
+          {/* Slash command bar */}
+          <div className="relative">
+            <button
+              onClick={() => setCmdOpen(o => !o)}
+              className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl transition-colors border border-slate-200 dark:border-slate-700"
+            >
+              <Terminal className="w-3.5 h-3.5" />
+              Schnellbefehle  <span className="font-mono text-slate-400">/</span>
+            </button>
+
+            <AnimatePresence>
+              {cmdOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  className="absolute left-0 top-10 z-30 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+                >
+                  <div className="px-3 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <input
+                      ref={cmdRef}
+                      value={cmdInput}
+                      onChange={e => setCmdInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && filteredCmds.length > 0) filteredCmds[0].action();
+                        if (e.key === 'Escape') { setCmdOpen(false); setCmdInput(''); }
+                      }}
+                      placeholder="Befehl eingeben… z.B. /quiz"
+                      className="w-full text-sm bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none font-mono"
+                    />
+                  </div>
+                  <div className="py-1">
+                    {filteredCmds.map(c => {
+                      const Icon = c.icon;
+                      return (
+                        <button
+                          key={c.cmd}
+                          onClick={c.action}
+                          className="flex items-center gap-3 w-full px-3 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                        >
+                          <div className="w-7 h-7 bg-indigo-50 dark:bg-indigo-950 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Icon className="w-3.5 h-3.5 text-indigo-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                              <span className="text-indigo-600 font-mono">{c.cmd}</span>
+                            </p>
+                            <p className="text-xs text-slate-500">{c.desc}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                    {filteredCmds.length === 0 && (
+                      <p className="text-xs text-slate-400 text-center py-4">Kein Befehl gefunden</p>
+                    )}
+                  </div>
+                  <div className="px-3 py-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400 flex gap-3">
+                    <span>↵ Ausführen</span><span>Esc Schließen</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Notes textarea */}
           <div>

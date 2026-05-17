@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { adminFetch } from '../../lib/adminApi';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
-import { Plus, Copy, Download } from 'lucide-react';
+import { Plus, Copy, Download, Trash2 } from 'lucide-react';
 
 const card = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '16px' } as const;
 
@@ -84,6 +84,15 @@ export default function AdminPromoCodesPage() {
       toast.success(`${data.count} codes generated`);
       fetchCodes();
     } catch (err: any) { toast.error(err.message); } finally { setSaving(false); }
+  }
+
+  async function deleteCode(id: number, code: string) {
+    if (!window.confirm(`Permanently delete code "${code}"? This cannot be undone.`)) return;
+    try {
+      await adminFetch(`/promo-codes/${id}`, { method: 'DELETE' });
+      toast.success('Code deleted');
+      fetchCodes();
+    } catch (err: any) { toast.error(err.message); }
   }
 
   async function deactivate(id: number) {
@@ -183,11 +192,16 @@ export default function AdminPromoCodesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {c.isActive && (
-                      <button onClick={() => deactivate(c.id)} className="text-xs hover:opacity-80" style={{ color: 'var(--danger)' }}>
-                        Deactivate
+                    <div className="flex items-center gap-3">
+                      {c.isActive && (
+                        <button onClick={() => deactivate(c.id)} className="text-xs hover:opacity-80" style={{ color: 'var(--danger)' }}>
+                          Deactivate
+                        </button>
+                      )}
+                      <button onClick={() => deleteCode(c.id, c.code)} className="hover:opacity-80" title="Delete permanently" style={{ color: 'var(--danger)' }}>
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { auth, AuthRequest } from '../middleware/auth';
-import { levelFromXP, xpForNextLevel, BADGE_DEFS } from '../services/gamification';
+import { levelFromXP, xpForNextLevel, levelNameFromXP, BADGE_DEFS, DAILY_QUESTS } from '../services/gamification';
 
 const router = Router();
 router.use(auth);
@@ -76,8 +76,10 @@ router.get('/', async (req: AuthRequest, res) => {
     recentSessions,
     xp,
     level: levelFromXP(xp),
+    levelName: levelNameFromXP(xp),
     xpProgress: xpForNextLevel(xp),
     badges,
+    dailyQuests: DAILY_QUESTS,
   });
 });
 
