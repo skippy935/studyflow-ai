@@ -28,6 +28,8 @@ export default function StudyPage() {
   const [ratings, setRatings] = useState({ 0: 0, 1: 0, 2: 0, 3: 0 });
 
   const [reviewingAll, setReviewingAll] = useState(false);
+  const [loopMode, setLoopMode]         = useState(false);
+  const [roundCount, setRoundCount]     = useState(1);
 
   useEffect(() => {
     apiFetch<{ deck: Deck; cards: Card[] }>(`/decks/${id}/due`)
@@ -49,6 +51,14 @@ export default function StudyPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  const restartSameCards = useCallback(() => {
+    setIndex(0);
+    setFlipped(false);
+    setDone(false);
+    setRatings({ 0: 0, 1: 0, 2: 0, 3: 0 });
+    setRoundCount(r => r + 1);
+  }, []);
+
   // Auto-speak card front when TTS enabled and card changes
   useEffect(() => {
     if (ttsEnabled && cards[index]?.front) {
@@ -59,19 +69,34 @@ export default function StudyPage() {
 
   const rateCard = useCallback(async (rating: 0 | 1 | 2 | 3) => {
     const card = cards[index];
-    setRatings(r => ({ ...r, [rating]: r[rating] + 1 }));
+    const newRatings = { ...ratings, [rating]: ratings[rating] + 1 };
+    setRatings(newRatings);
     apiFetch(`/cards/${card.id}/review`, { method: 'POST', body: JSON.stringify({ rating }) }).catch(() => {});
     const next = index + 1;
     if (next >= cards.length) {
-      setDone(true);
-      apiFetch<{ xp?: number; newBadges?: string[] }>('/ai/study-sessions', { method: 'POST', body: JSON.stringify({ deck_id: id, cards_studied: cards.length, again_count: ratings[0], hard_count: ratings[1], good_count: ratings[2], easy_count: ratings[3] }) })
+      // Always log the session
+      apiFetch<{ xp?: number; newBadges?: string[] }>('/ai/study-sessions', {
+        method: 'POST',
+        body: JSON.stringify({ deck_id: id, cards_studied: cards.length, again_count: newRatings[0], hard_count: newRatings[1], good_count: newRatings[2], easy_count: newRatings[3] }),
+      })
         .then(d => { if (d.newBadges?.length) d.newBadges.forEach(b => toast.success(`🏅 Badge unlocked: ${b.replace(/_/g, ' ')}`, { duration: 4000 })); })
         .catch(() => {});
+
+      if (loopMode) {
+        // Auto-loop: restart immediately, show a toast so they know a round ended
+        toast.success(`Round ${roundCount} done — looping back! 🔁`, { duration: 2000 });
+        setIndex(0);
+        setFlipped(false);
+        setRatings({ 0: 0, 1: 0, 2: 0, 3: 0 });
+        setRoundCount(r => r + 1);
+      } else {
+        setDone(true);
+      }
     } else {
       setIndex(next);
       setFlipped(false);
     }
-  }, [cards, index, id, ratings]);
+  }, [cards, index, id, ratings, loopMode, roundCount]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -128,13 +153,14 @@ export default function StudyPage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-3 justify-center">
-              <Button onClick={() => { setIndex(0); setFlipped(false); setDone(false); setRatings({ 0: 0, 1: 0, 2: 0, 3: 0 }); }}>
-                🔁 Loop Back to Start
-              </Button>
+              <Button onClick={restartSameCards}>🔁 Loop Again</Button>
               <Button onClick={loadAllCards}>Review All Cards</Button>
               <Button variant="ghost" onClick={() => navigate(`/deck/${id}`)}>{t.study.backToDeck}</Button>
               <Button variant="ghost" onClick={() => navigate('/dashboard')}>Dashboard</Button>
             </div>
+            <p className="text-xs text-slate-400 mt-4">
+              Tip: tap <span className="font-bold">🔁</span> during a session to auto-loop forever
+            </p>
           </motion.div>
         )}
 
@@ -152,6 +178,13 @@ export default function StudyPage() {
                 <motion.div animate={{ width: `${pct}%` }} className="h-full bg-indigo-600 rounded-full" />
               </div>
               <span className="text-xs font-bold text-slate-400 tabular-nums">{index + 1} / {cards.length}</span>
+              {/* Loop mode toggle */}
+              <button
+                onClick={() => setLoopMode(l => !l)}
+                title={loopMode ? 'Loop mode ON — will auto-restart' : 'Enable loop mode'}
+                className={`p-1.5 rounded-lg transition-colors font-bold text-sm ${loopMode ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950' : 'text-slate-400 hover:text-slate-600'}`}>
+                🔁
+              </button>
               {ttsSupported && (
                 <button
                   onClick={() => {
