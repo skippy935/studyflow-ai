@@ -112,8 +112,6 @@ export const en = {
     save: 'Save changes', saving: 'Saving…', saved: 'Saved!',
     deleteAccount: 'Delete account', deleteConfirm: 'This will permanently delete your account and all data. Type DELETE to confirm.',
   },
-};
-
   examiner: {
     title: 'The Examiner', stepUpload: 'Upload', stepSettings: 'Settings',
     extracting: 'Extracting text…', dropzone: 'Drop your file or click to browse',

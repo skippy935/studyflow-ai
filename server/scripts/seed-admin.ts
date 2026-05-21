@@ -6,7 +6,7 @@ async function main() {
   await p.admin.upsert({
     where: { email: 'danny.sam.allen@gmail.com' },
     update: {
-      passwordHash: '$2a$12$LegbKxOflFgiU.gqiRM3TOmKKj9RT3.1y05jNMdCIm4yjCKfkxH1a',
+      passwordHash: '$2a$12$IFLaWBJwWruF8i4vM1LKDebxOIB0X4m3c5UGmGuTSJOK7vNdi.Eaa',
       role: 'SUPER_ADMIN',
       inviteAccepted: true,
       isActive: true,
@@ -14,7 +14,7 @@ async function main() {
     },
     create: {
       email: 'danny.sam.allen@gmail.com',
-      passwordHash: '$2a$12$LegbKxOflFgiU.gqiRM3TOmKKj9RT3.1y05jNMdCIm4yjCKfkxH1a',
+      passwordHash: '$2a$12$IFLaWBJwWruF8i4vM1LKDebxOIB0X4m3c5UGmGuTSJOK7vNdi.Eaa',
       displayName: 'Danny Allen',
       role: 'SUPER_ADMIN',
       inviteAccepted: true,
