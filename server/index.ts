@@ -112,6 +112,6 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 StudyBuild running at http://localhost:${PORT}`);
+  console.log(`🚀 StudyBuild running on port ${PORT}`);
   startWeeklyEmailCron();
 });

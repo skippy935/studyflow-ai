@@ -4,7 +4,7 @@ import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import {
   LayoutDashboard, Plus, Settings, LogOut, Zap, Moon, Sun,
   CalendarCheck, GraduationCap, User, Trophy, Bell, CreditCard,
-  Sparkles, Package,
+  Sparkles, Package, ClipboardCheck,
 } from 'lucide-react';
 import { clearSession, getUser } from '../../lib/auth';
 import { useTranslation } from '../../i18n';
@@ -13,7 +13,8 @@ import { apiFetch } from '../../lib/api';
 const navLinks = [
   { to: '/dashboard',   icon: LayoutDashboard, label: 'Dashboard'   },
   { to: '/create',      icon: Plus,            label: 'Create'      },
-  { to: '/kits',        icon: Package,         label: 'Lern-Kits'   },
+  { to: '/examiner',    icon: ClipboardCheck,  label: 'Examiner'    },
+  { to: '/kits',        icon: Package,         label: 'Kits'        },
   { to: '/planner',     icon: CalendarCheck,   label: 'Planner'     },
   { to: '/sage',        icon: Sparkles,        label: 'Sage Tutor'  },
   { to: '/leaderboard', icon: Trophy,          label: 'Leaderboard' },
