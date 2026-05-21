@@ -3,6 +3,7 @@ import { Trophy, Flame, Crown, Medal, Star, TrendingUp } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import Spinner from '../components/ui/Spinner';
 import { apiFetch } from '../lib/api';
+import { useTranslation } from '../i18n';
 
 interface LeaderboardEntry {
   rank: number;
@@ -70,6 +71,7 @@ function XPBar({ xp, maxXp = 10000 }: { xp: number; maxXp?: number }) {
 }
 
 export default function LeaderboardPage() {
+  const { t } = useTranslation();
   const [data, setData] = useState<LeaderboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -99,9 +101,9 @@ export default function LeaderboardPage() {
             <Trophy className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Rangliste</h1>
+            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{t.leaderboard.title}</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5" /> Globales Ranking nach XP
+              <TrendingUp className="w-3.5 h-3.5" /> {t.leaderboard.subtitle}
             </p>
           </div>
         </div>
@@ -111,8 +113,8 @@ export default function LeaderboardPage() {
         ) : entries.length === 0 ? (
           <div className="text-center py-24 text-slate-400">
             <Trophy className="w-14 h-14 mx-auto mb-4 opacity-20" />
-            <p className="font-bold text-slate-500 dark:text-slate-400 text-lg">Noch keine Rankings</p>
-            <p className="text-sm mt-1.5">Lerne und verdiene XP, um hier zu erscheinen!</p>
+            <p className="font-bold text-slate-500 dark:text-slate-400 text-lg">{t.leaderboard.noRankings}</p>
+            <p className="text-sm mt-1.5">{t.leaderboard.noRankingsDesc}</p>
           </div>
         ) : (
           <>
@@ -123,10 +125,10 @@ export default function LeaderboardPage() {
                   #{data.myRank}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-indigo-700 dark:text-indigo-300">Dein aktueller Rang</p>
-                  <p className="text-xs text-indigo-500 dark:text-indigo-400">{data.myXp.toLocaleString('de-DE')} XP · Level {data.myLevel}</p>
+                  <p className="text-sm font-bold text-indigo-700 dark:text-indigo-300">{t.leaderboard.yourRank}</p>
+                  <p className="text-xs text-indigo-500 dark:text-indigo-400">{data.myXp.toLocaleString()} XP · Level {data.myLevel}</p>
                 </div>
-                <p className="text-xs text-indigo-400 dark:text-indigo-500">Noch {entries[data.myRank - 2]?.xp != null ? (entries[data.myRank - 2].xp - data.myXp).toLocaleString('de-DE') + ' XP bis #' + (data.myRank - 1) : 'oben bleiben!'}</p>
+                <p className="text-xs text-indigo-400 dark:text-indigo-500">{entries[data.myRank - 2]?.xp != null ? (entries[data.myRank - 2].xp - data.myXp).toLocaleString() + ' XP ' + t.leaderboard.xpToRank + (data.myRank - 1) : ''}</p>
               </div>
             )}
 
@@ -138,8 +140,8 @@ export default function LeaderboardPage() {
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center text-white font-bold text-sm mb-2">
                     {top3[1].displayName.charAt(0).toUpperCase()}
                   </div>
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-full text-center">{top3[1].displayName}{top3[1].isMe && ' (Du)'}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{top3[1].xp.toLocaleString('de-DE')} XP</p>
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-full text-center">{top3[1].displayName}{top3[1].isMe && ` ${t.leaderboard.you}`}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{top3[1].xp.toLocaleString()} XP</p>
                   <div className="mt-2 w-7 h-7 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center">
                     <span className="text-white font-black text-xs">2</span>
                   </div>
@@ -151,8 +153,8 @@ export default function LeaderboardPage() {
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-white font-bold text-base mb-2 shadow-md shadow-yellow-200 dark:shadow-yellow-900/50">
                     {top3[0].displayName.charAt(0).toUpperCase()}
                   </div>
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-full text-center">{top3[0].displayName}{top3[0].isMe && ' (Du)'}</p>
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400 font-bold mt-0.5">{top3[0].xp.toLocaleString('de-DE')} XP</p>
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-full text-center">{top3[0].displayName}{top3[0].isMe && ` ${t.leaderboard.you}`}</p>
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 font-bold mt-0.5">{top3[0].xp.toLocaleString()} XP</p>
                   {top3[0].streak >= 3 && (
                     <span className="flex items-center gap-0.5 text-[10px] text-orange-500 font-semibold mt-1">
                       <Flame className="w-3 h-3" />{top3[0].streak}
@@ -165,8 +167,8 @@ export default function LeaderboardPage() {
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm mb-2">
                     {top3[2].displayName.charAt(0).toUpperCase()}
                   </div>
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-full text-center">{top3[2].displayName}{top3[2].isMe && ' (Du)'}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{top3[2].xp.toLocaleString('de-DE')} XP</p>
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-full text-center">{top3[2].displayName}{top3[2].isMe && ` ${t.leaderboard.you}`}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{top3[2].xp.toLocaleString()} XP</p>
                   <div className="mt-2 w-7 h-7 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
                     <span className="text-white font-black text-xs">3</span>
                   </div>
@@ -201,7 +203,7 @@ export default function LeaderboardPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className={`text-sm font-semibold truncate ${entry.isMe ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-900 dark:text-slate-100'}`}>
                           {entry.displayName}
-                          {entry.isMe && <span className="text-xs font-normal text-indigo-500 ml-1">(Du)</span>}
+                          {entry.isMe && <span className="text-xs font-normal text-indigo-500 ml-1">{t.leaderboard.you}</span>}
                         </p>
                         <LevelBadge level={entry.level} />
                         {entry.streak >= 3 && (
@@ -214,7 +216,7 @@ export default function LeaderboardPage() {
                     </div>
 
                     <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100">{entry.xp.toLocaleString('de-DE')}</p>
+                      <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100">{entry.xp.toLocaleString()}</p>
                       <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">XP</p>
                     </div>
                   </div>
@@ -230,24 +232,24 @@ export default function LeaderboardPage() {
                   disabled={page === 0}
                   className="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 disabled:opacity-40 transition-all"
                 >
-                  ← Zurück
+                  {t.leaderboard.prev}
                 </button>
                 <span className="text-sm text-slate-500">
-                  Seite {page + 1} von {totalPages} · Plätze 4–{Math.min(4 + rest.length - 1, 100)}
+                  {t.leaderboard.page} {page + 1} {t.leaderboard.of} {totalPages}
                 </span>
                 <button
                   onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                   disabled={page === totalPages - 1}
                   className="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 disabled:opacity-40 transition-all"
                 >
-                  Weiter →
+                  {t.leaderboard.next}
                 </button>
               </div>
             )}
 
             {entries.length > 0 && (
               <p className="text-center text-xs text-slate-400 mt-4">
-                Top {entries.length} Lernende · Aktualisiert täglich
+                {t.leaderboard.topLearners} {entries.length} · {t.leaderboard.updatedDaily}
               </p>
             )}
           </>

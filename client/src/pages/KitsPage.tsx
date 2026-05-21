@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Lock, Star, ChevronRight, BookOpen, HelpCircle, Layers, FileText, Calendar, Zap, Filter, X, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
+import { useTranslation } from '../i18n';
 
 interface KitContent {
   studyGuide: string;
@@ -61,6 +62,7 @@ function includeIcon(label: string) {
 }
 
 export default function KitsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [kits, setKits] = useState<Kit[]>([]);
   const [isPro, setIsPro] = useState(false);
@@ -134,7 +136,7 @@ export default function KitsPage() {
             </div>
             <div>
               <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-                Lern-Kit Bibliothek
+                {t.kits.title}
               </h1>
               <p className="text-sm text-slate-500">100+ fertige Lernpakete für alle Fächer</p>
             </div>
@@ -143,17 +145,17 @@ export default function KitsPage() {
           {/* Stats bar */}
           <div className="flex items-center gap-4 mt-4 flex-wrap">
             <span className="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
-              {freeCount} kostenlos
+              {freeCount} {t.kits.freeStat}
             </span>
             <span className="text-xs font-semibold text-violet-600 bg-violet-50 dark:bg-violet-950 px-3 py-1.5 rounded-full flex items-center gap-1">
-              <Star className="w-3 h-3" /> {proCount} PRO-Kits
+              <Star className="w-3 h-3" /> {proCount} {t.kits.proStat}
             </span>
             {!isPro && (
               <button
                 onClick={() => navigate('/billing')}
                 className="text-xs font-semibold text-white bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity flex items-center gap-1"
               >
-                <Zap className="w-3 h-3 fill-white" /> Alle freischalten – €2,99/Monat
+                <Zap className="w-3 h-3 fill-white" /> {t.kits.upgradeCta}
               </button>
             )}
           </div>
@@ -187,7 +189,7 @@ export default function KitsPage() {
         {showFilters && (
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 mb-4 space-y-4">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Fach</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t.kits.subject}</p>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(CATEGORY_LABELS).map(([val, label]) => (
                   <button
@@ -201,7 +203,7 @@ export default function KitsPage() {
               </div>
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Schwierigkeit</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t.kits.difficulty}</p>
               <div className="flex flex-wrap gap-2">
                 {['all', 'Basis', 'Standard', 'Erweitert'].map(d => (
                   <button
@@ -209,14 +211,14 @@ export default function KitsPage() {
                     onClick={() => setDifficulty(d)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${difficulty === d ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-indigo-400'}`}
                   >
-                    {d === 'all' ? 'Alle' : d}
+                    {d === 'all' ? t.kits.all : d === 'Basis' ? t.kits.basis : d === 'Erweitert' ? t.kits.erweitert : t.kits.standard}
                   </button>
                 ))}
               </div>
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={freeOnly} onChange={e => setFreeOnly(e.target.checked)} className="rounded accent-indigo-600" />
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Nur kostenlose Kits</span>
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.kits.freeStat}</span>
             </label>
           </div>
         )}
@@ -242,8 +244,8 @@ export default function KitsPage() {
         ) : kits.length === 0 ? (
           <div className="text-center py-20 text-slate-400">
             <Search className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="font-semibold">Keine Kits gefunden</p>
-            <p className="text-sm mt-1">Versuche einen anderen Suchbegriff oder Filter</p>
+            <p className="font-semibold">{t.kits.noKits}</p>
+            <p className="text-sm mt-1">{t.kits.noKitsDesc}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -254,7 +256,7 @@ export default function KitsPage() {
                 className={`group text-left bg-white dark:bg-slate-900 rounded-2xl border shadow-sm p-4 transition-all hover:shadow-md hover:-translate-y-0.5 relative ${kit.locked ? 'opacity-75' : ''} ${kit.isPopular ? 'border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-200 dark:ring-indigo-800' : 'border-slate-100 dark:border-slate-800'}`}
               >
                 {kit.isPopular && (
-                  <span className="absolute -top-2 left-4 text-xs font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full">⭐ Beliebt</span>
+                  <span className="absolute -top-2 left-4 text-xs font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full">{t.kits.popular}</span>
                 )}
 
                 <div className="flex items-start justify-between mb-3">
@@ -274,7 +276,7 @@ export default function KitsPage() {
                 <p className="text-xs text-slate-500 mb-3 line-clamp-2">{kit.description}</p>
 
                 <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>{kit.subject} · Kl. {kit.grade}</span>
+                  <span>{kit.subject} · {t.kits.grade} {kit.grade}</span>
                   <span className="flex items-center gap-1">
                     <span>⏱</span> {kit.duration} Min
                   </span>
@@ -333,10 +335,10 @@ export default function KitsPage() {
               {/* Tabs */}
               <div className="flex gap-1 -mb-px">
                 {([
-                  { id: 'info', label: '📋 Info' },
-                  { id: 'guide', label: '📖 Lernguide', disabled: !kitContent },
-                  { id: 'cards', label: `🃏 Karten${kitContent ? ` (${kitContent.flashcards.length})` : ''}`, disabled: !kitContent },
-                  { id: 'quiz',  label: `❓ Quiz${kitContent ? ` (${kitContent.quiz.length})` : ''}`,  disabled: !kitContent },
+                  { id: 'info', label: t.kits.tabInfo },
+                  { id: 'guide', label: t.kits.tabGuide, disabled: !kitContent },
+                  { id: 'cards', label: `${t.kits.tabCards}${kitContent ? ` (${kitContent.flashcards.length})` : ''}`, disabled: !kitContent },
+                  { id: 'quiz',  label: `${t.kits.tabQuiz}${kitContent ? ` (${kitContent.quiz.length})` : ''}`,  disabled: !kitContent },
                 ] as const).map(tab => (
                   <button
                     key={tab.id}
@@ -361,7 +363,7 @@ export default function KitsPage() {
                 <div className="px-6 py-5 space-y-5">
                   <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{selected.description}</p>
                   <div>
-                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm mb-3">📦 Im Kit enthalten</h3>
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm mb-3">{t.kits.kitContains}</h3>
                     <div className="space-y-2">
                       {selected.includes.map(inc => {
                         const Icon = includeIcon(inc);

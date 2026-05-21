@@ -7,38 +7,40 @@ import {
 import AppLayout from '../components/layout/AppLayout';
 import { useSubscription } from '../hooks/useSubscription';
 import { getUser } from '../lib/auth';
+import { useTranslation } from '../i18n';
 import toast from 'react-hot-toast';
 
-const TIER_LABELS: Record<string, string> = {
-  premium: 'Premium',
-  school: 'Schule',
-  free: 'Kostenlos',
-};
-
-const STATUS_BADGE: Record<string, { label: string; color: string; Icon: any }> = {
-  active:     { label: 'Aktiv',           color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', Icon: CheckCircle },
-  trialing:   { label: 'Probephase',      color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',   Icon: Clock },
-  past_due:   { label: 'Zahlung offen',   color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',      Icon: AlertTriangle },
-  canceled:   { label: 'Gekündigt',       color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',              Icon: XCircle },
-  incomplete: { label: 'Unvollständig',   color: 'bg-slate-100 text-slate-600',                                               Icon: AlertTriangle },
-};
-
 function formatEur(amount: number): string {
-  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount);
+  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR' }).format(amount);
 }
 
 function formatDate(d: string | null): string {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+  return new Date(d).toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
 export default function BillingPage() {
+  const { t } = useTranslation();
   const user = getUser();
   const navigate = useNavigate();
   const { subscription, invoices, loading, error, openPortal, cancelPlan, reload } = useSubscription();
   const [canceling, setCanceling] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  const TIER_LABELS: Record<string, string> = {
+    premium: t.billing.tierPremium,
+    school:  t.billing.tierSchool,
+    free:    t.billing.tierFree,
+  };
+
+  const STATUS_BADGE: Record<string, { label: string; color: string; Icon: any }> = {
+    active:     { label: t.billing.statusActive,     color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', Icon: CheckCircle },
+    trialing:   { label: t.billing.statusTrialing,   color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',   Icon: Clock },
+    past_due:   { label: t.billing.statusPastDue,    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',       Icon: AlertTriangle },
+    canceled:   { label: t.billing.statusCanceled,   color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',               Icon: XCircle },
+    incomplete: { label: t.billing.statusIncomplete, color: 'bg-slate-100 text-slate-600',                                                Icon: AlertTriangle },
+  };
 
   const hasActiveSub = subscription && ['active', 'trialing'].includes(subscription.status);
   const badge = subscription ? (STATUS_BADGE[subscription.status] ?? STATUS_BADGE.incomplete) : null;
@@ -48,7 +50,7 @@ export default function BillingPage() {
     try {
       await openPortal();
     } catch (err: any) {
-      toast.error(err.message ?? 'Fehler beim Öffnen des Kundenportals');
+      toast.error(err.message ?? 'Could not open portal');
       setPortalLoading(false);
     }
   }
@@ -58,9 +60,9 @@ export default function BillingPage() {
     try {
       await cancelPlan();
       setShowCancelConfirm(false);
-      toast.success('Abonnement wird zum Ende des Abrechnungszeitraums gekündigt.');
+      toast.success(t.billing.cancelConfirmDesc);
     } catch (err: any) {
-      toast.error(err.message ?? 'Kündigung fehlgeschlagen');
+      toast.error(err.message ?? 'Cancellation failed');
     } finally {
       setCanceling(false);
     }
@@ -81,8 +83,8 @@ export default function BillingPage() {
       <AppLayout>
         <div className="max-w-xl mx-auto text-center py-16">
           <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-3" />
-          <p className="text-slate-500 mb-4">Billing-Daten konnten nicht geladen werden.</p>
-          <button onClick={reload} className="text-indigo-600 hover:underline text-sm">Erneut versuchen</button>
+          <p className="text-slate-500 mb-4">{t.billing.title}</p>
+          <button onClick={reload} className="text-indigo-600 hover:underline text-sm">{t.settings.save}</button>
         </div>
       </AppLayout>
     );
@@ -92,7 +94,7 @@ export default function BillingPage() {
     <AppLayout>
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">Abonnement & Rechnungen</h1>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{t.billing.title}</h1>
           <button onClick={reload} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -103,7 +105,7 @@ export default function BillingPage() {
           <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <CreditCard className="w-5 h-5 text-indigo-500" />
-              <span className="font-semibold text-slate-900 dark:text-slate-100">Aktuelles Abonnement</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">{t.billing.currentPlan}</span>
             </div>
             {badge && (
               <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${badge.color}`}>
@@ -116,38 +118,38 @@ export default function BillingPage() {
           <div className="p-5">
             {!hasActiveSub ? (
               <div className="text-center py-6">
-                <p className="text-slate-500 mb-4">Du hast kein aktives Abonnement.</p>
+                <p className="text-slate-500 mb-4">{t.billing.noActivePlan}</p>
                 <button
                   onClick={() => navigate('/pricing')}
                   className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm"
                 >
-                  Plan auswählen
+                  {t.billing.choosePlan}
                 </button>
               </div>
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-slate-400 text-xs mb-0.5">Plan</p>
+                    <p className="text-slate-400 text-xs mb-0.5">{t.billing.planLabel}</p>
                     <p className="font-semibold text-slate-900 dark:text-slate-100">
                       {TIER_LABELS[subscription!.tier] ?? subscription!.tier}
                     </p>
                   </div>
                   <div>
-                    <p className="text-slate-400 text-xs mb-0.5">Abrechnung</p>
+                    <p className="text-slate-400 text-xs mb-0.5">{t.billing.billingLabel}</p>
                     <p className="font-semibold text-slate-900 dark:text-slate-100">
-                      {subscription!.interval === 'month' ? 'Monatlich' : 'Jährlich'}
+                      {subscription!.interval === 'month' ? t.billing.monthly : t.billing.yearly}
                     </p>
                   </div>
                   <div>
-                    <p className="text-slate-400 text-xs mb-0.5">Aktuelle Periode</p>
+                    <p className="text-slate-400 text-xs mb-0.5">{t.billing.currentPeriod}</p>
                     <p className="font-semibold text-slate-900 dark:text-slate-100">
                       {formatDate(subscription!.currentPeriodStart)} – {formatDate(subscription!.currentPeriodEnd)}
                     </p>
                   </div>
                   {subscription!.trialEnd && new Date(subscription!.trialEnd) > new Date() && (
                     <div>
-                      <p className="text-slate-400 text-xs mb-0.5">Probephase endet</p>
+                      <p className="text-slate-400 text-xs mb-0.5">{t.billing.trialEnds}</p>
                       <p className="font-semibold text-indigo-600 dark:text-indigo-400">
                         {formatDate(subscription!.trialEnd)}
                       </p>
@@ -157,7 +159,7 @@ export default function BillingPage() {
                     <div className="col-span-2">
                       <p className="text-red-600 dark:text-red-400 text-sm font-medium flex items-center gap-1.5">
                         <XCircle className="w-4 h-4" />
-                        Kündigung aktiv — Zugang bis {formatDate(subscription!.currentPeriodEnd)}
+                        {t.billing.cancelActive} {formatDate(subscription!.currentPeriodEnd)}
                       </p>
                     </div>
                   )}
@@ -170,7 +172,7 @@ export default function BillingPage() {
                     className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold"
                   >
                     {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
-                    Zahlungsmethode verwalten
+                    {t.billing.managePayment}
                   </button>
                   {!subscription!.cancelAtPeriodEnd && (
                     <button
@@ -178,7 +180,7 @@ export default function BillingPage() {
                       className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-sm font-semibold"
                     >
                       <XCircle className="w-4 h-4" />
-                      Kündigen
+                      {t.billing.cancel}
                     </button>
                   )}
                 </div>
@@ -191,11 +193,11 @@ export default function BillingPage() {
         <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
           <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
             <FileText className="w-5 h-5 text-slate-400" />
-            <span className="font-semibold text-slate-900 dark:text-slate-100">Rechnungen</span>
+            <span className="font-semibold text-slate-900 dark:text-slate-100">{t.billing.invoices}</span>
           </div>
 
           {invoices.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-sm">Noch keine Rechnungen vorhanden.</div>
+            <div className="p-8 text-center text-slate-400 text-sm">{t.billing.noInvoices}</div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {invoices.map(inv => (
@@ -212,7 +214,7 @@ export default function BillingPage() {
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                       inv.status === 'paid' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500'
                     }`}>
-                      {inv.status === 'paid' ? 'Bezahlt' : inv.status}
+                      {inv.status === 'paid' ? t.billing.paid : inv.status}
                     </span>
                     {inv.pdfUrl && (
                       <a
@@ -258,11 +260,8 @@ export default function BillingPage() {
       {showCancelConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-2">Abonnement kündigen?</h3>
-            <p className="text-slate-500 text-sm mb-5">
-              Du behältst vollen Zugang bis zum Ende deiner aktuellen Periode ({formatDate(subscription?.currentPeriodEnd ?? null)}).
-              Danach wirst du auf den kostenlosen Plan zurückgestuft.
-            </p>
+            <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-2">{t.billing.cancelConfirmTitle}</h3>
+            <p className="text-slate-500 text-sm mb-5">{t.billing.cancelConfirmDesc}</p>
             <div className="flex gap-3">
               <button
                 onClick={handleCancel}
@@ -270,13 +269,13 @@ export default function BillingPage() {
                 className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5"
               >
                 {canceling ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
-                Ja, kündigen
+                {t.billing.confirmCancel}
               </button>
               <button
                 onClick={() => setShowCancelConfirm(false)}
                 className="flex-1 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-400"
               >
-                Abbrechen
+                {t.billing.cancelBack}
               </button>
             </div>
           </div>

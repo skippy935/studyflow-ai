@@ -10,31 +10,33 @@ import { clearSession, getUser } from '../../lib/auth';
 import { useTranslation } from '../../i18n';
 import { apiFetch } from '../../lib/api';
 
-const navLinks = [
-  { to: '/dashboard',   icon: LayoutDashboard, label: 'Dashboard'   },
-  { to: '/create',      icon: Plus,            label: 'Create'      },
-  { to: '/examiner',    icon: ClipboardCheck,  label: 'Examiner'    },
-  { to: '/kits',        icon: Package,         label: 'Kits'        },
-  { to: '/planner',     icon: CalendarCheck,   label: 'Planner'     },
-  { to: '/sage',        icon: Sparkles,        label: 'Sage Tutor'  },
-  { to: '/leaderboard', icon: Trophy,          label: 'Leaderboard' },
-  { to: '/billing',     icon: CreditCard,      label: 'Billing'     },
-  { to: '/settings',    icon: Settings,        label: 'Settings'    },
-];
-
-const mobileNavLinks = [
-  { to: '/dashboard',   icon: LayoutDashboard, label: 'Home'   },
-  { to: '/create',      icon: Plus,            label: 'Create' },
-  { to: '/examiner',    icon: GraduationCap,   label: 'Exam'   },
-  { to: '/leaderboard', icon: Trophy,          label: 'Ranks'  },
-  { to: '/settings',    icon: User,            label: 'Profile'},
-];
+const useNavLinks = (t: any) => ({
+  desktop: [
+    { to: '/dashboard',   icon: LayoutDashboard, label: t.nav.dashboard   },
+    { to: '/create',      icon: Plus,            label: t.nav.create      },
+    { to: '/examiner',    icon: ClipboardCheck,  label: t.nav.examiner    },
+    { to: '/kits',        icon: Package,         label: t.nav.kits        },
+    { to: '/planner',     icon: CalendarCheck,   label: t.nav.planner     },
+    { to: '/sage',        icon: Sparkles,        label: t.nav.sageTutor   },
+    { to: '/leaderboard', icon: Trophy,          label: t.nav.leaderboard },
+    { to: '/billing',     icon: CreditCard,      label: t.nav.billing     },
+    { to: '/settings',    icon: Settings,        label: t.nav.settings    },
+  ],
+  mobile: [
+    { to: '/dashboard',   icon: LayoutDashboard, label: t.nav.home    },
+    { to: '/create',      icon: Plus,            label: t.nav.create  },
+    { to: '/examiner',    icon: GraduationCap,   label: t.nav.exam    },
+    { to: '/leaderboard', icon: Trophy,          label: t.nav.ranks   },
+    { to: '/settings',    icon: User,            label: t.nav.profile },
+  ],
+});
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const { t, lang, setLang } = useTranslation();
   const user = getUser();
   const isOnline = useOnlineStatus();
+  const { desktop: navLinks, mobile: mobileNavLinks } = useNavLinks(t);
 
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem('sb_theme');
@@ -78,7 +80,7 @@ export default function Sidebar() {
             </span>
             {!isOnline && (
               <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400">
-                Offline
+                {t.nav.offline}
               </span>
             )}
           </div>
@@ -155,7 +157,7 @@ export default function Sidebar() {
                   </span>
                 )}
               </div>
-              Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''}
+              {t.nav.notifications}{unreadCount > 0 ? ` (${unreadCount})` : ''}
             </NavLink>
 
             {/* User card */}
@@ -192,7 +194,7 @@ export default function Sidebar() {
           <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">StudyBuild</span>
           {!isOnline && (
             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400">
-              Offline
+              {t.nav.offline}
             </span>
           )}
         </div>
